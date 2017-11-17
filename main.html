@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Video Magnification</title>
+	<link rel='stylesheet' href='styles.css'></link>
+	<script src='setup.js'></script>
+	<script src='filter.js'></script>
+</head>
+<body>
+	<div class='layer center'>
+	<video class='input hide' muted loop autoplay playsinline></video>
+	<img class='input hide' src='foo.png'>
+
+	<canvas class='output'></canvas>
+	<canvas class='output'></canvas>
+	</div>
+
+	<div class='layer right' style='margin-right: 50px'>
+	<div>
+		<input type="checkbox" name='reflect-x'>
+		<label>reflect-x</label>
+	</div>
+	<div>
+		<input type="checkbox" name='hide'>
+		<label>hide</label>
+	</div>
+	<div>
+		<input type="checkbox" name='filter_on'>
+		<label>filter on</label>
+	</div>
+	</div>
+</body>
+</html>
