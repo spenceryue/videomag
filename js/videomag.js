@@ -8,71 +8,93 @@ var kernel = null;
 var low1_pyramid = null;
 var low2_pyramid = null;
 
-var buf0 = null;
-var buf1 = null;
-var buf2 = null;
+var buf = Array (3);
 var IntermediateTypedArray = Float32Array;
 var blur_size_changed;
 var filter_size_changed;
 
 
-function buffer_init ()
-{
-  /*
-  Capitalized variables (BUF0, BUF1, BUF2) keep references to memory so they aren't garbage collected on
-  resizing lower-cased variables (buf0, buf1, buf2) from updating the filter_size.
-  */
-  buf0 = buffer_init.BUF0 = fill_alpha (new IntermediateTypedArray (4 * FRAME_WIDTH * FRAME_HEIGHT), 255);
-  buf1 = buffer_init.BUF1 = fill_alpha (new IntermediateTypedArray (4 * FRAME_WIDTH * FRAME_HEIGHT), 255);
-  buf2 = buffer_init.BUF2 = fill_alpha (new IntermediateTypedArray (4 * FRAME_WIDTH * FRAME_HEIGHT), 255);
-  filter_size_changed = true;
-}
-
-
 function filter (input, width, height)
 {
-  if (blur_size_changed)
+  if (blur_size_changed || filter_size_changed)
   {
+    let w = width;
+    let h = height;
+    let depth = max_pyramid_depth(w, h, blur_size);
+    for (let i=0; i < depth; i++)
+    {
+      pyramid[i] = new IntermediateTypedArray (buffer_init.PYRAMID[i].buffer, 0, 4 * w * h);
+      pyramid[i].width = w;
+      pyramid[i].height = h;
+
+      w = Math.floor (w/2);
+      h = Math.floor (h/2);
+    }
+
     if (blur_size_changed)
-      blur_size_changed = false;
-    kernel = get_blur_kernel (blur_size);
+      kernel = get_blur_kernel (blur_size);
+
+    if (filter_size_changed)
+    {
+      let length = 4 * width * height;
+      for (let i=0; i < buf.length; i++)
+        buf[i] = new IntermediateTypedArray (buffer_init.BUF[i].buffer, 0, length);
+    }
   }
 
-  if (filter_size_changed)
-  {
-    let length = 4 * width * height;
-
-    buf0 = new IntermediateTypedArray (buffer_init.BUF0.buffer, 0, length);
-    buf1 = new IntermediateTypedArray (buffer_init.BUF1.buffer, 0, length);
-    buf2 = new IntermediateTypedArray (buffer_init.BUF2.buffer, 0, length);
-    filter_size_changed = false;
-  }
-
-  buf0 = rgb_to (buf0_color, input, width, height, buf0, use_fscs, true);
-  build_pyramid (buf0, width, height, 0);
+  buf[0] = rgb_to (buf0_color, input, width, height, buf[0], use_fscs, true);
+  build_pyramid (buf[0], width, height, 0);
 
   if (buf0_color != buf1_color)
   {
-    buf0 = to_rgb (buf0_color, buf0, width, height, buf0, use_fscs);
-    buf1 = rgb_to (buf1_color, buf0, width, height, buf0, use_fscs);
+    buf[0] = to_rgb (buf0_color, buf[0], width, height, buf[0], use_fscs);
+    buf[1] = rgb_to (buf1_color, buf[0], width, height, buf[0], use_fscs);
   }
 
-  amplify (buf0, width, height, buf1, 1);
-  buf1 = to_rgb (buf1_color, buf1, width, height, buf1, use_fscs);
+  amplify (buf[0], width, height, buf[1], 1);
+  buf[1] = to_rgb (buf1_color, buf[1], width, height, buf[1], use_fscs);
 
   // if (++counter % 10 == 1)
   // {
-    // console.log (buf1.map((x,i)=> x-input[i]).reduce((v,x)=>Math.abs(x) > v ? Math.abs(x) : v, 0));
+    // console.log (buf[1].map((x,i)=> x-input[i]).reduce((v,x)=>Math.abs(x) > v ? Math.abs(x) : v, 0));
     // console.log (buf2.slice(800,812));
-    // console.log (buf1.slice(800,812));
+    // console.log (buf[1].slice(800,812));
     // console.log (input.slice(800,812));
-    // buf1.slice(800,812).forEach((val,i) => console.log(val,input[800+i], val-input[800+i]));
+    // buf[1].slice(800,812).forEach((val,i) => console.log(val,input[800+i], val-input[800+i]));
   // }
 
-  // return new Uint8ClampedArray (buf1.map((x,i)=> (i%4!=3) ? (Math.round(x-input[i]) ? 255 : 0) : x));
-  // return new Uint8ClampedArray (buf1.map((x,i)=> (i%4!=3) ? (Math.round(x-input[i]) ? x : 0) : x));
-  // return new Uint8ClampedArray (buf1.map((x,i)=> (i%4!=3) ? x-input[i] : x));
-  return new Uint8ClampedArray (buf1);
+  // return new Uint8ClampedArray (buf[1].map((x,i)=> (i%4!=3) ? (Math.round(x-input[i]) ? 255 : 0) : x));
+  // return new Uint8ClampedArray (buf[1].map((x,i)=> (i%4!=3) ? (Math.round(x-input[i]) ? x : 0) : x));
+  // return new Uint8ClampedArray (buf[1].map((x,i)=> (i%4!=3) ? x-input[i] : x));
+  return new Uint8ClampedArray (buf[1]);
+}
+
+
+function buffer_init ()
+{
+  buffer_init.BUF = [];
+  buffer_init.PYRAMID = [];
+
+  /*
+  Each BUF[i] keeps a reference to memory so it isn't garbage collected on
+  resizing buf[i] from updating the filter_size.
+  */
+  for (let i=0; i < buf.length; i++)
+    buf[i] = buffer_init.BUF[i] = fill_alpha (new IntermediateTypedArray (4 * FRAME_WIDTH * FRAME_HEIGHT), 255);
+
+  /* Same comment as above. */
+  var width = FRAME_WIDTH;
+  var height = FRAME_HEIGHT;
+  var depth = max_pyramid_depth(width, height, 1);
+  for (let i=0; i < depth; i++)
+  {
+    pyramid[i] = buffer_init.PYRAMID[i] = fill_alpha (new IntermediateTypedArray (4 * width * height), 255);
+    pyramid[i].width = width;
+    pyramid[i].height = height;
+
+    width = Math.floor (width/2);
+    height = Math.floor (height/2);
+  }
 }
 
 

@@ -7,11 +7,12 @@ var FPS, FPS_LABEL, DECAY, FPS_DECAY_THRESHOLD;
 var FRAME_BOUNDS = {};
 var FILTER_BOUNDS = {};
 var filter_on;
+var use_fscs;
+var show_pyramid;
 var blur_size;
 var filter_size;
 var buf0_color;
 var buf1_color;
-var use_fscs;
 
 
 var defaults =
@@ -20,6 +21,7 @@ var defaults =
   'hide_original': false,
   'filter_on': true,
   'use_fscs': true,
+  'show_pyramid': true,
   'blur_size': {min:1, max:50, step:1, value:50},
   'filter_size': {min:1, max:100, step:'any', value:50},
   'buf0_color': 'rgb',
@@ -52,9 +54,9 @@ function camera_init (mediaStream)
   {
     FRAME_WIDTH = SINK.canvas.width = SOURCE.videoWidth;
     FRAME_HEIGHT = SINK.canvas.height = SOURCE.videoHeight;
-    buffer_init ();
     loaded ();
     console.log('camera source loaded.')
+    buffer_init ();
 
     requestAnimationFrame (render);
   };
@@ -68,9 +70,9 @@ function image_init()
   {
     FRAME_WIDTH = SINK.canvas.width = SOURCE.width;
     FRAME_HEIGHT = SINK.canvas.height = SOURCE.height;
-    buffer_init ();
     loaded ();
     console.log('image source loaded.')
+    buffer_init ();
 
     requestAnimationFrame (render);
   }
@@ -142,13 +144,24 @@ function options_init ()
   bind_option ('hide_original', event => SOURCE.classList.toggle ('hide', event.srcElement.checked));
 
   SINK.canvas.classList.toggle('reflect_x', get_option('reflect_x'));
-  bind_option ('reflect_x', event => SINK.canvas.classList.toggle ('reflect_x', event.srcElement.checked));
+  bind_option ('reflect_x', event => document.querySelectorAll('canvas').forEach(e => e.classList.toggle ('reflect_x', event.srcElement.checked)));
 
   filter_on = defaults['filter_on'];
-  bind_option ('filter_on', event => filter_on = event.srcElement.checked);
+  bind_option ('filter_on', event => {
+    filter_on = event.srcElement.checked;
+    if (!filter_on)
+      remove_previous_pyramids();
+  });
 
   use_fscs = defaults['use_fscs'];
   bind_option ('use_fscs', event => use_fscs = event.srcElement.checked);
+
+  show_pyramid = defaults['show_pyramid'];
+  bind_option ('show_pyramid', event => {
+    show_pyramid = event.srcElement.checked;
+    if (!show_pyramid)
+      remove_previous_pyramids ();
+  });
 
   blur_size = defaults['blur_size'].value;
   bind_option ('blur_size', event => update_blur_size(event.srcElement.value));
@@ -233,8 +246,6 @@ function render (timestamp)
   if (filter_size_changed)
     set_filter_dims ();
 
-  if (render.last==0 || filter_size_changed || blur_size_changed)
-    display_pyramid();
 
   if (filter_on)
   {
@@ -256,6 +267,12 @@ function render (timestamp)
       let filtered = filter (frame.data, FRAME_WIDTH, FRAME_HEIGHT);
       SINK.putImageData (new ImageData(filtered, FRAME_WIDTH, FRAME_HEIGHT), 0, 0);
     }
+
+    if (show_pyramid)
+      display_pyramid();
+
+    blur_size_changed = false;
+    filter_size_changed = false;
   }
   else
     SINK.putImageData (frame, 0, 0);

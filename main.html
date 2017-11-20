@@ -10,7 +10,9 @@
     <video class='source hide loading' muted loop autoplay playsinline></video>
     <img class='source hide loading' src='foo.png'>
 
-    <canvas class='sink loading'></canvas>
+    <div class='wrapper'>
+      <canvas class='sink loading'></canvas>
+    </div>
   </div>
 
   <div class='layer right' style='margin-right: 50px'>
@@ -29,6 +31,10 @@
     <div class='option'>
       <label>scale contrast</label>
       <input type="checkbox" name='use_fscs'>
+    </div>
+    <div class='option'>
+      <label>show Laplacian pyramid</label>
+      <input type="checkbox" name='show_pyramid'>
     </div>
     <div class='option'>
       <label>blur size</label>

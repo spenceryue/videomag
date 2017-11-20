@@ -26,7 +26,7 @@ function get_binomial_kernel (window)
 
   for (let i=binomial_kernels.length; i < window; i++)
   {
-    binomial_kernels.push (new KernelTypedArray(i+1));
+    binomial_kernels[i] = new KernelTypedArray(i+1);
     binomial_kernels[i][0] = binomial_kernels[i][i] = binomial_kernels[i-1][0] / 2;
     for (let j=1; j < i; j++)
       binomial_kernels[i][j] = (binomial_kernels[i-1][j-1] + binomial_kernels[i-1][j]) / 2;
@@ -45,6 +45,7 @@ function conv2_down (input, width, height, output, intermediate)
 }
 
 
+/* Candidate for C++ conversion. */
 function row_conv_down (input, width, height, output, stride)
 {
   var pre = Math.ceil((kernel.length-1)/2);
@@ -90,6 +91,7 @@ function row_conv_down (input, width, height, output, stride)
 }
 
 
+/* Candidate for C++ conversion. */
 function col_conv_down (input, width, height, output, stride)
 {
   var pre = Math.ceil((kernel.length-1)/2);

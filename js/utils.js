@@ -1,6 +1,7 @@
 'use strict';
 
 
+/* Candidate for C++ conversion. */
 function fill_alpha (input, value)
 {
   for (let i=0; i < input.length; i+=4)
@@ -16,6 +17,7 @@ function next_multiple (x, m)
 }
 
 
+/* Candidate for C++ conversion. */
 function full_scale_contrast_stretch (input, min, max)
 {
   if (min == undefined || max == undefined)

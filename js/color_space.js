@@ -59,6 +59,7 @@ function to_rgb (from, input, width, height, output, fscs, copy)
 }
 
 
+/* Candidate for C++ conversion. */
 function _rgb2ntsc (input, width, height, output)
 {
   for (let y=0; y < height; y++)
@@ -79,6 +80,7 @@ function _rgb2ntsc (input, width, height, output)
 }
 
 
+/* Candidate for C++ conversion. */
 function _rgb2ntsc_fscs (input, width, height, output)
 {
   var min = 255;
@@ -108,6 +110,7 @@ function _rgb2ntsc_fscs (input, width, height, output)
 }
 
 
+/* Candidate for C++ conversion. */
 function _ntsc2rgb (input, width, height, output)
 {
   for (let y=0; y < height; y++)
@@ -128,6 +131,7 @@ function _ntsc2rgb (input, width, height, output)
 }
 
 
+/* Candidate for C++ conversion. */
 function _ntsc2rgb_fscs (input, width, height, output)
 {
   full_scale_contrast_stretch (input);
@@ -150,6 +154,7 @@ function _ntsc2rgb_fscs (input, width, height, output)
 }
 
 
+/* Candidate for C++ conversion. */
 /*
   JPEG variant: https://en.wikipedia.org/wiki/YCbCr#JPEG_conversion
   Original spec: http://www.itu.int/rec/T-REC-T.871-201105-I/en
@@ -176,6 +181,7 @@ function _rgb2ycbcr (input, width, height, output)
 }
 
 
+/* Candidate for C++ conversion. */
 function _ycbcr2rgb (input, width, height, output)
 {
   for (let y=0; y < height; y++)
@@ -196,6 +202,7 @@ function _ycbcr2rgb (input, width, height, output)
 }
 
 
+/* Candidate for C++ conversion. */
 function _rgb2ycbcr_fscs (input, width, height, output)
 {
   var min = 255;
@@ -225,6 +232,7 @@ function _rgb2ycbcr_fscs (input, width, height, output)
 }
 
 
+/* Candidate for C++ conversion. */
 function _ycbcr2rgb_fscs (input, width, height, output)
 {
   full_scale_contrast_stretch (input);
