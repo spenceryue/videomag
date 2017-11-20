@@ -1,50 +1,108 @@
 *
 {
-	box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+@font-face
+{
+  font-family: Ubuntu;
+  font-style: normal;
+  font-weight: 400;
+  src: local('Ubuntu');
+     /*url('https://fonts.googleapis.com/css?family=Ubuntu');*/
+  unicode-range: U+000-5FF; /* Latin glyphs */
+}
+
+body
+{
+  font-family: Ubuntu, sans-serif;
 }
 
 .layer
 {
-	position: absolute;
+  position: absolute;
 }
 
 .hide
 {
-	display: none;
+  display: none;
 }
 
 .center
 {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	transform: translate(-50%, -50%);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .right
 {
-	position: absolute;
-	right: 0;
-	top: 50%;
-	transform: translateY(-50%);
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
-.debug-border
+.left
 {
-	border: 2px solid green;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
-.output
+.debug_border
+{
+  border: 2px solid green;
+}
+
+.loading
+{
+  display: none !important;
+}
+
+.source
 {
 }
 
-.reflect-x
+.sink
 {
-	transform: rotateY(180deg);
+}
+
+.reflect_x
+{
+  transform: rotateY(180deg);
 }
 
 input[type=checkbox]
 {
-	width: 50px;
-	height: 50px;
+  width: 50px;
+  height: 50px;
+}
+
+input[type=range]
+{
+  width: 150px;
+  height: 50px;
+}
+
+input[type=radio]
+{
+  width: 50px;
+  height: 50px;
+}
+
+.option
+{
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.stat
+{
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }

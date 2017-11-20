@@ -1,33 +1,73 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Video Magnification</title>
-	<link rel='stylesheet' href='styles.css'></link>
-	<script src='setup.js'></script>
-	<script src='filter.js'></script>
+  <title>Video Magnification</title>
+  <link rel='stylesheet' href='styles.css'></link>
+  <link href="https://fonts.googleapis.com/css?family=Ubuntu" rel="stylesheet">
 </head>
 <body>
-	<div class='layer center'>
-	<video class='input hide' muted loop autoplay playsinline></video>
-	<img class='input hide' src='foo.png'>
+  <div class='layer center'>
+    <video class='source hide loading' muted loop autoplay playsinline></video>
+    <img class='source hide loading' src='foo.png'>
 
-	<canvas class='output'></canvas>
-	<canvas class='output'></canvas>
-	</div>
+    <canvas class='sink loading'></canvas>
+  </div>
 
-	<div class='layer right' style='margin-right: 50px'>
-	<div>
-		<input type="checkbox" name='reflect-x'>
-		<label>reflect-x</label>
-	</div>
-	<div>
-		<input type="checkbox" name='hide'>
-		<label>hide</label>
-	</div>
-	<div>
-		<input type="checkbox" name='filter_on'>
-		<label>filter on</label>
-	</div>
-	</div>
+  <div class='layer right' style='margin-right: 50px'>
+    <div class='option'>
+      <label>reflect horizontally</label>
+      <input type="checkbox" name='reflect_x'>
+    </div>
+    <div class='option'>
+      <label>hide original</label>
+      <input type="checkbox" name='hide_original'>
+    </div>
+    <div class='option'>
+      <label>filter on</label>
+      <input type="checkbox" name='filter_on'>
+    </div>
+    <div class='option'>
+      <label>scale contrast</label>
+      <input type="checkbox" name='use_fscs'>
+    </div>
+    <div class='option'>
+      <label>blur size</label>
+      <input type="range" name='blur_size'>
+    </div>
+    <div class='option'>
+      <label>filter size</label>
+      <input type="range" name='filter_size'>
+    </div>
+    <div class='option'>
+      <div>blur color space</div>
+      <input type="radio" name='buf0_color' value='rgb'>
+      <label>RGB</label>
+      <input type="radio" name='buf0_color' value='ntsc'>
+      <label>NTSC</label>
+      <input type="radio" name='buf0_color' value='ycbcr'>
+      <label>YCbCr</label>
+    </div>
+    <div class='option'>
+      <div>magnification color space</div>
+      <input type="radio" name='buf1_color' value='rgb'>
+      <label>RGB</label>
+      <input type="radio" name='buf1_color' value='ntsc'>
+      <label>NTSC</label>
+      <input type="radio" name='buf1_color' value='ycbcr'>
+      <label>YCbCr</label>
+    </div>
+  </div>
+
+  <div class='left'>
+    <div class='stat'>
+      <label>FPS:&nbsp;</label><span class='fps'></span>
+    </div>
+  </div>
+
+  <script src='js/utils.js'></script>
+  <script src='js/videomag.js'></script>
+  <script src='js/blur_filter.js'></script>
+  <script src='js/color_space.js'></script>
+  <script src='js/setup.js'></script>
 </body>
 </html>
