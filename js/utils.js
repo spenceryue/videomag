@@ -70,17 +70,14 @@ function both_reflect (i, min, max)
 }
 
 
-function array_copy (input, output)
+function array_copy (input, output, rows, cols)
 {
-  console.assert (input.width <= output.width, input.width, output.width, 'array_copy: input.width > output.width');
-  console.assert (input.height <= output.height, input.height, output.height, 'array_copy: input.height > output.height');
-
-  for (let y=0; y < input.height; y++)
+  for (let y=0; y < rows; y++)
   {
     let row_ofs = 4 * y * input.width;
     let output_row_ofs = 4 * y * output.width;
 
-    for (let x=0; x < input.width; x++)
+    for (let x=0; x < cols; x++)
     {
       let input_idx = row_ofs + 4 * x;
       let output_idx = output_row_ofs + 4 * x;
@@ -95,15 +92,12 @@ function array_copy (input, output)
 
 function array_copy_a (input, output)
 {
-  console.assert (input.width <= output.width, input.width, output.width, 'array_copy: input.width > output.width');
-  console.assert (input.height <= output.height, input.height, output.height, 'array_copy: input.height > output.height');
-
-  for (let y=0; y < input.height; y++)
+  for (let y=0; y < rows; y++)
   {
     let row_ofs = 4 * y * input.width;
     let output_row_ofs = 4 * y * output.width;
 
-    for (let x=0; x < input.width; x++)
+    for (let x=0; x < cols; x++)
     {
       let input_idx = row_ofs + 4 * x;
       let output_idx = output_row_ofs + 4 * x;

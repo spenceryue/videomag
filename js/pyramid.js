@@ -1,21 +1,24 @@
 'use strict';
 
 
+var pyramid_depths = new Map();
+
+
 function build_pyramid (input, width, height, level)
 {
   var save = input;
 
-  var depth = max_pyramid_depth();
+  var depth = max_pyramid_depth (width, height, blur_size);
   for (let i=1; i < depth; i++)
   {
     corr2_down (input, buf[2], pyramid[i]);
     input = pyramid[i];
   }
 
-  array_copy (pyramid[1], save);
+  array_copy (pyramid[1], save, pyramid[1].height, pyramid[1].width);
 
   // corr2_down (input, buf[2], input);
-  // array_copy (pyramid[1], save);
+  // array_copy (pyramid[1], save, pyramid[1].height, pyramid[1].width);
 }
 
 
@@ -37,8 +40,10 @@ function next_pyramid_position (prev_width, prev_height, prev_x, prev_y, level, 
 
 function max_pyramid_depth (_filter_width, _filter_height, _blur_size)
 {
-  if (MAX_PYRAMID_DEPTH)
-    return MAX_PYRAMID_DEPTH;
+  var key = Math.trunc(_filter_width*_filter_height*128+_blur_size);
+
+  if (pyramid_depths[key])
+    return pyramid_depths[key];
 
   var min_dim = Math.min(_filter_width, _filter_height);
   var depth = 0;
@@ -47,8 +52,8 @@ function max_pyramid_depth (_filter_width, _filter_height, _blur_size)
     depth++;
     min_dim = Math.floor (min_dim/2);
   }
-
-  return MAX_PYRAMID_DEPTH = depth;
+  console.log('depth',depth);
+  return pyramid_depths[key] = depth;
 }
 
 
@@ -107,7 +112,7 @@ function display_new_pyramid ()
   var prev_x = FILTER_BOUNDS.x;
   var prev_y = FILTER_BOUNDS.y;
   var x, y;
-  var depth = max_pyramid_depth(prev_width, prev_height, blur_size);
+  var depth = max_pyramid_depth (prev_width, prev_height, blur_size);
 
   for (let level=1; level < depth; level++)
   {

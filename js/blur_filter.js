@@ -61,6 +61,9 @@ function corr2_down (input, intermediate, output)
     output, output.width,
     stride
   );
+
+  // array_copy (intermediate, output, output.height, output.width);
+
   // row_corr_up (output, width, height, intermediate, stride);
   // for (let i=0; i<output.length; i++)
     // output[i] = intermediate[i];
@@ -154,7 +157,6 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
   {
     let row_ofs = 4 * y * in_width;
     let output_row_ofs = 4 * Math.floor (y / stride) * out_width;
-    let output_row_ofs = 4 * y * out_width;
 
     for (let x=0; x < in_width; x++)
     {
@@ -178,7 +180,7 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
         }
       }
       // right edge
-      else if (y >= in_width - post)
+      else if (y >= in_height - post)
       {
         for (let w=-pre; w <= post; w++)
         {
@@ -210,7 +212,7 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
 
 
 /* Candidate for C++ conversion. */
-function col_corr_down (input, in_width, in_height, output, out_width, stride)
+/*function col_corr_down (input, in_width, in_height, output, out_width, stride)
 {
   var pre = Math.ceil((kernel.length-1)/2);
   var post = Math.floor((kernel.length-1)/2);
@@ -255,7 +257,7 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
       }
     }
   }
-}
+}*/
 
 
 /* Candidate for C++ conversion. */

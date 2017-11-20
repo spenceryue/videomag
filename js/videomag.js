@@ -12,7 +12,6 @@ var buf = Array (3);
 var IntermediateTypedArray = Float32Array;
 var blur_size_changed;
 var filter_size_changed;
-var MAX_PYRAMID_DEPTH;
 
 
 function filter (input, width, height)
@@ -114,7 +113,6 @@ function update_filter_size (new_filter_size)
 {
   filter_size = new_filter_size;
   filter_size_changed = true;
-  MAX_PYRAMID_DEPTH = null;
 }
 
 
@@ -131,7 +129,6 @@ function update_blur_size (new_blur_size)
 {
   blur_size = new_blur_size;
   blur_size_changed = true;
-  MAX_PYRAMID_DEPTH = null;
 }
 
 
