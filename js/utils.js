@@ -61,6 +61,15 @@ function right_reflect (i, max)
 }
 
 
+/* Possible C++ dependency. */
+function both_reflect (i, min, max)
+{
+  // (last valid) - (reflected distance)
+  // (max - 1) - (i - max)
+  return left_reflect (right_reflect (i, max), min);
+}
+
+
 function array_copy (input, output)
 {
   console.assert (input.width <= output.width, input.width, output.width, 'array_copy: input.width > output.width');

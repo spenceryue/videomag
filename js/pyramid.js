@@ -12,8 +12,10 @@ function build_pyramid (input, width, height, level)
     input = pyramid[i];
   }
 
-
   array_copy (pyramid[1], save);
+
+  // corr2_down (input, buf[2], input);
+  // array_copy (pyramid[1], save);
 }
 
 
@@ -59,7 +61,7 @@ function get_canvas (width, height, x, y)
   canvas.width = width;
   canvas.height = height;
   canvas.classList.toggle('pyramid');
-  canvas.classList.toggle('debug_border');
+  // canvas.classList.toggle('debug_border');
 
   return canvas;
 }

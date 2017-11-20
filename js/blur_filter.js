@@ -47,8 +47,8 @@ function corr2_down (input, intermediate, output)
   let result_height = Math.floor((input.height-1)/stride);
   console.assert (result_width <= intermediate.width, 'Intermediate width not large enough for row_corr_down()!');
   console.assert (input.height <= intermediate.height, 'Intermediate array height less than input height!');
-  console.assert (result_width <= output.width, 'Output width less than width of row_corr_down() output!');
-  console.assert (result_height <= output.height, 'Output height not large enough for row_corr_down()!');
+  console.assert (result_width <= output.width, result_width, output.width, 'Output width less than width of row_corr_down() output!');
+  console.assert (result_height <= output.height, result_height, output.height, 'Output height not large enough for row_corr_down()!');
 
   row_corr_down (
     input, input.width, input.height,
@@ -88,7 +88,6 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
   for (let y=0; y < in_height; y++)
   {
     let row_ofs = 4 * y * in_width;
-    let next_row_ofs = row_ofs + 4 * in_width;
     let output_row_ofs = 4 * y * out_width;
 
     for (let x=0; x < in_width; x+=stride)
@@ -103,10 +102,9 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
       // left edge
       if (x < pre)
       {
-        for (let w=-pre; w <= 0; w++)
+        for (let w=-pre; w <= post; w++)
         {
-          let block_ofs = 4 * w;
-          let input_idx = left_reflect (input_base_idx + block_ofs, row_ofs);
+          let input_idx = row_ofs + 4 * left_reflect (x + w, 0);
           let kernel_idx = w + pre;
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
@@ -117,10 +115,9 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
       // right edge
       else if (x >= in_width - post)
       {
-        for (let w=1; w < post; w++)
+        for (let w=-pre; w <= post; w++)
         {
-          let block_ofs = 4 * w;
-          let input_idx = right_reflect (input_base_idx + block_ofs, next_row_ofs);
+          let input_idx = row_ofs + 4 * right_reflect (x + w, in_width);
           let kernel_idx = w + pre;
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
@@ -131,10 +128,74 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
       // center
       else
       {
-        output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
-        for (let w=-pre; w < post; w++)
+        for (let w=-pre; w <= post; w++)
         {
           let block_ofs = 4 * w;
+          let input_idx = input_base_idx + block_ofs;
+          let kernel_idx = w + pre;
+
+          output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+          output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+          output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+        }
+      }
+    }
+  }
+}
+
+
+/* Candidate for C++ conversion. */
+function col_corr_down (input, in_width, in_height, output, out_width, stride)
+{
+  var pre = Math.ceil((kernel.length-1)/2);
+  var post = Math.floor((kernel.length-1)/2);
+
+  for (let y=0; y < in_height; y+=stride)
+  {
+    let row_ofs = 4 * y * in_width;
+    let output_row_ofs = 4 * Math.floor (y / stride) * out_width;
+    let output_row_ofs = 4 * y * out_width;
+
+    for (let x=0; x < in_width; x++)
+    {
+      let col_idx = 4 * x;
+      let output_idx = output_row_ofs + col_idx;
+      let input_base_idx = row_ofs + col_idx;
+
+      output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
+
+      // left edge
+      if (y < pre)
+      {
+        for (let w=-pre; w <= post; w++)
+        {
+          let input_idx = 4 * left_reflect (y + w, 0) * in_width + col_idx;
+          let kernel_idx = w + pre;
+
+          output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+          output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+          output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+        }
+      }
+      // right edge
+      else if (y >= in_width - post)
+      {
+        for (let w=-pre; w <= post; w++)
+        {
+          let input_idx = 4 * right_reflect (y + w, in_height) * in_width + col_idx;
+          let kernel_idx = w + pre;
+
+          output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+          output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+          output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+        }
+      }
+      // center
+      else
+      {
+        for (let w=-pre; w <= post; w++)
+        {
+          let block_ofs = 4 * w * in_width;
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 

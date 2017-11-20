@@ -20,11 +20,11 @@ var defaults =
   'reflect_x': false,
   'hide_original': false,
   'filter_on': true,
-  'use_fscs': false,
+  'use_fscs': true,
   'show_pyramid': true,
   'blur_size': {min:1, max:50, step:1, value:50},
   'filter_size': {min:1, max:100, step:'any', value:50},
-  'buf0_color': 'ntsc',
+  'buf0_color': 'rgb',
   'buf1_color': 'ntsc',
 };
 
