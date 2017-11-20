@@ -21,7 +21,7 @@ var defaults =
   'filter_on': true,
   'use_fscs': true,
   'blur_size': {min:1, max:50, step:1, value:50},
-  'filter_size': {min:1, max:100, step:'any', value:100},
+  'filter_size': {min:1, max:100, step:'any', value:50},
   'buf0_color': 'rgb',
   'buf1_color': 'rgb',
 };
@@ -52,7 +52,6 @@ function camera_init (mediaStream)
   {
     FRAME_WIDTH = SINK.canvas.width = SOURCE.videoWidth;
     FRAME_HEIGHT = SINK.canvas.height = SOURCE.videoHeight;
-    FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
     buffer_init ();
     loaded ();
     console.log('camera source loaded.')
@@ -69,7 +68,6 @@ function image_init()
   {
     FRAME_WIDTH = SINK.canvas.width = SOURCE.width;
     FRAME_HEIGHT = SINK.canvas.height = SOURCE.height;
-    FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
     buffer_init ();
     loaded ();
     console.log('image source loaded.')
@@ -200,6 +198,7 @@ function loaded ()
 {
   SOURCE.classList.toggle ('loading');
   SINK.canvas.classList.toggle ('loading');
+  FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
 }
 
 
@@ -231,13 +230,17 @@ function render (timestamp)
   SINK.drawImage (SOURCE, 0, 0);
   var frame = SINK.getImageData (0, 0, FRAME_WIDTH, FRAME_HEIGHT);
 
+  if (filter_size_changed)
+    set_filter_dims ();
+
+  if (render.last==0 || filter_size_changed || blur_size_changed)
+    display_pyramid();
+
   if (filter_on)
   {
     if (filter_size < 100)
     {
       SINK.putImageData (frame, 0, 0);
-      if (filter_size_changed)
-        set_filter_dims ();
 
       let width = FILTER_BOUNDS.width;
       let height = FILTER_BOUNDS.height;
@@ -257,28 +260,12 @@ function render (timestamp)
   else
     SINK.putImageData (frame, 0, 0);
 
-  // if (render.last==0)
-    // display_pyramid();
 
   update_frame_rate (timestamp - render.last);
   render.last = timestamp;
   requestAnimationFrame (render);
 }
 render.last = 0;
-
-
-function get_canvas (width, height, x, y)
-{
-  var canvas = document.createElement('canvas');
-  canvas.style.position = 'absolute';
-  canvas.style.left = parseInt(x) + 'px';
-  canvas.style.top  = parseInt(y) + 'px';
-  canvas.style.width = parseInt(width) + 'px';
-  canvas.style.height = parseInt(height) + 'px';
-  canvas.classList.toggle('debug_border');
-
-  return canvas;
-}
 
 
 init();

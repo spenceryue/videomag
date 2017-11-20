@@ -8,8 +8,8 @@
   font-family: Ubuntu;
   font-style: normal;
   font-weight: 400;
-  src: local('Ubuntu');
-     /*url('https://fonts.googleapis.com/css?family=Ubuntu');*/
+  src: local('Ubuntu'),
+       url('https://fonts.googleapis.com/css?family=Ubuntu');
   unicode-range: U+000-5FF; /* Latin glyphs */
 }
 
@@ -36,20 +36,23 @@ body
   transform: translate(-50%, -50%);
 }
 
+.middle
+{
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .right
 {
   position: absolute;
   right: 0;
-  top: 50%;
-  transform: translateY(-50%);
 }
 
 .left
 {
   position: absolute;
   left: 0;
-  top: 50%;
-  transform: translateY(-50%);
 }
 
 .debug_border

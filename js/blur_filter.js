@@ -42,17 +42,6 @@ function conv2_down (input, width, height, output, intermediate)
 
   row_conv_down (input, width, height, intermediate, stride);
   col_conv_down (intermediate, width, height, output, stride);
-  // rgb_to ('rgb', intermediate, width, height, output, false, true);
-
-  // col_conv_down (intermediate, width, height, output, stride);
-
-   // if (++counter % 10 == 1)
-  // {
-    // console.log (intermediate.slice(800,812));
-    // console.log (output.slice(800,812).map ((x,i) => x - intermediate[800+i]));
-    // console.log (input.slice(800,812));
-    // buf1.slice(800,812).forEach((val,i) => console.log(val,input[800+i], val-input[800+i]));
-  // }
 }
 
 
@@ -76,9 +65,9 @@ function row_conv_down (input, width, height, output, stride)
       // just copy the edges
       if (x < pre || x >= width - post || copy_only)
       {
-        output[output_idx + 0] = 128;//input[input_base_idx + 0];
-        output[output_idx + 1] = 128;//input[input_base_idx + 1];
-        output[output_idx + 2] = 128;//input[input_base_idx + 2];
+        output[output_idx + 0] = input[input_base_idx + 0];
+        output[output_idx + 1] = input[input_base_idx + 1];
+        output[output_idx + 2] = input[input_base_idx + 2];
       }
 
       // filter the center
@@ -121,9 +110,9 @@ function col_conv_down (input, width, height, output, stride)
       // just copy the edges
       if (y < pre || y >= height - post || copy_only)
       {
-        output[output_idx + 0] = 128;//input[input_base_idx + 0];
-        output[output_idx + 1] = 128;//input[input_base_idx + 1];
-        output[output_idx + 2] = 128;//input[input_base_idx + 2];
+        output[output_idx + 0] = input[input_base_idx + 0];
+        output[output_idx + 1] = input[input_base_idx + 1];
+        output[output_idx + 2] = input[input_base_idx + 2];
       }
 
       // filter the center
