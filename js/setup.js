@@ -126,11 +126,14 @@ function bind_option (name, updater)
   switch (document.getElementsByName(name)[0].type)
   {
     case 'checkbox':
+      document.getElementsByName(name)[0].onchange = updater
+      break;
     case 'range':
-      document.getElementsByName(name)[0].onchange = updater;
+      document.getElementsByName(name)[0].oninput = updater;
       break;
     case 'radio':
       document.getElementsByName(name).forEach(element => element.onchange = updater);
+      break;
   }
 }
 
@@ -260,6 +263,7 @@ function render (timestamp)
 
       frame = SINK.getImageData (x, y, width, height);
       let filtered = filter (frame.data, width, height);
+      console.log(filtered)
       SINK.putImageData (new ImageData(filtered, width, height), x, y);
     }
     else

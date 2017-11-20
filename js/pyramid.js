@@ -6,17 +6,8 @@ function build_pyramid (input, width, height, level)
   if (width < blur_size || height < blur_size)
     return;
 
-  // if (level >= pyramid.length - 1)
-  // {
-  //   pyramid[level] = new IntermediateTypedArray (4 * width * height);
-  //   var output = pyramid[level];
-  //   fill_alpha (output, 255);
-  // }
-  // else
-  //   var output = pyramid[level];
-
   var output = input;
-  conv2_down (input, width, height, output, buf[2]);
+  corr2_down (input, buf[2], output);
 }
 
 

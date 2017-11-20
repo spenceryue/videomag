@@ -23,9 +23,7 @@ function filter (input, width, height)
     let depth = max_pyramid_depth(w, h, blur_size);
     for (let i=0; i < depth; i++)
     {
-      pyramid[i] = new IntermediateTypedArray (buffer_init.PYRAMID[i].buffer, 0, 4 * w * h);
-      pyramid[i].width = w;
-      pyramid[i].height = h;
+      pyramid[i] = get_resized_array (buffer_init.PYRAMID[i].buffer, w, h); // TODO try using pyramid[i].buffer instead
 
       w = Math.floor (w/2);
       h = Math.floor (h/2);
@@ -36,9 +34,8 @@ function filter (input, width, height)
 
     if (filter_size_changed)
     {
-      let length = 4 * width * height;
       for (let i=0; i < buf.length; i++)
-        buf[i] = new IntermediateTypedArray (buffer_init.BUF[i].buffer, 0, length);
+        buf[i] = get_resized_array (buffer_init.BUF[i].buffer, width, height);
     }
   }
 
@@ -80,7 +77,11 @@ function buffer_init ()
   resizing buf[i] from updating the filter_size.
   */
   for (let i=0; i < buf.length; i++)
+  {
     buf[i] = buffer_init.BUF[i] = fill_alpha (new IntermediateTypedArray (4 * FRAME_WIDTH * FRAME_HEIGHT), 255);
+    buf[i].width = FRAME_WIDTH;
+    buf[i].height = FRAME_HEIGHT;
+  }
 
   /* Same comment as above. */
   var width = FRAME_WIDTH;
@@ -95,6 +96,16 @@ function buffer_init ()
     width = Math.floor (width/2);
     height = Math.floor (height/2);
   }
+}
+
+
+function get_resized_array (buffer, width, height)
+{
+  var array = new IntermediateTypedArray (buffer, 0, 4 * width * height);
+  array.width = width;
+  array.height = height;
+
+  return array;
 }
 
 
