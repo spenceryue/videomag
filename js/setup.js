@@ -20,12 +20,12 @@ var defaults =
   'reflect_x': false,
   'hide_original': false,
   'filter_on': true,
-  'use_fscs': true,
+  'use_fscs': false,
   'show_pyramid': true,
   'blur_size': {min:1, max:50, step:1, value:50},
   'filter_size': {min:1, max:100, step:'any', value:50},
-  'buf0_color': 'rgb',
-  'buf1_color': 'rgb',
+  'buf0_color': 'ntsc',
+  'buf1_color': 'ntsc',
 };
 
 
@@ -138,6 +138,19 @@ function bind_option (name, updater)
 }
 
 
+/* Disable full-scale contrast stretch option in RGB color space. */
+function check_fscs ()
+{
+  check_fscs.element = document.getElementsByName('use_fscs')[0];
+  check_fscs.element.disabled = buf0_color == 'rgb' && buf1_color == 'rgb';
+  if (check_fscs.element.disabled)
+  {
+    use_fscs = false;
+    check_fscs.element.checked = false;
+  }
+}
+
+
 function options_init ()
 {
   for (let key in defaults)
@@ -176,15 +189,17 @@ function options_init ()
 
   buf0_color = defaults['buf0_color'];
   bind_option ('buf0_color', event => {
-    if (event.srcElement.checked)
-      buf0_color = event.srcElement.value;
+    buf0_color = event.srcElement.value;
+    check_fscs ();
   });
 
   buf1_color = defaults['buf1_color'];
   bind_option ('buf1_color', event => {
-    if (event.srcElement.checked)
-      buf1_color = event.srcElement.value;
+    buf1_color = event.srcElement.value
+    check_fscs ();
   });
+
+  check_fscs ();
 
   console.log('options initialized.')
 }
@@ -263,7 +278,6 @@ function render (timestamp)
 
       frame = SINK.getImageData (x, y, width, height);
       let filtered = filter (frame.data, width, height);
-      console.log(filtered)
       SINK.putImageData (new ImageData(filtered, width, height), x, y);
     }
     else

@@ -43,10 +43,12 @@ function corr2_down (input, intermediate, output)
 {
   const stride = 2;
 
-  console.assert (Math.floor((input.width-1)/stride) <= intermediate.width, 'Intermediate width not large enough for row_corr_down()!');
-  console.assert (input.height == intermediate.height, 'Intermediate array height not equal to input height!');
-  console.assert (intermediate.width <= output.width, 'Output width less than intermediate width!');
-  console.assert (Math.floor((intermediate.height-1)/stride) <= output.height, 'Output height not large enough for row_corr_down()!');
+  let result_width = Math.floor((input.width-1)/stride);
+  let result_height = Math.floor((input.height-1)/stride);
+  console.assert (result_width <= intermediate.width, 'Intermediate width not large enough for row_corr_down()!');
+  console.assert (input.height <= intermediate.height, 'Intermediate array height less than input height!');
+  console.assert (result_width <= output.width, 'Output width less than width of row_corr_down() output!');
+  console.assert (result_height <= output.height, 'Output height not large enough for row_corr_down()!');
 
   row_corr_down (
     input, input.width, input.height,
@@ -82,11 +84,11 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
 {
   var pre = Math.ceil((kernel.length-1)/2);
   var post = Math.floor((kernel.length-1)/2);
-  var copy_only = pre == 0 && post == 0;
 
   for (let y=0; y < in_height; y++)
   {
     let row_ofs = 4 * y * in_width;
+    let next_row_ofs = row_ofs + 4 * in_width;
     let output_row_ofs = 4 * y * out_width;
 
     for (let x=0; x < in_width; x+=stride)
@@ -96,18 +98,37 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
       let output_idx = output_row_ofs + output_col_idx;
       let input_base_idx = row_ofs + col_idx;
 
-      // just copy the edges
-      if (x < pre || x >= in_width - post || copy_only)
-      {
-        output[output_idx + 0] = input[input_base_idx + 0];
-        output[output_idx + 1] = input[input_base_idx + 1];
-        output[output_idx + 2] = input[input_base_idx + 2];
-        // Clear alpha channel right now because the edges will not
-        // magnify correctly later, since they contain all frequencies.
-        // output[output_idx + 3] = 0;
-      }
+      output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
 
-      // filter the center
+      // left edge
+      if (x < pre)
+      {
+        for (let w=-pre; w <= 0; w++)
+        {
+          let block_ofs = 4 * w;
+          let input_idx = left_reflect (input_base_idx + block_ofs, row_ofs);
+          let kernel_idx = w + pre;
+
+          output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+          output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+          output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+        }
+      }
+      // right edge
+      else if (x >= in_width - post)
+      {
+        for (let w=1; w < post; w++)
+        {
+          let block_ofs = 4 * w;
+          let input_idx = right_reflect (input_base_idx + block_ofs, next_row_ofs);
+          let kernel_idx = w + pre;
+
+          output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+          output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+          output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+        }
+      }
+      // center
       else
       {
         output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
@@ -146,14 +167,14 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
       let input_base_idx = row_ofs + col_idx;
 
       // just copy the edges
-      if (y < pre || y >= in_height - post || copy_only)
+      if (1 || y < pre || y >= in_height - post || copy_only)
       {
         output[output_idx + 0] = input[input_base_idx + 0];
         output[output_idx + 1] = input[input_base_idx + 1];
         output[output_idx + 2] = input[input_base_idx + 2];
         // Clear alpha channel right now because the edges will not
         // magnify correctly later, since they contain all frequencies.
-        output[output_idx + 3] = 0;
+        // output[output_idx + 3] = 0;
       }
 
       // filter the center

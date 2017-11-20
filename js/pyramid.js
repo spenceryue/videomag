@@ -3,11 +3,17 @@
 
 function build_pyramid (input, width, height, level)
 {
-  if (width < blur_size || height < blur_size)
-    return;
+  var save = input;
 
-  var output = input;
-  corr2_down (input, buf[2], output);
+  var depth = max_pyramid_depth();
+  for (let i=1; i < depth; i++)
+  {
+    corr2_down (input, buf[2], pyramid[i]);
+    input = pyramid[i];
+  }
+
+
+  array_copy (pyramid[1], save);
 }
 
 
@@ -29,6 +35,9 @@ function next_pyramid_position (prev_width, prev_height, prev_x, prev_y, level, 
 
 function max_pyramid_depth (_filter_width, _filter_height, _blur_size)
 {
+  if (MAX_PYRAMID_DEPTH)
+    return MAX_PYRAMID_DEPTH;
+
   var min_dim = Math.min(_filter_width, _filter_height);
   var depth = 0;
   while (min_dim > _blur_size)
@@ -37,7 +46,7 @@ function max_pyramid_depth (_filter_width, _filter_height, _blur_size)
     min_dim = Math.floor (min_dim/2);
   }
 
-  return depth;
+  return MAX_PYRAMID_DEPTH = depth;
 }
 
 
@@ -50,7 +59,7 @@ function get_canvas (width, height, x, y)
   canvas.width = width;
   canvas.height = height;
   canvas.classList.toggle('pyramid');
-  // canvas.classList.toggle('debug_border');
+  canvas.classList.toggle('debug_border');
 
   return canvas;
 }
@@ -81,10 +90,10 @@ function display_old_pyramid (c)
 {
   for (let i=0; i < c.length; i++)
   {
-    c[i].getContext('2d').fillStyle = 'hsla(' + (Math.random() * 360) + ', 100%, 50%, 1)';
-    c[i].getContext ('2d').fillRect (0, 0, pyramid[i].width, pyramid[i].height);
-    // let data = new ImageData (new Uint8ClampedArray (pyramid[i]));
-    // c[i].getContext ('2d').putImageData (data, 0, 0);
+    // c[i].getContext('2d').fillStyle = 'hsla(' + (Math.random() * 360) + ', 100%, 50%, 1)';
+    // c[i].getContext ('2d').fillRect (0, 0, pyramid[i].width, pyramid[i].height);
+    let data = new ImageData (new Uint8ClampedArray (pyramid[i+1]), pyramid[i+1].width, pyramid[i+1].height);
+    c[i].getContext ('2d').putImageData (data, 0, 0);
   }
 }
 
