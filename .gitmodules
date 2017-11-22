@@ -1,0 +1,3 @@
+[submodule "emscripten_tutorial"]
+	path = emscripten_tutorial
+	url = https://github.com/spenceryue/emscripten_tutorial
