@@ -93,9 +93,7 @@ void col_corr_down (float* input, int in_width, int in_height, float* output, in
   for (int y=0; y < in_height; y+=stride)
   {
     int row_ofs = 4 * y * in_width;
-    int output_row_ofs = 4 * out_width;
-    int floor = y / stride;
-    output_row_ofs *= floor;
+    int output_row_ofs = 4 * (y / stride) * out_width;
 
     for (int x=0; x < in_width; x++)
     {

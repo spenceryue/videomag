@@ -56,13 +56,13 @@ function corr2_down (input, intermediate, output)
     stride
   );
 
-  // col_corr_down (
-  //   intermediate, intermediate.width, intermediate.height,
-  //   output, output.width,
-  //   stride
-  // );
+  col_corr_down (
+    intermediate, intermediate.width, intermediate.height,
+    output, output.width,
+    stride
+  );
 
-  array_copy (intermediate, output, output.height, output.width);
+  // array_copy (intermediate, output, output.height, output.width);
 
   // row_corr_up (output, width, height, intermediate, stride);
   // for (let i=0; i<output.length; i++)
@@ -179,7 +179,7 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
 {
   if (use_wasm)
   {
-    _row_corr_down (input.ptr, in_width, in_height, output.ptr, out_width, stride, kernel.ptr, kernel.length);
+    _col_corr_down (input.ptr, in_width, in_height, output.ptr, out_width, stride, kernel.ptr, kernel.length);
     return;
   }
 

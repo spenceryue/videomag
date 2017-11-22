@@ -4,3 +4,5 @@
 c/*.js
 c/*.wasm
 c/*.o
+**/a.out
+c/utils
