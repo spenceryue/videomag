@@ -210,6 +210,7 @@ function init ()
   SOURCE = document.querySelector('.source');
   SINK = document.querySelector('.sink').getContext('2d');
 
+  heap_init ();
   options_init ();
   fps_init ();
 
@@ -227,9 +228,18 @@ function init ()
 
 function loaded ()
 {
-  SOURCE.classList.toggle ('loading');
-  SINK.canvas.classList.toggle ('loading');
+  document.querySelectorAll ('.loading').forEach (e=> e.classList.replace ('loading', 'fade_in'));
+  spinner_init ();
+
   FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
+}
+
+
+function spinner_init()
+{
+  var spinnerElement = document.querySelector ('.spinner');
+  spinnerElement.classList.toggle ('fade_out');
+  setTimeout (() => spinnerElement.remove(), 330);
 }
 
 
@@ -301,6 +311,3 @@ function render (timestamp)
   requestAnimationFrame (render);
 }
 render.last = 0;
-
-
-init();

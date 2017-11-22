@@ -26,7 +26,7 @@ function get_binomial_kernel (window)
 
   for (let i=binomial_kernels.length; i < window; i++)
   {
-    binomial_kernels[i] = new KernelTypedArray(i+1);
+    binomial_kernels[i] = malloc (KernelTypedArray, i+1);
     binomial_kernels[i][0] = binomial_kernels[i][i] = binomial_kernels[i-1][0] / 2;
     for (let j=1; j < i; j++)
       binomial_kernels[i][j] = (binomial_kernels[i-1][j-1] + binomial_kernels[i-1][j]) / 2;
@@ -85,6 +85,13 @@ function corr2_down (input, intermediate, output)
 /* Candidate for C++ conversion. */
 function row_corr_down (input, in_width, in_height, output, out_width, stride)
 {
+  if (use_wasm)
+  {
+    _row_corr_down (input.ptr, in_width, in_height, output.ptr, out_width, stride, kernel.ptr, kernel.length);
+    return;
+  }
+
+
   var pre = Math.ceil((kernel.length-1)/2);
   var post = Math.floor((kernel.length-1)/2);
 
@@ -105,9 +112,19 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
       // left edge
       if (x < pre)
       {
-        for (let w=-pre; w <= post; w++)
+        for (let w=-pre; w <= 0; w++)
         {
           let input_idx = row_ofs + 4 * left_reflect (x + w, 0);
+          let kernel_idx = w + pre;
+
+          output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+          output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+          output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+        }
+        for (let w=1; w <= post; w++)
+        {
+          let block_ofs = 4 * w;
+          let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
@@ -118,7 +135,17 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
       // right edge
       else if (x >= in_width - post)
       {
-        for (let w=-pre; w <= post; w++)
+        for (let w=-pre; w <= 0; w++)
+        {
+          let block_ofs = 4 * w;
+          let input_idx = input_base_idx + block_ofs;
+          let kernel_idx = w + pre;
+
+          output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+          output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+          output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+        }
+        for (let w=1; w <= post; w++)
         {
           let input_idx = row_ofs + 4 * right_reflect (x + w, in_width);
           let kernel_idx = w + pre;
@@ -150,6 +177,12 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
 /* Candidate for C++ conversion. */
 function col_corr_down (input, in_width, in_height, output, out_width, stride)
 {
+  if (use_wasm)
+  {
+    _row_corr_down (input.ptr, in_width, in_height, output.ptr, out_width, stride, kernel.ptr, kernel.length);
+    return;
+  }
+
   var pre = Math.ceil((kernel.length-1)/2);
   var post = Math.floor((kernel.length-1)/2);
 
@@ -169,9 +202,19 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
       // left edge
       if (y < pre)
       {
-        for (let w=-pre; w <= post; w++)
+        for (let w=-pre; w <= 0; w++)
         {
           let input_idx = 4 * left_reflect (y + w, 0) * in_width + col_idx;
+          let kernel_idx = w + pre;
+
+          output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+          output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+          output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+        }
+        for (let w=1; w <= post; w++)
+        {
+          let block_ofs = 4 * w * in_width;
+          let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
@@ -182,7 +225,17 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
       // right edge
       else if (y >= in_height - post)
       {
-        for (let w=-pre; w <= post; w++)
+        for (let w=-pre; w <= 0; w++)
+        {
+          let block_ofs = 4 * w * in_width;
+          let input_idx = input_base_idx + block_ofs;
+          let kernel_idx = w + pre;
+
+          output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+          output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+          output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+        }
+        for (let w=1; w <= post; w++)
         {
           let input_idx = 4 * right_reflect (y + w, in_height) * in_width + col_idx;
           let kernel_idx = w + pre;

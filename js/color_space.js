@@ -14,15 +14,15 @@ function rgb_to (to, input, width, height, output, fscs, copy)
       break;
     case 'ntsc':
       if (fscs)
-        _rgb2ntsc_fscs(input, width, height, output);
+        rgb2ntsc_fscs (input, width, height, output);
       else
-        _rgb2ntsc(input, width, height, output);
+        rgb2ntsc (input, width, height, output);
       break;
     case 'ycbcr':
       if (fscs)
-        _rgb2ycbcr_fscs(input, width, height, output);
+        rgb2ycbcr_fscs (input, width, height, output);
       else
-        _rgb2ycbcr(input, width, height, output);
+        rgb2ycbcr (input, width, height, output);
       break;
   }
 
@@ -43,15 +43,15 @@ function to_rgb (from, input, width, height, output, fscs, copy)
       break;
     case 'ntsc':
       if (fscs)
-        _ntsc2rgb_fscs(input, width, height, output);
+        ntsc2rgb_fscs (input, width, height, output);
       else
-        _ntsc2rgb(input, width, height, output);
+        ntsc2rgb (input, width, height, output);
       break;
     case 'ycbcr':
       if (fscs)
-        _ycbcr2rgb_fscs(input, width, height, output);
+        ycbcr2rgb_fscs (input, width, height, output);
       else
-        _ycbcr2rgb(input, width, height, output);
+        ycbcr2rgb (input, width, height, output);
       break;
   }
 
@@ -59,9 +59,16 @@ function to_rgb (from, input, width, height, output, fscs, copy)
 }
 
 
-/* Candidate for C++ conversion. */
-function _rgb2ntsc (input, width, height, output)
+/* Candidate for C->WebAssembly conversion. */
+function rgb2ntsc (input, width, height, output)
 {
+  if (use_wasm)
+  {
+    _rgb2ntsc (input.ptr, width, height, output.ptr);
+    // TODO: replace with "direct" call
+    return;
+  }
+
   for (let y=0; y < height; y++)
   {
     let row_ofs = 4 * y * width;
@@ -80,9 +87,15 @@ function _rgb2ntsc (input, width, height, output)
 }
 
 
-/* Candidate for C++ conversion. */
-function _rgb2ntsc_fscs (input, width, height, output)
+/* Candidate for C->WebAssembly conversion. */
+function rgb2ntsc_fscs (input, width, height, output)
 {
+  if (use_wasm)
+  {
+    _rgb2ntsc_fscs (input.ptr, width, height, output.ptr);
+    return;
+  }
+
   var min = 255;
   var max = 0;
 
@@ -110,9 +123,15 @@ function _rgb2ntsc_fscs (input, width, height, output)
 }
 
 
-/* Candidate for C++ conversion. */
-function _ntsc2rgb (input, width, height, output)
+/* Candidate for C->WebAssembly conversion. */
+function ntsc2rgb (input, width, height, output)
 {
+  if (use_wasm)
+  {
+    _ntsc2rgb (input.ptr, width, height, output.ptr);
+    return;
+  }
+
   for (let y=0; y < height; y++)
   {
     let row_ofs = 4 * y * width;
@@ -131,9 +150,15 @@ function _ntsc2rgb (input, width, height, output)
 }
 
 
-/* Candidate for C++ conversion. */
-function _ntsc2rgb_fscs (input, width, height, output)
+/* Candidate for C->WebAssembly conversion. */
+function ntsc2rgb_fscs (input, width, height, output)
 {
+  if (use_wasm)
+  {
+    _ntsc2rgb_fscs (input.ptr, width, height, output.ptr);
+    return;
+  }
+
   full_scale_contrast_stretch (input);
 
   for (let y=0; y < height; y++)
@@ -154,15 +179,21 @@ function _ntsc2rgb_fscs (input, width, height, output)
 }
 
 
-/* Candidate for C++ conversion. */
+/* Candidate for C->WebAssembly conversion. */
 /*
   JPEG variant: https://en.wikipedia.org/wiki/YCbCr#JPEG_conversion
   Original spec: http://www.itu.int/rec/T-REC-T.871-201105-I/en
 
   FSCS packed in as well (not much effect).
 */
-function _rgb2ycbcr (input, width, height, output)
+function rgb2ycbcr (input, width, height, output)
 {
+  if (use_wasm)
+  {
+    _rgb2ycbcr (input.ptr, width, height, output.ptr);
+    return;
+  }
+
   for (let y=0; y < height; y++)
   {
     let row_ofs = 4 * y * width;
@@ -181,9 +212,15 @@ function _rgb2ycbcr (input, width, height, output)
 }
 
 
-/* Candidate for C++ conversion. */
-function _ycbcr2rgb (input, width, height, output)
+/* Candidate for C->WebAssembly conversion. */
+function ycbcr2rgb (input, width, height, output)
 {
+  if (use_wasm)
+  {
+    _ycbcr2rgb (input.ptr, width, height, output.ptr);
+    return;
+  }
+
   for (let y=0; y < height; y++)
   {
     let row_ofs = 4 * y * width;
@@ -202,9 +239,15 @@ function _ycbcr2rgb (input, width, height, output)
 }
 
 
-/* Candidate for C++ conversion. */
-function _rgb2ycbcr_fscs (input, width, height, output)
+/* Candidate for C->WebAssembly conversion. */
+function rgb2ycbcr_fscs (input, width, height, output)
 {
+  if (use_wasm)
+  {
+    _rgb2ycbcr_fscs (input.ptr, width, height, output.ptr);
+    return;
+  }
+
   var min = 255;
   var max = 0;
 
@@ -232,9 +275,15 @@ function _rgb2ycbcr_fscs (input, width, height, output)
 }
 
 
-/* Candidate for C++ conversion. */
-function _ycbcr2rgb_fscs (input, width, height, output)
+/* Candidate for C->WebAssembly conversion. */
+function ycbcr2rgb_fscs (input, width, height, output)
 {
+  if (use_wasm)
+  {
+    _ycbcr2rgb_fscs (input.ptr, width, height, output.ptr);
+    return;
+  }
+
   full_scale_contrast_stretch (input);
 
   for (let y=0; y < height; y++)

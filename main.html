@@ -6,16 +6,20 @@
   <link href="https://fonts.googleapis.com/css?family=Ubuntu" rel="stylesheet">
 </head>
 <body>
-  <div class='layer center'>
-    <video class='source hide loading' muted loop autoplay playsinline></video>
-    <img class='source hide loading' src='foo.png'>
+  <div class='center'>
+    <div class="spinner"></div>
+  </div>
 
-    <div class='wrapper'>
-      <canvas class='sink loading'></canvas>
+  <div class='layer center loading'>
+    <video class='source hide' muted loop autoplay playsinline></video>
+    <img class='source hide' src='foo.png'>
+
+    <div class='wrapper loading'>
+      <canvas class='sink'></canvas>
     </div>
   </div>
 
-  <div class='layer right' style='margin-right: 50px'>
+  <div class='layer right loading' style='margin-right: 50px'>
     <div class='option'>
       <label>reflect horizontally</label>
       <input type="checkbox" name='reflect_x'>
@@ -64,17 +68,20 @@
     </div>
   </div>
 
-  <div class='left middle'>
+  <div class='left middle loading'>
     <div class='stat'>
       <label>FPS:&nbsp;</label><span class='fps'></span>
     </div>
   </div>
 
   <script src='js/utils.js'></script>
+  <script src='js/memory.js'></script>
   <script src='js/videomag.js'></script>
   <script src='js/pyramid.js'></script>
   <script src='js/blur_filter.js'></script>
   <script src='js/color_space.js'></script>
   <script src='js/setup.js'></script>
+  <script src='js/wasm.js'></script>
+  <script src='c/a.out.js'></script>
 </body>
 </html>

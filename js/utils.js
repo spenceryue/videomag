@@ -1,7 +1,7 @@
 'use strict';
 
 
-/* Candidate for C++ conversion. */
+/* Candidate for C->WebAssembly conversion. */
 function fill_alpha (input, value)
 {
   for (let i=0; i < input.length; i+=4)
@@ -11,14 +11,14 @@ function fill_alpha (input, value)
 }
 
 
-/* Possible C++ dependency. */
+/* Possible C->WebAssembly dependency. */
 function next_multiple (x, m)
 {
   return x + (m - x % m) % m;
 }
 
 
-/* Candidate for C++ conversion. */
+/* Candidate for C->WebAssembly conversion. */
 function full_scale_contrast_stretch (input, min, max)
 {
   if (min == undefined || max == undefined)
@@ -43,7 +43,7 @@ function full_scale_contrast_stretch (input, min, max)
 }
 
 
-/* Possible C++ dependency. */
+/* Possible C->WebAssembly dependency. */
 function left_reflect (i, min)
 {
   // start + [ reflected distance ]
@@ -52,7 +52,7 @@ function left_reflect (i, min)
 }
 
 
-/* Possible C++ dependency. */
+/* Possible C->WebAssembly dependency. */
 function right_reflect (i, max)
 {
   // (last valid) - (reflected distance)
@@ -61,7 +61,7 @@ function right_reflect (i, max)
 }
 
 
-/* Possible C++ dependency. */
+/* Possible C->WebAssembly dependency. */
 function both_reflect (i, min, max)
 {
   // (last valid) - (reflected distance)
@@ -72,6 +72,17 @@ function both_reflect (i, min, max)
 
 function array_copy (input, output, rows, cols)
 {
+  if (!rows || !cols)
+  {
+    rows = input.height;
+    cols = input.width;
+  }
+
+  console.assert (typeof input.width != 'undefined')
+  console.assert (typeof input.height != 'undefined')
+  console.assert (typeof output.width != 'undefined')
+  console.assert (typeof output.height != 'undefined')
+
   for (let y=0; y < rows; y++)
   {
     let row_ofs = 4 * y * input.width;
@@ -85,13 +96,25 @@ function array_copy (input, output, rows, cols)
       output[output_idx + 0] = input[input_idx + 0];
       output[output_idx + 1] = input[input_idx + 1];
       output[output_idx + 2] = input[input_idx + 2];
+      // output[output_idx + 3] = input[input_idx + 3];
     }
   }
 }
 
 
-function array_copy_a (input, output)
+function array_copy_a (input, output, rows, cols)
 {
+  if (!rows || !cols)
+  {
+    rows = input.height;
+    cols = input.width;
+  }
+
+  console.assert (typeof input.width != 'undefined')
+  console.assert (typeof input.height != 'undefined')
+  console.assert (typeof output.width != 'undefined')
+  console.assert (typeof output.height != 'undefined')
+
   for (let y=0; y < rows; y++)
   {
     let row_ofs = 4 * y * input.width;

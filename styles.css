@@ -63,7 +63,7 @@ body
 
 .loading
 {
-  display: none !important;
+  opacity: 0;
 }
 
 .source
@@ -114,4 +114,39 @@ input[type=radio]
   display: flex;
   align-items: center;
   justify-content: flex-start;
+}
+
+.spinner
+{
+  height: 120px;
+  width: 120px;
+  animation: .67s spin linear infinite;
+
+  border: 3px solid skyblue;
+  border-top: 3px solid pink;
+  border-radius: 50%;
+}
+
+.fade_in
+{
+  opacity: 1;
+  transition: opacity .33s ease;
+}
+
+.fade_out
+{
+  opacity: 0;
+  transition: opacity .33s ease;
+}
+
+@keyframes spin
+{
+  from
+  {
+    transform: rotate(0deg);
+  }
+  to
+  {
+    transform: rotate(360deg);
+  }
 }

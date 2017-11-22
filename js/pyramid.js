@@ -42,8 +42,8 @@ function max_pyramid_depth (_filter_width, _filter_height, _blur_size)
 {
   var key = Math.trunc(_filter_width*_filter_height*128+_blur_size);
 
-  if (pyramid_depths[key])
-    return pyramid_depths[key];
+  if (pyramid_depths.has(key))
+    return pyramid_depths.get(key);
 
   var min_dim = Math.min(_filter_width, _filter_height);
   var depth = 0;
@@ -53,7 +53,8 @@ function max_pyramid_depth (_filter_width, _filter_height, _blur_size)
     min_dim = Math.floor (min_dim/2);
   }
   console.log('depth',depth);
-  return pyramid_depths[key] = depth;
+  pyramid_depths.set(key, depth);
+  return depth;
 }
 
 
