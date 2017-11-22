@@ -6,10 +6,10 @@ var KernelTypedArray = Float32Array;
 var binomial_kernels =
 [
   new KernelTypedArray([1]),
-  new KernelTypedArray([.5, .5]),
+  /*new KernelTypedArray([.5, .5]),
   new KernelTypedArray([.25, .5, .25]),
   new KernelTypedArray([.125, .375, .375, .125]),
-  new KernelTypedArray([.0625, .25, .375, .25, .0625]),
+  new KernelTypedArray([.0625, .25, .375, .25, .0625]),*/
 ];
 
 
@@ -56,13 +56,13 @@ function corr2_down (input, intermediate, output)
     stride
   );
 
-  col_corr_down (
-    intermediate, intermediate.width, intermediate.height,
-    output, output.width,
-    stride
-  );
+  // col_corr_down (
+  //   intermediate, intermediate.width, intermediate.height,
+  //   output, output.width,
+  //   stride
+  // );
 
-  // array_copy (intermediate, output, output.height, output.width);
+  array_copy (intermediate, output, output.height, output.width);
 
   // row_corr_up (output, width, height, intermediate, stride);
   // for (let i=0; i<output.length; i++)

@@ -9,6 +9,7 @@ var FILTER_BOUNDS = {};
 var filter_on;
 var use_fscs;
 var show_pyramid;
+var use_wasm;
 var blur_size;
 var filter_size;
 var buf0_color;
@@ -22,6 +23,7 @@ var defaults =
   'filter_on': true,
   'use_fscs': true,
   'show_pyramid': true,
+  'use_wasm': true,
   'blur_size': {min:1, max:50, step:1, value:50},
   'filter_size': {min:1, max:100, step:'any', value:50},
   'buf0_color': 'rgb',
@@ -178,6 +180,9 @@ function options_init ()
     if (!show_pyramid)
       remove_previous_pyramids ();
   });
+
+  use_wasm = defaults['use_wasm'];
+  bind_option ('use_wasm', event => use_wasm = event.srcElement.checked);
 
   blur_size = defaults['blur_size'].value;
   bind_option ('blur_size', event => update_blur_size(event.srcElement.value));

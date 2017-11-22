@@ -7,7 +7,7 @@
   -O3 \
   -s WASM=1 \
   -s NO_EXIT_RUNTIME=1 \
-  -s TOTAL_MEMORY=44236800 # 24576000 # = 640*480*4*4*(2 + 3)
+  -s TOTAL_MEMORY=44236800 # = 640*480*4*4*(9)
 */
 
 var Module =
@@ -19,5 +19,3 @@ var Module =
   print: (text) => console.log(text),
   printErr: (text) => console.warn(text)
 };
-
-var use_wasm = true;

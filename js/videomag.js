@@ -35,8 +35,8 @@ function filter (input, width, height)
   // }
 
   // return new Uint8ClampedArray (buf[1].map((x,i)=> (i%4!=3) ? (Math.round(x-input[i]) ? 255 : 0) : x));
-  // return new Uint8ClampedArray (buf[1].map((x,i)=> (i%4!=3) ? (Math.round(x-input[i]) ? x : 0) : x));
-  // return new Uint8ClampedArray (buf[1].map((x,i)=> (i%4!=3) ? x-input[i] : x));
+  // return new Uint8ClampedArray (buf[0].map((x,i)=> (i%4!=3) ? (Math.round(x-input[i]) ? x : 0) : x));
+  // return new Uint8ClampedArray (buf[0].map((x,i)=> (i%4!=3) ? x-input[i] : x));
   return new Uint8ClampedArray (buf[0]);
 }
 
