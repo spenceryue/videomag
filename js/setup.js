@@ -23,7 +23,7 @@ var defaults =
   'filter_on': true,
   'use_fscs': false,
   'show_pyramid': true,
-  'use_wasm': false,
+  'use_wasm': true,
   'blur_size': {min:1, max:50, step:1, value:50},
   'filter_size': {min:1, max:100, step:'any', value:50},
   'buf0_color': 'rgb',
