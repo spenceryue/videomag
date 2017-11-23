@@ -61,14 +61,15 @@ function corr2_down (input, intermediate, output)
     stride
   );
 
-  /*if (input.width == buf[0].width && input.height == buf[0].height)
+  if (input.width == buf[0].width && input.height == buf[0].height)
   {
+    console.log('here');
     row_corr_up (
       output, output.width, output.height,
       input, input.width,
       stride
     );
-  }*/
+  }
 }
 
 
@@ -253,6 +254,94 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
   }
 }
 
+
+/* Candidate for C++ conversion. */
+function row_corr_up (input, in_width, in_height, output, out_width, stride)
+{
+  var pre = Math.ceil((kernel.length-1)/2);
+  var post = Math.floor((kernel.length-1)/2);
+
+  for (let y=0; y < in_height; y++)
+  {
+    let row_ofs = 4*y*in_width;
+    let output_row_ofs = 4*y*out_width;
+
+    for (let x=0; x < in_width; x++)
+    {
+      let col_idx = 4*x;
+      let input_base_idx = row_ofs + col_idx;
+
+      for (let xx=x*stride; xx < (x+1)*stride; xx++)
+      {
+        let output_col_idx = 4*xx;
+        let output_idx = output_row_ofs + output_col_idx;
+
+        // just copy the edges for now
+        if (xx < pre || xx >= stride*in_width - post)
+        {
+          if (xx%stride == 0)
+          {
+            output[output_idx + 0] = input[input_base_idx + 0];
+            output[output_idx + 1] = input[input_base_idx + 1];
+            output[output_idx + 2] = input[input_base_idx + 2];
+          }
+          else
+          {
+            output[output_idx + 0] = 0;
+            output[output_idx + 1] = 0;
+            output[output_idx + 2] = 0;
+          }
+        }
+        // filter the center
+        else
+        {
+          output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
+
+          // Start off aligned with a nonzero element of upsampled input.
+          // Then loop by stride, since other elements are zero.
+          /*
+              Illustration:
+
+              input:
+                1 3 5
+              upsampled input (by factor of 2):
+                1 0 3 0 5 0
+              kernel:
+                a b c
+
+              Execution trace (for xx=0 to xx=5):
+                xx = 0:
+                  (edge) -> picks the if-branch in the code
+                xx = 1:
+                  output = a*1 + b*0 + c*3
+                xx = 2:
+                  output = a*0 + b*3 + c*0
+                ...
+
+              When xx = 1, we offset by 0 since the first input element is nonzero (upsampled_input[0+0]=1).
+              When xx = 2, we offset by +1 to start on a nonzero element (upsampled_input[1+1]=3).
+              We stride over kernel elements by the upsample factor, since the corresponding upsampled
+              input elements in between strides are zero.
+              We always use a non-negative offset so that the kernel array is not read out of bounds.
+              The offset is calculated by the positive result of remainder(xx + pre, stride).
+          */
+          let kernel_ofs = ((xx + pre) % stride + stride) % stride;
+          for (let w=-pre + kernel_ofs; w < post; w+=stride)
+          {
+            let block_ofs = 4*w;
+            let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
+            console.assert ((output_col_idx + block_ofs)%stride == 0);
+            let kernel_idx = w + pre;
+
+            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+          }
+        }
+      }
+    }
+  }
+}
 
 
 /* Not used. */
