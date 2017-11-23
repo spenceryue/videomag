@@ -75,6 +75,9 @@ function rgb2ntsc (input, width, height, output)
     for (let x=0; x < width; x++)
     {
       let index = row_ofs + 4 * x;
+      console.assert (index + 2 < input.length)
+      console.assert (index + 2 < output.length)
+
       let R = input[index + 0];
       let G = input[index + 1];
       let B = input[index + 2];
@@ -105,6 +108,9 @@ function rgb2ntsc_fscs (input, width, height, output)
     for (let x=0; x < width; x++)
     {
       let index = row_ofs + 4 * x;
+      console.assert (index + 2 < input.length)
+      console.assert (index + 2 < output.length)
+
       let R = input[index + 0];
       let G = input[index + 1];
       let B = input[index + 2];
@@ -138,6 +144,9 @@ function ntsc2rgb (input, width, height, output)
     for (let x=0; x < width; x++)
     {
       let index = row_ofs + 4 * x;
+      console.assert (index + 2 < input.length)
+      console.assert (index + 2 < output.length)
+
       let Y = input[index + 0];
       let I = input[index + 1];
       let Q = input[index + 2];
@@ -167,6 +176,9 @@ function ntsc2rgb_fscs (input, width, height, output)
     for (let x=0; x < width; x++)
     {
       let index = row_ofs + 4 * x;
+      console.assert (index + 2 < input.length)
+      console.assert (index + 2 < output.length)
+
       let Y = input[index + 0];
       let I = input[index + 1];
       let Q = input[index + 2];
@@ -200,6 +212,9 @@ function rgb2ycbcr (input, width, height, output)
     for (let x=0; x < width; x++)
     {
       let index = row_ofs + 4 * x;
+      console.assert (index + 2 < input.length)
+      console.assert (index + 2 < output.length)
+
       let R = input[index + 0];
       let G = input[index + 1];
       let B = input[index + 2];
@@ -227,6 +242,9 @@ function ycbcr2rgb (input, width, height, output)
     for (let x=0; x < width; x++)
     {
       let index = row_ofs + 4 * x;
+      console.assert (index + 2 < input.length)
+      console.assert (index + 2 < output.length)
+
       let Y = input[index + 0];
       let Cb = input[index + 1];
       let Cr = input[index + 2];
@@ -257,6 +275,9 @@ function rgb2ycbcr_fscs (input, width, height, output)
     for (let x=0; x < width; x++)
     {
       let index = row_ofs + 4 * x;
+      console.assert (index + 2 < input.length)
+      console.assert (index + 2 < output.length)
+
       let R = input[index + 0];
       let G = input[index + 1];
       let B = input[index + 2];
@@ -292,6 +313,9 @@ function ycbcr2rgb_fscs (input, width, height, output)
     for (let x=0; x < width; x++)
     {
       let index = row_ofs + 4 * x;
+      console.assert (index + 2 < input.length)
+      console.assert (index + 2 < output.length)
+
       let Y = input[index + 0];
       let Cb = input[index + 1];
       let Cr = input[index + 2];

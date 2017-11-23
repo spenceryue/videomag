@@ -17,7 +17,7 @@ function build_pyramid (input, width, height, level)
 
 
   var i = 1;
-  array_copy (pyramid[i], save, pyramid[i].height, pyramid[i].width);
+  // array_copy (pyramid[i], save, pyramid[i].height, pyramid[i].width);
 
   // corr2_down (input, buf[2], input);
   // array_copy (pyramid[1], save, pyramid[1].height, pyramid[1].width);

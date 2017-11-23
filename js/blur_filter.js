@@ -42,31 +42,46 @@ function corr2_down (input, intermediate, output)
 {
   const stride = 2;
 
-  let result_width = Math.floor((input.width-1)/stride);
-  let result_height = Math.floor((input.height-1)/stride);
+  let result_width = Math.floor((input.width-1)/stride) + 1;
+  let result_height = Math.floor((input.height-1)/stride) + 1;
+
   console.assert (result_width <= intermediate.width, 'Intermediate width not large enough for row_corr_down()!');
   console.assert (input.height <= intermediate.height, 'Intermediate array height less than input height!');
   console.assert (result_width <= output.width, result_width, output.width, 'Output width less than width of row_corr_down() output!');
   console.assert (result_height <= output.height, result_height, output.height, 'Output height not large enough for row_corr_down()!');
 
   row_corr_down (
-    input, input.width, input.height,
+    input, input.width,
     intermediate, intermediate.width,
+    input.width, input.height,
     stride
   );
 
   col_corr_down (
-    intermediate, intermediate.width, intermediate.height,
+    intermediate, intermediate.width,
     output, output.width,
+    result_width, input.height,
     stride
   );
 
   if (input.width == buf[0].width && input.height == buf[0].height)
   {
-    console.log('here');
-    row_corr_up (
+    /*col_corr_up (
       output, output.width, output.height,
       input, input.width,
+      stride
+    );*/
+    row_corr_up (
+      output, output.width,
+      intermediate, intermediate.width,
+      result_width, result_height,
+      stride
+    );
+
+    col_corr_up (
+      intermediate, intermediate.width,
+      input, input.width,
+      input.width, result_height,
       stride
     );
   }
@@ -74,29 +89,31 @@ function corr2_down (input, intermediate, output)
 
 
 /* Candidate for C++ conversion. */
-function row_corr_down (input, in_width, in_height, output, out_width, stride)
+function row_corr_down (input, in_width, output, out_width, operate_width, operate_height, stride)
 {
   if (use_wasm)
   {
-    _row_corr_down (input.ptr, in_width, in_height, output.ptr, out_width, stride, kernel.ptr, kernel.length);
+    _row_corr_down (input.ptr, in_width, output.ptr, out_width, operate_width, operate_height, stride, kernel.ptr, kernel.length);
     return;
   }
-
 
   var pre = Math.ceil((kernel.length-1)/2);
   var post = Math.floor((kernel.length-1)/2);
 
-  for (let y=0; y < in_height; y++)
+  for (let y=0; y < operate_height; y++)
   {
     let row_ofs = 4 * y * in_width;
     let output_row_ofs = 4 * y * out_width;
 
-    for (let x=0; x < in_width; x+=stride)
+    for (let x=0; x < operate_width; x+=stride)
     {
       let col_idx = 4 * x;
       let output_col_idx = Math.floor (col_idx / stride);
       let output_idx = output_row_ofs + output_col_idx;
       let input_base_idx = row_ofs + col_idx;
+
+      console.assert (output_idx + 2 < output.length);
+      console.assert (input_base_idx + 2 < input.length);
 
       output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
 
@@ -108,6 +125,8 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
           let input_idx = row_ofs + 4 * left_reflect (x + w, 0);
           let kernel_idx = w + pre;
 
+          console.assert (input_idx + 2 < input.length);
+
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
           output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
@@ -117,6 +136,8 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
           let block_ofs = 4 * w;
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
+
+          console.assert (input_idx + 2 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -124,7 +145,7 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
         }
       }
       // right edge
-      else if (x >= in_width - post)
+      else if (x >= operate_width - post)
       {
         for (let w=-pre; w <= 0; w++)
         {
@@ -132,14 +153,18 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 
+          console.assert (input_idx + 2 < input.length);
+
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
           output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
         }
         for (let w=1; w <= post; w++)
         {
-          let input_idx = row_ofs + 4 * right_reflect (x + w, in_width);
+          let input_idx = row_ofs + 4 * right_reflect (x + w, operate_width);
           let kernel_idx = w + pre;
+
+          console.assert (input_idx + 2 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -155,6 +180,8 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 
+          console.assert (input_idx + 2 < input.length);
+
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
           output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
@@ -166,27 +193,33 @@ function row_corr_down (input, in_width, in_height, output, out_width, stride)
 
 
 /* Candidate for C++ conversion. */
-function col_corr_down (input, in_width, in_height, output, out_width, stride)
+function col_corr_down (input, in_width, output, out_width, operate_width, operate_height, stride)
 {
   if (use_wasm)
   {
-    _col_corr_down (input.ptr, in_width, in_height, output.ptr, out_width, stride, kernel.ptr, kernel.length);
+    _col_corr_down (input.ptr, in_width, output.ptr, out_width, operate_width, operate_height, stride, kernel.ptr, kernel.length);
     return;
   }
+
+  // TODO paste this in, and paste in row_corr_down
+
 
   var pre = Math.ceil((kernel.length-1)/2);
   var post = Math.floor((kernel.length-1)/2);
 
-  for (let y=0; y < in_height; y+=stride)
+  for (let y=0; y < operate_height; y+=stride)
   {
     let row_ofs = 4 * y * in_width;
     let output_row_ofs = 4 * Math.floor (y / stride) * out_width;
 
-    for (let x=0; x < in_width; x++)
+    for (let x=0; x < operate_width; x++)
     {
       let col_idx = 4 * x;
       let output_idx = output_row_ofs + col_idx;
       let input_base_idx = row_ofs + col_idx;
+
+      console.assert (output_idx + 2 < output.length)
+      console.assert (input_base_idx + 2 < input.length);
 
       output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
 
@@ -198,6 +231,8 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
           let input_idx = 4 * left_reflect (y + w, 0) * in_width + col_idx;
           let kernel_idx = w + pre;
 
+          console.assert (input_idx + 2 < input.length);
+
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
           output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
@@ -207,6 +242,8 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
           let block_ofs = 4 * w * in_width;
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
+
+          console.assert (input_idx + 2 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -214,7 +251,7 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
         }
       }
       // right edge
-      else if (y >= in_height - post)
+      else if (y >= operate_height - post)
       {
         for (let w=-pre; w <= 0; w++)
         {
@@ -222,14 +259,18 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 
+          console.assert (input_idx + 2 < input.length);
+
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
           output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
         }
         for (let w=1; w <= post; w++)
         {
-          let input_idx = 4 * right_reflect (y + w, in_height) * in_width + col_idx;
+          let input_idx = 4 * right_reflect (y + w, operate_height) * in_width + col_idx;
           let kernel_idx = w + pre;
+
+          console.assert (input_idx + 2 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -245,6 +286,8 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 
+          console.assert (input_idx + 2 < input.length);
+
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
           output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
@@ -256,82 +299,132 @@ function col_corr_down (input, in_width, in_height, output, out_width, stride)
 
 
 /* Candidate for C++ conversion. */
-function row_corr_up (input, in_width, in_height, output, out_width, stride)
+function row_corr_up (input, in_width, output, out_width, operate_width, operate_height, stride)
 {
+  if (use_wasm)
+  {
+    _row_corr_up (input.ptr, in_width, output.ptr, out_width, operate_width, operate_height, stride, kernel.ptr, kernel.length);
+    return;
+  }
+
   var pre = Math.ceil((kernel.length-1)/2);
   var post = Math.floor((kernel.length-1)/2);
 
-  for (let y=0; y < in_height; y++)
+  for (let y=0; y < operate_height; y++)
   {
     let row_ofs = 4*y*in_width;
     let output_row_ofs = 4*y*out_width;
 
-    for (let x=0; x < in_width; x++)
+    for (let x=0; x < operate_width; x++)
     {
-      let col_idx = 4*x;
-      let input_base_idx = row_ofs + col_idx;
-
       for (let xx=x*stride; xx < (x+1)*stride; xx++)
       {
         let output_col_idx = 4*xx;
         let output_idx = output_row_ofs + output_col_idx;
 
-        // just copy the edges for now
-        if (xx < pre || xx >= stride*in_width - post)
+        console.assert (output_idx + 2 < output.length);
+
+        output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
+        // Start off aligned with a nonzero element of upsampled input.
+        // Then loop by stride, since other elements are zero.
+        /*
+            Illustration:
+
+            input:
+              1 3 5
+            upsampled input (by factor of 2):
+              1 0 3 0 5 0
+            kernel:
+              a b c
+
+            Execution trace (for xx=0 to xx=5):
+              xx = 0:
+                (edge) -> picks the if-branch in the code
+              xx = 1:
+                output = a*1 + b*0 + c*3
+              xx = 2:
+                output = a*0 + b*3 + c*0
+              ...
+
+            When xx = 1, we offset by 0 since the first input element is nonzero (upsampled_input[0+0]=1).
+            When xx = 2, we offset by +1 to start on a nonzero element (upsampled_input[1+1]=3).
+            We stride over kernel elements by the upsample factor, since the corresponding upsampled
+            input elements in between strides are zero.
+            We always use a non-negative offset so that the kernel array is not read out of bounds.
+            The offset is calculated by the positive result of remainder(xx + pre, stride).
+        */
+        let kernel_ofs = ((xx + pre) % stride + stride) % stride;
+        let w = -pre + kernel_ofs;
+
+        // left edge
+        if (xx < pre)
         {
-          if (xx%stride == 0)
+          for (; w <= 0; w+=stride)
           {
-            output[output_idx + 0] = input[input_base_idx + 0];
-            output[output_idx + 1] = input[input_base_idx + 1];
-            output[output_idx + 2] = input[input_base_idx + 2];
+            let input_idx = row_ofs + 4 * left_reflect((xx + w)/stride, 0);
+            console.assert ((xx + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
           }
-          else
-          {
-            output[output_idx + 0] = 0;
-            output[output_idx + 1] = 0;
-            output[output_idx + 2] = 0;
-          }
-        }
-        // filter the center
-        else
-        {
-          output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
-
-          // Start off aligned with a nonzero element of upsampled input.
-          // Then loop by stride, since other elements are zero.
-          /*
-              Illustration:
-
-              input:
-                1 3 5
-              upsampled input (by factor of 2):
-                1 0 3 0 5 0
-              kernel:
-                a b c
-
-              Execution trace (for xx=0 to xx=5):
-                xx = 0:
-                  (edge) -> picks the if-branch in the code
-                xx = 1:
-                  output = a*1 + b*0 + c*3
-                xx = 2:
-                  output = a*0 + b*3 + c*0
-                ...
-
-              When xx = 1, we offset by 0 since the first input element is nonzero (upsampled_input[0+0]=1).
-              When xx = 2, we offset by +1 to start on a nonzero element (upsampled_input[1+1]=3).
-              We stride over kernel elements by the upsample factor, since the corresponding upsampled
-              input elements in between strides are zero.
-              We always use a non-negative offset so that the kernel array is not read out of bounds.
-              The offset is calculated by the positive result of remainder(xx + pre, stride).
-          */
-          let kernel_ofs = ((xx + pre) % stride + stride) % stride;
-          for (let w=-pre + kernel_ofs; w < post; w+=stride)
+          for (; w < post; w+=stride)
           {
             let block_ofs = 4*w;
             let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
-            console.assert ((output_col_idx + block_ofs)%stride == 0);
+            console.assert ((xx + w)%stride == 0);
             let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+          }
+        }
+        // right edge
+        else if (xx >= operate_width - post)
+        {
+          for (; w <= 0; w+=stride)
+          {
+            let block_ofs = 4*w;
+            let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
+            console.assert ((xx + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+          }
+          for (; w < post; w+=stride)
+          {
+            let input_idx = row_ofs + 4 * right_reflect((xx + w)/stride, operate_width); // guaranteed to be divisible
+            console.assert ((xx + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+          }
+        }
+        // center
+        else
+        {
+          for (; w < post; w+=stride)
+          {
+            let block_ofs = 4*w;
+            let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
+            console.assert ((xx + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
 
             output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -342,6 +435,114 @@ function row_corr_up (input, in_width, in_height, output, out_width, stride)
     }
   }
 }
+
+
+/* Candidate for C++ conversion. */
+function col_corr_up (input, in_width, output, out_width, operate_width, operate_height, stride)
+{
+  if (use_wasm)
+  {
+    _col_corr_up (input.ptr, in_width, output.ptr, out_width, operate_width, operate_height, stride, kernel.ptr, kernel.length);
+    return;
+  }
+
+  var pre = Math.ceil((kernel.length-1)/2);
+  var post = Math.floor((kernel.length-1)/2);
+
+  for (let y=0; y < operate_height; y++)
+  {
+    for (let x=0; x < operate_width; x++)
+    {
+      let col_idx = 4*x;
+
+      for (let yy=y*stride; yy < (y+1)*stride; yy++)
+      {
+        let output_row_ofs = 4*yy*out_width;
+        let output_idx = output_row_ofs + col_idx;
+
+        console.assert (output_idx + 2 < output.length);
+
+        output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
+        let kernel_ofs = ((yy + pre) % stride + stride) % stride;
+        let w = -pre + kernel_ofs;
+
+        // left edge
+        if (yy < pre)
+        {
+          for (; w <= 0; w+=stride)
+          {
+            let input_idx = 4*left_reflect((yy + w)/stride, 0)*in_width + col_idx; // guaranteed to be divisible
+            console.assert ((yy + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+          }
+          for (; w < post; w+=stride)
+          {
+            let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
+            console.assert ((yy + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+          }
+        }
+        // right edge
+        else if (yy >= operate_height - post)
+        {
+          for (; w <= 0; w+=stride)
+          {
+            let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
+            console.assert ((yy + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+          }
+          for (; w < post; w+=stride)
+          {
+            let input_idx = 4*right_reflect((yy + w)/stride, operate_height)*in_width + col_idx; // guaranteed to be divisible
+            console.assert ((yy + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+          }
+        }
+        // center
+        else
+        {
+          for (; w < post; w+=stride)
+          {
+            let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
+            console.assert ((yy + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
+          }
+        }
+      }
+    }
+  }
+}
+
 
 
 /* Not used. */

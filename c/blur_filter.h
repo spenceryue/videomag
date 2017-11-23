@@ -20,11 +20,20 @@
 
 DEMANGLE
 EXPORT
-void row_corr_down (float* input, int in_width, int in_height, float* output, int out_width, int stride, float* kernel, int window);
+void row_corr_down (float* input, int in_width, float* output, int out_width, int operate_width, int operate_height, int stride, float* kernel, int window);
 
 
 EXPORT
-void col_corr_down (float* input, int in_width, int in_height, float* output, int out_width, int stride, float* kernel, int window);
+void col_corr_down (float* input, int in_width, float* output, int out_width, int operate_width, int operate_height, int stride, float* kernel, int window);
+
+
+EXPORT
+void row_corr_up (float* input, int in_width, float* output, int out_width, int operate_width, int operate_height, int stride, float* kernel, int window);
+
+
+EXPORT
+void col_corr_up (float* input, int in_width, float* output, int out_width, int operate_width, int operate_height, int stride, float* kernel, int window);
 END_DEMANGLE
+
 
 #endif /* BLUR_FILTER_H */
