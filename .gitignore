@@ -3,6 +3,7 @@
 **/*.pyc
 c/*.js
 c/*.wasm
+c/*.wast
 c/*.o
 **/a.out
 c/utils

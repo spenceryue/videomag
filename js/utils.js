@@ -70,14 +70,8 @@ function both_reflect (i, min, max)
 }
 
 
-function array_copy (input, output, rows, cols)
+function array_copy (input, output, rows = input.height, cols = input.width)
 {
-  if (!rows || !cols)
-  {
-    rows = input.height;
-    cols = input.width;
-  }
-
   console.assert (typeof input.width != 'undefined')
   console.assert (typeof input.height != 'undefined')
   console.assert (typeof output.width != 'undefined')
@@ -102,14 +96,8 @@ function array_copy (input, output, rows, cols)
 }
 
 
-function array_copy_a (input, output, rows, cols)
+function array_copy_a (input, output, rows = input.height, cols = input.width)
 {
-  if (!rows || !cols)
-  {
-    rows = input.height;
-    cols = input.width;
-  }
-
   console.assert (typeof input.width != 'undefined')
   console.assert (typeof input.height != 'undefined')
   console.assert (typeof output.width != 'undefined')
@@ -132,3 +120,23 @@ function array_copy_a (input, output, rows, cols)
     }
   }
 }
+
+
+/* From here: https://stackoverflow.com/a/10284006/3624264 */
+function zip (...arrays)
+{
+  return arrays[0].map ((x,i) => arrays.map (array => array[i]));
+}
+
+
+/* From here: https://stackoverflow.com/a/31194949/3624264 */
+function $args(func) {
+    return (func + '')
+      .replace(/[/][/].*$/mg,'') // strip single-line comments
+      .replace(/\s+/g, '') // strip white space
+      .replace(/[/][*][^/*]*[*][/]/g, '') // strip multi-line comments
+      .split('){', 1)[0].replace(/^[^(]*[(]/, '') // extract the parameters
+      .replace(/=[^,]+/g, '') // strip any ES6 defaults
+      .split(',').filter(Boolean); // split & filter [""]
+}
+

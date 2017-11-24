@@ -50,33 +50,42 @@ function heap_init ()
 
 function buffer_init ()
 {
-  buffer_init.BUF = [];
-  buffer_init.PYRAMID = [];
-
-  /*
-  Each BUF[i] keeps a reference to memory so it isn't garbage collected on
-  resizing buf[i] from updating the filter_size.
-  */
+  /* General purpose buffers. */
   for (let i=0; i < buf.length; i++)
   {
 
-    buf[i] = buffer_init.BUF[i] = fill_alpha (malloc (IntermediateTypedArray, 4 * FRAME_WIDTH * FRAME_HEIGHT), 255);
+    buf[i] = fill_alpha (malloc (IntermediateTypedArray, 4 * FRAME_WIDTH * FRAME_HEIGHT), 255);
     buf[i].width = FRAME_WIDTH;
     buf[i].height = FRAME_HEIGHT;
   }
 
-  /* Same comment as above. */
+  /* Pyramid buffers. */
   var width = FRAME_WIDTH;
   var height = FRAME_HEIGHT;
   var depth = max_pyramid_depth(width, height, 1);
   for (let i=0; i < depth; i++)
   {
-    pyramid[i] = buffer_init.PYRAMID[i] = fill_alpha (malloc (IntermediateTypedArray, 4 * width * height), 255);
+    pyramid[i] = fill_alpha (malloc (IntermediateTypedArray, 4 * width * height), 255);
     pyramid[i].width = width;
     pyramid[i].height = height;
 
-    width = Math.floor (width/2);
-    height = Math.floor (height/2);
+    [width, height] = next_pyramid_dimensions (width, height);
+  }
+
+  /* To check for memory corruption.
+  (Assumes malloc() will hand out next piece of memory close to pyramid.) */
+  buffer_init.MAGIC = malloc (Uint32Array, 1);
+  buffer_init.MAGIC[0] = 0xdeadbeef;
+}
+
+
+function validate_pyramid_memory ()
+{
+  if (buffer_init.MAGIC[0] != 0xdeadbeef)
+  {
+    throw '\n(\u256F\u00B0\u25A1\u00B0)\u256F.-~ \u253B\u2501\u253B You ate my 0xdeadbeef !!!!\n'
+    + '\\(\u00B4\u0414` )/==3 And you pooped it out as:'
+    + '0x' + buffer_init.MAGIC[0].toString(16);
   }
 }
 
@@ -92,6 +101,7 @@ function malloc (ArrayType, length)
   var bytes_needed = bytesPerElement_map.get(ArrayType) * length;
 
   var ptr = Module._malloc (bytes_needed);
+  console.assert (!heap_map.has (ptr));
   heap_map.add (ptr);
 
   var heapView = heapView_map.get(ArrayType);
@@ -99,7 +109,7 @@ function malloc (ArrayType, length)
   resultArray.ptr = ptr; // same as resultArray.byteOffset
   resultArray.heapView = heapView;
 
-  console.log('bytes_needed', bytes_needed, 'ptr', ptr, 'length', length)
+
   return resultArray;
 }
 
@@ -111,7 +121,6 @@ function get_resized_array (array, width, height)
   resultArray.height = height;
   resultArray.ptr = array.ptr;
   resultArray.heapView = array.heapView;
-  console.log('resizing...', 'bytes_needed', array.BYTES_PER_ELEMENT*4*width*height, 'ptr', array.ptr, 'length', 4*width*height, 'resultArray.length', resultArray.length)
 
   return resultArray;
 }
@@ -149,10 +158,9 @@ function fulfill_resize (width, height)
     let depth = max_pyramid_depth(w, h, blur_size);
     for (let i=0; i < depth; i++)
     {
-      pyramid[i] = get_resized_array (buffer_init.PYRAMID[i], w, h);
+      pyramid[i] = get_resized_array (pyramid[i], w, h);
 
-      w = Math.floor (w/2);
-      h = Math.floor (h/2);
+      [w, h] = next_pyramid_dimensions (w, h);
     }
 
     if (blur_size_changed)
@@ -161,7 +169,7 @@ function fulfill_resize (width, height)
     if (filter_size_changed)
     {
       for (let i=0; i < buf.length; i++)
-        buf[i] = get_resized_array (buffer_init.BUF[i], width, height);
+        buf[i] = get_resized_array (buf[i], width, height);
     }
   }
 }

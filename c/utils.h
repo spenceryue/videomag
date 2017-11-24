@@ -58,6 +58,21 @@ static inline int both_reflect (int i, int min, int max)
 }
 
 
+static inline int min (int a, int b)
+{
+  return (a<b) ? a : b;
+}
+
+
+#ifdef NDEBUG
+#define ASSERT (void) 0
+#else
+#include <assert.h>
+#define ASSERT(pred, msg...) do {if (!(pred)) {fprintf (stderr, msg); assert ((pred));}} while(0)
+#endif
+
+
+
 #endif /* UTILS_H */
 
 
@@ -84,6 +99,7 @@ int main (int argc, char** argv)
     printf ("next_multiple (x=%d, m=%d) = %d\n", atoi ( argv[1] ), atoi ( argv[2] ), next_multiple ( atoi ( argv[1] ), atoi ( argv[2] ) ) );
   printf ("left_reflect (i=%d, min=%d) = %d\n", atoi ( argv[1] ), atoi ( argv[2] ), left_reflect ( atoi ( argv[1] ), atoi ( argv[2] ) ) );
   printf ("right_reflect (i=%d, max=%d) = %d\n", atoi ( argv[1] ), atoi ( argv[2] ), right_reflect ( atoi ( argv[1] ), atoi ( argv[2] ) ) );
+  printf ("min (a=%d, a=%d) = %d\n", atoi ( argv[1] ), atoi ( argv[2] ), min ( atoi ( argv[1] ), atoi ( argv[2] ) ) );
 
   if (argc > 3)
     printf ("both_reflect (i=%d, min=%d, max=%d) = %d\n", atoi ( argv[1] ), atoi ( argv[2] ), atoi ( argv[3] ), both_reflect ( atoi ( argv[1] ), atoi ( argv[2] ), atoi ( argv[3] ) ) );

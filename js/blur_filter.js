@@ -4,12 +4,26 @@
 var KernelTypedArray = Float32Array;
 var binomial_kernels =
 [
-  new KernelTypedArray([1]),
-  /*new KernelTypedArray([.5, .5]),
-  new KernelTypedArray([.25, .5, .25]),
-  new KernelTypedArray([.125, .375, .375, .125]),
-  new KernelTypedArray([.0625, .25, .375, .25, .0625]),*/
+  [1],
+  [.5, .5],
+  [.25, .5, .25],
+  [.125, .375, .375, .125],
+  [.0625, .25, .375, .25, .0625],
 ];
+
+
+function blur_init ()
+{
+  for (let i=0; i<binomial_kernels.length; i++)
+  {
+    let tmp = malloc (KernelTypedArray, i+1);
+
+    for (let j=0; j < i+1; j++)
+      tmp[j] = binomial_kernels[i][j];
+
+    binomial_kernels[i] = tmp;
+  }
+}
 
 
 function get_blur_kernel (window)
@@ -40,10 +54,7 @@ function get_binomial_kernel (window)
    Downsamples by the STRIDE factor at the same time for efficiency. */
 function corr2_down (input, intermediate, output)
 {
-  const stride = 2;
-
-  let result_width = Math.floor((input.width-1)/stride) + 1;
-  let result_height = Math.floor((input.height-1)/stride) + 1;
+  let [result_width, result_height] = next_pyramid_dimensions (input.width, input.height);
 
   console.assert (result_width <= intermediate.width, 'Intermediate width not large enough for row_corr_down()!');
   console.assert (input.height <= intermediate.height, 'Intermediate array height less than input height!');
@@ -54,46 +65,76 @@ function corr2_down (input, intermediate, output)
     input, input.width,
     intermediate, intermediate.width,
     input.width, input.height,
-    stride
+    PYRAMID_STRIDE
   );
+  validate_pyramid_memory ();
 
   col_corr_down (
     intermediate, intermediate.width,
     output, output.width,
     result_width, input.height,
-    stride
+    PYRAMID_STRIDE
   );
+  validate_pyramid_memory ();
+}
 
-  if (input.width == buf[0].width && input.height == buf[0].height)
-  {
-    /*col_corr_up (
-      output, output.width, output.height,
-      input, input.width,
-      stride
-    );*/
-    row_corr_up (
-      output, output.width,
+
+function corr2_up (input, intermediate, output, subtract_from_output)
+{
+  let [result_width, result_height] = prev_pyramid_dimensions (input.width, input.height);
+
+  console.assert (result_width <= intermediate.width, 'Intermediate width not large enough for row_corr_up()!');
+  console.assert (input.height <= intermediate.height, 'Intermediate array height less than input height!');
+  console.assert (result_width <= output.width, result_width, output.width, 'Output width less than width of row_corr_up() output!');
+  console.assert (result_height <= output.height, result_height, output.height, 'Output height not large enough for row_corr_up()!');
+
+  row_corr_up (
+    input, input.width,
+    intermediate, intermediate.width,
+    input.width, input.height,
+    output.width,
+    PYRAMID_STRIDE
+  );
+  validate_pyramid_memory ();
+
+  if (subtract_from_output)
+    col_corr_up_sub (
       intermediate, intermediate.width,
-      result_width, result_height,
-      stride
+      output, output.width,
+      result_width, input.height,
+      output.height,
+      PYRAMID_STRIDE
     );
-
+  else
     col_corr_up (
       intermediate, intermediate.width,
-      input, input.width,
-      input.width, result_height,
-      stride
+      output, output.width,
+      result_width, input.height,
+      output.height,
+      PYRAMID_STRIDE
     );
-  }
+  validate_pyramid_memory ();
 }
 
 
 /* Candidate for C++ conversion. */
-function row_corr_down (input, in_width, output, out_width, operate_width, operate_height, stride)
+function row_corr_down (
+  input, in_width,
+  output, out_width,
+  operate_width, operate_height,
+  stride
+  )
 {
   if (use_wasm)
   {
-    _row_corr_down (input.ptr, in_width, output.ptr, out_width, operate_width, operate_height, stride, kernel.ptr, kernel.length);
+    _row_corr_down (
+      input.ptr, in_width,
+      output.ptr, out_width,
+      operate_width, operate_height,
+      stride,
+      kernel.ptr, kernel.length,
+      input.length, output.length, buffer_init.MAGIC.ptr
+    );
     return;
   }
 
@@ -193,16 +234,25 @@ function row_corr_down (input, in_width, output, out_width, operate_width, opera
 
 
 /* Candidate for C++ conversion. */
-function col_corr_down (input, in_width, output, out_width, operate_width, operate_height, stride)
+function col_corr_down (
+  input, in_width,
+  output, out_width,
+  operate_width, operate_height,
+  stride
+  )
 {
   if (use_wasm)
   {
-    _col_corr_down (input.ptr, in_width, output.ptr, out_width, operate_width, operate_height, stride, kernel.ptr, kernel.length);
+    _col_corr_down (
+      input.ptr, in_width,
+      output.ptr, out_width,
+      operate_width, operate_height,
+      stride,
+      kernel.ptr, kernel.length,
+      input.length, output.length, buffer_init.MAGIC.ptr
+    );
     return;
   }
-
-  // TODO paste this in, and paste in row_corr_down
-
 
   var pre = Math.ceil((kernel.length-1)/2);
   var post = Math.floor((kernel.length-1)/2);
@@ -299,11 +349,19 @@ function col_corr_down (input, in_width, output, out_width, operate_width, opera
 
 
 /* Candidate for C++ conversion. */
-function row_corr_up (input, in_width, output, out_width, operate_width, operate_height, stride)
+function row_corr_up (input, in_width, output, out_width, operate_width, operate_height, clip_width, stride)
 {
   if (use_wasm)
   {
-    _row_corr_up (input.ptr, in_width, output.ptr, out_width, operate_width, operate_height, stride, kernel.ptr, kernel.length);
+    _row_corr_up (
+      input.ptr, in_width,
+      output.ptr, out_width,
+      operate_width, operate_height,
+      clip_width,
+      stride,
+      kernel.ptr, kernel.length,
+      input.length, output.length, buffer_init.MAGIC.ptr
+    );
     return;
   }
 
@@ -317,7 +375,9 @@ function row_corr_up (input, in_width, output, out_width, operate_width, operate
 
     for (let x=0; x < operate_width; x++)
     {
-      for (let xx=x*stride; xx < (x+1)*stride; xx++)
+      let stop = Math.min((x+1)*stride, clip_width);
+
+      for (let xx=x*stride; xx < stop; xx++)
       {
         let output_col_idx = 4*xx;
         let output_idx = output_row_ofs + output_col_idx;
@@ -438,11 +498,19 @@ function row_corr_up (input, in_width, output, out_width, operate_width, operate
 
 
 /* Candidate for C++ conversion. */
-function col_corr_up (input, in_width, output, out_width, operate_width, operate_height, stride)
+function col_corr_up (input, in_width, output, out_width, operate_width, operate_height, clip_height, stride)
 {
   if (use_wasm)
   {
-    _col_corr_up (input.ptr, in_width, output.ptr, out_width, operate_width, operate_height, stride, kernel.ptr, kernel.length);
+    _col_corr_up (
+      input.ptr, in_width,
+      output.ptr, out_width,
+      operate_width, operate_height,
+      clip_height,
+      stride,
+      kernel.ptr, kernel.length,
+      input.length, output.length, buffer_init.MAGIC.ptr
+    );
     return;
   }
 
@@ -454,8 +522,9 @@ function col_corr_up (input, in_width, output, out_width, operate_width, operate
     for (let x=0; x < operate_width; x++)
     {
       let col_idx = 4*x;
+      let stop = Math.min((y+1)*stride, clip_height);
 
-      for (let yy=y*stride; yy < (y+1)*stride; yy++)
+      for (let yy=y*stride; yy < stop; yy++)
       {
         let output_row_ofs = 4*yy*out_width;
         let output_idx = output_row_ofs + col_idx;
@@ -543,6 +612,254 @@ function col_corr_up (input, in_width, output, out_width, operate_width, operate
   }
 }
 
+
+/* Candidate for C++ conversion. */
+function row_corr_up_sub (input, in_width, output, out_width, operate_width, operate_height, clip_width, stride)
+{
+  if (use_wasm)
+  {
+    _row_corr_up_sub (
+      input.ptr, in_width,
+      output.ptr, out_width,
+      operate_width, operate_height,
+      clip_width,
+      stride,
+      kernel.ptr, kernel.length,
+      input.length, output.length, buffer_init.MAGIC.ptr
+    );
+    return;
+  }
+
+  var pre = Math.ceil((kernel.length-1)/2);
+  var post = Math.floor((kernel.length-1)/2);
+
+  for (let y=0; y < operate_height; y++)
+  {
+    let row_ofs = 4*y*in_width;
+    let output_row_ofs = 4*y*out_width;
+
+    for (let x=0; x < operate_width; x++)
+    {
+      let stop = Math.min((x+1)*stride, clip_width);
+
+      for (let xx=x*stride; xx < stop; xx++)
+      {
+        let output_col_idx = 4*xx;
+        let output_idx = output_row_ofs + output_col_idx;
+
+        console.assert (output_idx + 2 < output.length);
+
+        let kernel_ofs = ((xx + pre) % stride + stride) % stride;
+        let w = -pre + kernel_ofs;
+
+        // left edge
+        if (xx < pre)
+        {
+          for (; w <= 0; w+=stride)
+          {
+            let input_idx = row_ofs + 4 * left_reflect((xx + w)/stride, 0);
+            console.assert ((xx + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+          }
+          for (; w < post; w+=stride)
+          {
+            let block_ofs = 4*w;
+            let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
+            console.assert ((xx + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+          }
+        }
+        // right edge
+        else if (xx >= operate_width - post)
+        {
+          for (; w <= 0; w+=stride)
+          {
+            let block_ofs = 4*w;
+            let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
+            console.assert ((xx + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+          }
+          for (; w < post; w+=stride)
+          {
+            let input_idx = row_ofs + 4 * right_reflect((xx + w)/stride, operate_width); // guaranteed to be divisible
+            console.assert ((xx + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+          }
+        }
+        // center
+        else
+        {
+          for (; w < post; w+=stride)
+          {
+            let block_ofs = 4*w;
+            let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
+            console.assert ((xx + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+          }
+        }
+      }
+    }
+  }
+}
+
+
+/* Candidate for C++ conversion. */
+function col_corr_up_sub (input, in_width, output, out_width, operate_width, operate_height, clip_height, stride)
+{
+  if (use_wasm)
+  {
+    _col_corr_up_sub (
+      input.ptr, in_width,
+      output.ptr, out_width,
+      operate_width, operate_height,
+      clip_height,
+      stride,
+      kernel.ptr, kernel.length,
+      input.length, output.length, buffer_init.MAGIC.ptr
+    );
+    return;
+  }
+
+  var pre = Math.ceil((kernel.length-1)/2);
+  var post = Math.floor((kernel.length-1)/2);
+
+  for (let y=0; y < operate_height; y++)
+  {
+    for (let x=0; x < operate_width; x++)
+    {
+      let col_idx = 4*x;
+      let stop = Math.min((y+1)*stride, clip_height);
+
+      for (let yy=y*stride; yy < stop; yy++)
+      {
+        let output_row_ofs = 4*yy*out_width;
+        let output_idx = output_row_ofs + col_idx;
+
+        console.assert (output_idx + 2 < output.length);
+
+        let kernel_ofs = ((yy + pre) % stride + stride) % stride;
+        let w = -pre + kernel_ofs;
+
+        // left edge
+        if (yy < pre)
+        {
+          for (; w <= 0; w+=stride)
+          {
+            let input_idx = 4*left_reflect((yy + w)/stride, 0)*in_width + col_idx; // guaranteed to be divisible
+            console.assert ((yy + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+          }
+          for (; w < post; w+=stride)
+          {
+            let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
+            console.assert ((yy + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+          }
+        }
+        // right edge
+        else if (yy >= operate_height - post)
+        {
+          for (; w <= 0; w+=stride)
+          {
+            let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
+            console.assert ((yy + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+          }
+          for (; w < post; w+=stride)
+          {
+            let input_idx = 4*right_reflect((yy + w)/stride, operate_height)*in_width + col_idx; // guaranteed to be divisible
+            console.assert ((yy + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+          }
+        }
+        // center
+        else
+        {
+          for (; w < post; w+=stride)
+          {
+            let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
+            console.assert ((yy + w)%stride == 0);
+            let kernel_idx = w + pre;
+
+            console.assert (input_idx + 2 < input.length);
+
+            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+          }
+        }
+      }
+    }
+  }
+}
+
+
+/*
+For loop inspector:
+
+if (!(output_idx + 2 < output.length))
+{
+  window.dump = zip ($args(arguments.callee), Array.from (arguments));
+  window.extra = ['x','y','yy','pre','post','output_idx','output.length','output.height','input.height'];
+  window.extra_v = [x,y,yy,pre,post,output_idx,output.length,output.height,input.height];
+  zip(extra,extra_v).forEach(row => dump.push(row))
+  console.table(dump)
+}
+*/
 
 
 /* Not used. */

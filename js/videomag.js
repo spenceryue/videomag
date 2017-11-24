@@ -7,23 +7,26 @@ var counter = 0;
 function filter (input, width, height)
 {
   fulfill_resize (width, height);
+  validate_pyramid_memory ();
 
-  input.width = width;
-  input.height = height;
-  array_copy (input, buf[0]);
-
-  buf[0] = rgb_to (buf0_color, buf[0], width, height, buf[0], use_fscs, true);
-  build_pyramid (buf[0], width, height, 0);
+  pyramid[0] = rgb_to (buf0_color, input, width, height, pyramid[0], use_fscs, true);
+  validate_pyramid_memory ();
+  build_pyramid (width, height, 0);
 
   if (buf0_color != buf1_color)
   {
-    buf[0] = to_rgb (buf0_color, buf[0], width, height, buf[0], use_fscs);
-    buf[0] = rgb_to (buf1_color, buf[0], width, height, buf[0], use_fscs);
+    pyramid[0] = to_rgb (buf0_color, pyramid[0], width, height, pyramid[0], use_fscs);
+    validate_pyramid_memory ();
+    pyramid[0] = rgb_to (buf1_color, pyramid[0], width, height, pyramid[0], use_fscs);
+    validate_pyramid_memory ();
   }
 
-  // amplify (buf[0], width, height, buf[0], 1);
+  // amplify (pyramid[0], width, height, pyramid[0], 1);
   if (buf1_color != 'rgb')
-    buf[0] = to_rgb (buf1_color, buf[0], width, height, buf[0], use_fscs);
+  {
+    pyramid[0] = to_rgb (buf1_color, pyramid[0], width, height, pyramid[0], use_fscs);
+    validate_pyramid_memory ();
+  }
 
   // if (++counter % 10 == 1)
   // {
@@ -37,7 +40,7 @@ function filter (input, width, height)
   // return new Uint8ClampedArray (buf[1].map((x,i)=> (i%4!=3) ? (Math.round(x-input[i]) ? 255 : 0) : x));
   // return new Uint8ClampedArray (buf[0].map((x,i)=> (i%4!=3) ? (Math.round(x-input[i]) ? x : 0) : x));
   // return new Uint8ClampedArray (buf[0].map((x,i)=> (i%4!=3) ? x-input[i] : x));
-  return new Uint8ClampedArray (buf[0]);
+  return new Uint8ClampedArray (pyramid[0]);
 }
 
 

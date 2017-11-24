@@ -7,6 +7,13 @@ EMCC_FLAGS = -s WASM=1 -s NO_EXIT_RUNTIME=1 -s TOTAL_MEMORY=44236800
 SRCS = $(wildcard *.c)
 OBJS = $(SRCS:.c=.o)
 
+ifdef debug
+CFLAGS +=  -g
+else
+CFLAGS += -DNDEBUG
+endif
+
+
 videomag.js: $(OBJS)
 	$(CC) -o $@ $^ $(CFLAGS) $(EMCC_FLAGS)
 

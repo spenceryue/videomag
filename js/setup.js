@@ -24,7 +24,7 @@ var defaults =
   'use_fscs': false,
   'show_pyramid': true,
   'use_wasm': true,
-  'blur_size': {min:1, max:50, step:1, value:50},
+  'blur_size': {min:1, max:50, step:1, value:1},
   'filter_size': {min:1, max:100, step:'any', value:50},
   'buf0_color': 'rgb',
   'buf1_color': 'ntsc',
@@ -59,6 +59,7 @@ function camera_init (mediaStream)
     loaded ();
     console.log('camera source loaded.')
     buffer_init ();
+    blur_init ();
 
     requestAnimationFrame (render);
   };
@@ -75,6 +76,7 @@ function image_init()
     loaded ();
     console.log('image source loaded.')
     buffer_init ();
+    blur_init ();
 
     requestAnimationFrame (render);
   }

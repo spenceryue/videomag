@@ -1,26 +1,19 @@
 'use strict';
 
 
-var pyramid_depths = new Map();
+var pyramid_depths_map = new Map ();
+var pyramid_prev_dimension_map = new Map ();
+const PYRAMID_STRIDE = 2;
 
 
-function build_pyramid (input, width, height, level)
+function build_pyramid (width, height, level)
 {
-  var save = input;
-
   var depth = max_pyramid_depth (width, height, blur_size);
-  for (let i=1; i < depth; i++)
+  for (let i=0; i < depth-1; i++)
   {
-    corr2_down (input, buf[2], pyramid[i]);
-    input = pyramid[i];
+    corr2_down (pyramid[i], buf[2], pyramid[i+1]);
+    corr2_up (pyramid[i+1], buf[2], pyramid[i], true);
   }
-
-
-  var i = 1;
-  // array_copy (pyramid[i], save, pyramid[i].height, pyramid[i].width);
-
-  // corr2_down (input, buf[2], input);
-  // array_copy (pyramid[1], save, pyramid[1].height, pyramid[1].width);
 }
 
 
@@ -40,22 +33,58 @@ function next_pyramid_position (prev_width, prev_height, prev_x, prev_y, level, 
 }
 
 
-function max_pyramid_depth (_filter_width, _filter_height, _blur_size)
+function next_pyramid_dimensions (width, height)
 {
-  var key = Math.trunc(_filter_width*_filter_height*128+_blur_size);
+  const half = x => Math.floor ((x-1)/PYRAMID_STRIDE) + 1;
 
-  if (pyramid_depths.has(key))
-    return pyramid_depths.get(key);
+  var result = [half(width), half(height)];
+  var key = result.join (' ')
+
+  if (!pyramid_prev_dimension_map.has (key))
+    pyramid_prev_dimension_map.set (key, [width, height]);
+
+  return result;
+}
+
+
+function prev_pyramid_dimensions (width, height)
+{
+  var key = [width, height].join (' ');
+  return pyramid_prev_dimension_map.get (key);
+}
+
+
+function dump_prev_map (print=true,value=false)
+{
+  var a = Array.from(pyramid_prev_dimension_map.keys());
+  var b = Array.from(pyramid_prev_dimension_map.values());
+  var c = a.map((x,i)=>[x].concat(b[i]));
+
+  if (print)
+    console.table(c);
+
+  if (value)
+    return c;
+}
+
+
+function max_pyramid_depth (_filter_width=FILTER_BOUNDS.width, _filter_height=FILTER_BOUNDS.height, _blur_size=blur_size)
+{
+  var key = Array.from (arguments).join(' ');
+
+
+  if (pyramid_depths_map.has(key))
+    return pyramid_depths_map.get(key);
 
   var min_dim = Math.min(_filter_width, _filter_height);
   var depth = 0;
   while (min_dim > _blur_size)
   {
     depth++;
-    min_dim = Math.floor (min_dim/2);
+    [min_dim, ] = next_pyramid_dimensions (min_dim);
   }
-  console.log('depth',depth);
-  pyramid_depths.set(key, depth);
+
+  pyramid_depths_map.set(key, depth);
   return depth;
 }
 
