@@ -11,8 +11,21 @@ function build_pyramid (width, height, level)
   var depth = max_pyramid_depth (width, height, blur_size);
   for (let i=0; i < depth-1; i++)
   {
+    var tmp = malloc (IntermediateTypedArray, pyramid[i].length);
+    tmp.width = pyramid[i].width;
+    tmp.height = pyramid[i].height;
     corr2_down (pyramid[i], buf[2], pyramid[i+1]);
-    corr2_up (pyramid[i+1], buf[2], pyramid[i], true);
+    // array_copy (pyramid[i], pyramid[i+1], pyramid[i+1].height, pyramid[i+1].width);
+    corr2_up (pyramid[i+1], buf[2], tmp, false);
+    full_scale_contrast_stretch (tmp);
+    full_scale_contrast_stretch (pyramid[i]);
+    for (let j=0; j<tmp.length; j++)
+    {
+      if (j%4==3)
+        continue;
+      pyramid[i][j] -= tmp[j];
+    }
+    free (tmp);
   }
 }
 

@@ -171,5 +171,7 @@ function fulfill_resize (width, height)
       for (let i=0; i < buf.length; i++)
         buf[i] = get_resized_array (buf[i], width, height);
     }
+
+    validate_pyramid_memory ();
   }
 }

@@ -12,18 +12,9 @@ void row_corr_down (
   int IN_LENGTH, int OUT_LENGTH, void** MAGIC
   )
 {
-  int count = 0;
   int pre = (window-1 + 1)/2;
   int post = (window-1)/2;
 
-  printf ("row_corr_down before:"
-          "kernel pointer: %p\n"
-          "MAGIC: %p\n"
-          ,
-          kernel
-          ,
-          *(void**) MAGIC
-          );
 
   for (int y=0; y < operate_height; y++)
   {
@@ -111,18 +102,9 @@ void row_corr_down (
           output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
         }
       }
-      count++;
     }
   }
-  printf ("row_corr_down after:"
-          "kernel pointer: %p\n"
-          "MAGIC: %p\n"
-          ,
-          kernel
-          ,
-          *(void**) MAGIC
-          );
-  printf("row_corr_down finished. count: %d\n", count);
+  ASSERT (*MAGIC == (void*) 0xdeadbeef, "MAGIC corrupted! (%p)\n", *MAGIC);
 }
 
 
@@ -135,18 +117,9 @@ void col_corr_down (
   int IN_LENGTH, int OUT_LENGTH, void** MAGIC
   )
 {
-  int count = 0;
   int pre = (window-1 + 1)/2;
   int post = (window-1)/2;
 
-  printf ("col_corr_down before:"
-          "kernel pointer: %p\n"
-          "MAGIC: %p\n"
-          ,
-          kernel
-          ,
-          *(void**) MAGIC
-          );
 
   for (int y=0; y < operate_height; y+=stride)
   {
@@ -233,18 +206,9 @@ void col_corr_down (
           output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
         }
       }
-      count++;
     }
   }
-  printf ("col_corr_down after:"
-          "kernel pointer: %p\n"
-          "MAGIC: %p\n"
-          ,
-          kernel
-          ,
-          *(void**) MAGIC
-          );
-  printf("col_corr_down finished. count: %d\n", count);
+  ASSERT (*MAGIC == (void*) 0xdeadbeef, "MAGIC corrupted! (%p)\n", *MAGIC);
 }
 
 
@@ -258,7 +222,6 @@ void row_corr_up (
   int IN_LENGTH, int OUT_LENGTH, void** MAGIC
   )
 {
-  int count = 0;
   int pre = (window-1 + 1)/2;
   int post = (window-1)/2;
 
@@ -380,11 +343,10 @@ void row_corr_up (
             output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
           }
         }
-        count++;
       }
     }
   }
-  printf("row_corr_up finished. count: %d\n", count);
+  ASSERT (*MAGIC == (void*) 0xdeadbeef, "MAGIC corrupted! (%p)\n", *MAGIC);
 }
 
 
@@ -489,6 +451,7 @@ void col_corr_up (
       }
     }
   }
+  ASSERT (*MAGIC == (void*) 0xdeadbeef, "MAGIC corrupted! (%p)\n", *MAGIC);
 }
 
 
@@ -597,6 +560,7 @@ void row_corr_up_sub (
       }
     }
   }
+  ASSERT (*MAGIC == (void*) 0xdeadbeef, "MAGIC corrupted! (%p)\n", *MAGIC);
 }
 
 
@@ -610,7 +574,6 @@ void col_corr_up_sub (
   int IN_LENGTH, int OUT_LENGTH, void** MAGIC
   )
 {
-  int count = 0;
   int pre = (window-1 + 1)/2;
   int post = (window-1)/2;
 
@@ -698,9 +661,8 @@ void col_corr_up_sub (
             output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
           }
         }
-        count++;
       }
     }
   }
-  printf("col_corr_up_sub finished. count: %d\n", count);
+  ASSERT (*MAGIC == (void*) 0xdeadbeef, "MAGIC corrupted! (%p)\n", *MAGIC);
 }

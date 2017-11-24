@@ -24,9 +24,9 @@ var defaults =
   'use_fscs': false,
   'show_pyramid': true,
   'use_wasm': true,
-  'blur_size': {min:1, max:50, step:1, value:1},
-  'filter_size': {min:1, max:100, step:'any', value:50},
-  'buf0_color': 'rgb',
+  'blur_size': {min:1, max:50, step:1, value:5},
+  'filter_size': {min:1, max:100, step:'any', value:100},
+  'buf0_color': 'ntsc',
   'buf1_color': 'ntsc',
 };
 

@@ -1,7 +1,7 @@
 'use strict';
 
 
-function rgb_to (to, input, width, height, output, fscs, copy)
+function rgb_to (to, input, width, height, output, fscs, copy=false)
 {
   switch (to)
   {
@@ -25,12 +25,13 @@ function rgb_to (to, input, width, height, output, fscs, copy)
         rgb2ycbcr (input, width, height, output);
       break;
   }
+  validate_pyramid_memory ();
 
   return output;
 }
 
 
-function to_rgb (from, input, width, height, output, fscs, copy)
+function to_rgb (from, input, width, height, output, fscs, copy=false)
 {
   switch (from)
   {
@@ -54,6 +55,7 @@ function to_rgb (from, input, width, height, output, fscs, copy)
         ycbcr2rgb (input, width, height, output);
       break;
   }
+  validate_pyramid_memory ();
 
   return output;
 }

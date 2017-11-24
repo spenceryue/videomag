@@ -87,6 +87,9 @@ function array_copy (input, output, rows = input.height, cols = input.width)
       let input_idx = row_ofs + 4 * x;
       let output_idx = output_row_ofs + 4 * x;
 
+      console.assert (input_idx < input.length);
+      console.assert (output_idx < output.length);
+
       output[output_idx + 0] = input[input_idx + 0];
       output[output_idx + 1] = input[input_idx + 1];
       output[output_idx + 2] = input[input_idx + 2];
@@ -112,6 +115,9 @@ function array_copy_a (input, output, rows = input.height, cols = input.width)
     {
       let input_idx = row_ofs + 4 * x;
       let output_idx = output_row_ofs + 4 * x;
+
+      console.assert (input_idx < input.length);
+      console.assert (output_idx < output.length);
 
       output[output_idx + 0] = input[input_idx + 0];
       output[output_idx + 1] = input[input_idx + 1];

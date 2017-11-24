@@ -65,10 +65,10 @@ static inline int min (int a, int b)
 
 
 #ifdef NDEBUG
-#define ASSERT (void) 0
+#define ASSERT(args...) ((void) 0)
 #else
 #include <assert.h>
-#define ASSERT(pred, msg...) do {if (!(pred)) {fprintf (stderr, msg); assert ((pred));}} while(0)
+#define ASSERT(pred, msg...) do {if (!(pred)) {fprintf (stderr, "%s : %d : Assertion failed: %s\n", __FUNCTION__, __LINE__, #pred); fprintf (stderr, msg); assert ((pred));}} while(0)
 #endif
 
 
