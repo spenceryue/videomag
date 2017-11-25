@@ -9,7 +9,7 @@ const PYRAMID_STRIDE = 2;
 function build_pyramid (width, height, level)
 {
   var depth = max_pyramid_depth (width, height, blur_size);
-  for (let i=0; i < 1; i++)
+  for (let i=0; i < depth-1; i++)
   {
     // console.log ('pyramid i: ', i);
     // var tmp = malloc (IntermediateTypedArray, pyramid[i].length);
@@ -18,7 +18,7 @@ function build_pyramid (width, height, level)
     corr2_down (pyramid[i], buf[2], pyramid[i+1]);
     // array_copy (pyramid[i], pyramid[i+1], pyramid[i+1].height, pyramid[i+1].width);
     // array_copy (pyramid[i+1], tmp);
-    corr2_up (pyramid[i+1], buf[2], pyramid[i], true);
+    corr2_up (pyramid[i+1], buf[2], pyramid[i], false);
     // full_scale_contrast_stretch (tmp);
     // full_scale_contrast_stretch (pyramid[i]);
 /*    for (let j=0; j<tmp.length; j++)
@@ -148,35 +148,10 @@ function display_pyramid ()
 }
 
 
-function draw_pyramid (context, i)
-{
-  pyramid[i] = to_rgb (
-    buf0_color,
-    pyramid[i],
-    pyramid[i].width,
-    pyramid[i].height,
-    pyramid[i],
-    use_fscs
-  );
-
-  let data = new ImageData (new Uint8ClampedArray (
-    pyramid[i]),
-    pyramid[i].width,
-    pyramid[i].height
-  );
-
-  context.putImageData (data, 0, 0);
-}
-
-
 function display_old_pyramid (c)
 {
   for (let i=0; i < c.length; i++)
-  {
-    // c[i].getContext('2d').fillStyle = 'hsla(' + (Math.random() * 360) + ', 100%, 90%, .5)';
-    // c[i].getContext ('2d').fillRect (0, 0, pyramid[i].width, pyramid[i].height);
-    draw_pyramid (c[i].getContext ('2d'), i+1);
-  }
+    show_image (c[i].getContext ('2d'), pyramid[i+1], buf0_color);
 }
 
 
@@ -194,7 +169,6 @@ function display_new_pyramid ()
     [x, y] = next_pyramid_position (prev_width, prev_height, prev_x, prev_y, level, width, height);
     let c = get_canvas (width, height, x, y);
     c.getContext ('2d').fillStyle = 'hsla(' + (Math.random() * 360) + ', 100%, 90%, .5)';
-    // draw_pyramid (c.getContext ('2d'), i+1);
     c.getContext ('2d').fillRect(0,0, width, height);
     parentNode.append (c);
     [prev_width, prev_height] = [width, height];

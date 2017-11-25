@@ -349,7 +349,13 @@ function col_corr_down (
 
 
 /* Candidate for C++ conversion. */
-function row_corr_up (input, in_width, output, out_width, operate_width, operate_height, clip_width, stride)
+function row_corr_up (
+  input, in_width,
+  output, out_width,
+  operate_width, operate_height,
+  clip_width,
+  stride
+  )
 {
   if (use_wasm)
   {
@@ -431,7 +437,7 @@ function row_corr_up (input, in_width, output, out_width, operate_width, operate
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
             output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
           }
-          for (; w < post; w+=stride)
+          for (; w <= post; w+=stride)
           {
             let block_ofs = 4*w;
             let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
@@ -446,7 +452,7 @@ function row_corr_up (input, in_width, output, out_width, operate_width, operate
           }
         }
         // right edge
-        else if (xx >= operate_width - post)
+        else if (xx >= clip_width - post)
         {
           for (; w <= 0; w+=stride)
           {
@@ -461,7 +467,7 @@ function row_corr_up (input, in_width, output, out_width, operate_width, operate
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
             output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
           }
-          for (; w < post; w+=stride)
+          for (; w <= post; w+=stride)
           {
             let input_idx = row_ofs + 4 * right_reflect((xx + w)/stride, operate_width); // guaranteed to be divisible
             console.assert ((xx + w)%stride == 0);
@@ -477,7 +483,7 @@ function row_corr_up (input, in_width, output, out_width, operate_width, operate
         // center
         else
         {
-          for (; w < post; w+=stride)
+          for (; w <= post; w+=stride)
           {
             let block_ofs = 4*w;
             let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
@@ -498,7 +504,13 @@ function row_corr_up (input, in_width, output, out_width, operate_width, operate
 
 
 /* Candidate for C++ conversion. */
-function col_corr_up (input, in_width, output, out_width, operate_width, operate_height, clip_height, stride)
+function col_corr_up (
+  input, in_width,
+  output, out_width,
+  operate_width, operate_height,
+  clip_height,
+  stride
+  )
 {
   if (use_wasm)
   {
@@ -550,7 +562,7 @@ function col_corr_up (input, in_width, output, out_width, operate_width, operate
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
             output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
           }
-          for (; w < post; w+=stride)
+          for (; w <= post; w+=stride)
           {
             let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
             console.assert ((yy + w)%stride == 0);
@@ -564,7 +576,7 @@ function col_corr_up (input, in_width, output, out_width, operate_width, operate
           }
         }
         // right edge
-        else if (yy >= operate_height - post)
+        else if (yy >= clip_height - post)
         {
           for (; w <= 0; w+=stride)
           {
@@ -578,7 +590,7 @@ function col_corr_up (input, in_width, output, out_width, operate_width, operate
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
             output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
           }
-          for (; w < post; w+=stride)
+          for (; w <= post; w+=stride)
           {
             let input_idx = 4*right_reflect((yy + w)/stride, operate_height)*in_width + col_idx; // guaranteed to be divisible
             console.assert ((yy + w)%stride == 0);
@@ -594,7 +606,7 @@ function col_corr_up (input, in_width, output, out_width, operate_width, operate
         // center
         else
         {
-          for (; w < post; w+=stride)
+          for (; w <= post; w+=stride)
           {
             let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
             console.assert ((yy + w)%stride == 0);
@@ -614,7 +626,13 @@ function col_corr_up (input, in_width, output, out_width, operate_width, operate
 
 
 /* Candidate for C++ conversion. */
-function row_corr_up_sub (input, in_width, output, out_width, operate_width, operate_height, clip_width, stride)
+function row_corr_up_sub (
+  input, in_width,
+  output, out_width,
+  operate_width, operate_height,
+  clip_width,
+  stride
+  )
 {
   if (use_wasm)
   {
@@ -667,7 +685,7 @@ function row_corr_up_sub (input, in_width, output, out_width, operate_width, ope
             output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
             output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
           }
-          for (; w < post; w+=stride)
+          for (; w <= post; w+=stride)
           {
             let block_ofs = 4*w;
             let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
@@ -682,7 +700,7 @@ function row_corr_up_sub (input, in_width, output, out_width, operate_width, ope
           }
         }
         // right edge
-        else if (xx >= operate_width - post)
+        else if (xx >= clip_width - post)
         {
           for (; w <= 0; w+=stride)
           {
@@ -697,7 +715,7 @@ function row_corr_up_sub (input, in_width, output, out_width, operate_width, ope
             output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
             output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
           }
-          for (; w < post; w+=stride)
+          for (; w <= post; w+=stride)
           {
             let input_idx = row_ofs + 4 * right_reflect((xx + w)/stride, operate_width); // guaranteed to be divisible
             console.assert ((xx + w)%stride == 0);
@@ -713,7 +731,7 @@ function row_corr_up_sub (input, in_width, output, out_width, operate_width, ope
         // center
         else
         {
-          for (; w < post; w+=stride)
+          for (; w <= post; w+=stride)
           {
             let block_ofs = 4*w;
             let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
@@ -734,7 +752,13 @@ function row_corr_up_sub (input, in_width, output, out_width, operate_width, ope
 
 
 /* Candidate for C++ conversion. */
-function col_corr_up_sub (input, in_width, output, out_width, operate_width, operate_height, clip_height, stride)
+function col_corr_up_sub (
+  input, in_width,
+  output, out_width,
+  operate_width, operate_height,
+  clip_height,
+  stride
+  )
 {
   if (use_wasm)
   {
@@ -785,7 +809,7 @@ function col_corr_up_sub (input, in_width, output, out_width, operate_width, ope
             output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
             output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
           }
-          for (; w < post; w+=stride)
+          for (; w <= post; w+=stride)
           {
             let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
             console.assert ((yy + w)%stride == 0);
@@ -799,7 +823,7 @@ function col_corr_up_sub (input, in_width, output, out_width, operate_width, ope
           }
         }
         // right edge
-        else if (yy >= operate_height - post)
+        else if (yy >= clip_height - post)
         {
           for (; w <= 0; w+=stride)
           {
@@ -813,7 +837,7 @@ function col_corr_up_sub (input, in_width, output, out_width, operate_width, ope
             output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
             output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
           }
-          for (; w < post; w+=stride)
+          for (; w <= post; w+=stride)
           {
             let input_idx = 4*right_reflect((yy + w)/stride, operate_height)*in_width + col_idx; // guaranteed to be divisible
             console.assert ((yy + w)%stride == 0);
@@ -829,7 +853,7 @@ function col_corr_up_sub (input, in_width, output, out_width, operate_width, ope
         // center
         else
         {
-          for (; w < post; w+=stride)
+          for (; w <= post; w+=stride)
           {
             let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
             console.assert ((yy + w)%stride == 0);

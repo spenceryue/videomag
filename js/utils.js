@@ -146,3 +146,42 @@ function $args(func) {
       .split(',').filter(Boolean); // split & filter [""]
 }
 
+
+function add_div (width, height, parent, left=0, top=0)
+{
+  var a = document.createElement('div');
+  a.style.width = width + 'px';
+  a.style.height = height + 'px';
+  a.style.position = 'absolute';
+  a.classList.toggle('debug_border');
+
+  if (parent)
+  {
+    parent.append(a);
+    a.style.left = left + 'px';
+    a.style.top = top + 'px';
+  }
+
+  return a;
+}
+
+
+function show_image (context, img, from_color_space='rgb', x=0, y=0, fscs=use_fscs)
+{
+  img = to_rgb (
+    from_color_space,
+    img,
+    img.width,
+    img.height,
+    img,
+    fscs
+  );
+
+  let data = new ImageData (
+    new Uint8ClampedArray (img),
+    img.width,
+    img.height
+  );
+
+  context.putImageData (data, x, y);
+}

@@ -23,10 +23,10 @@ var defaults =
   'filter_on': true,
   'use_fscs': false,
   'show_pyramid': true,
-  'use_wasm': true,
+  'use_wasm': false,
   'blur_size': {min:1, max:50, step:1, value:2},
   'filter_size': {min:1, max:100, step:'any', value:100},
-  'buf0_color': 'rgb',
+  'buf0_color': 'ntsc',
   'buf1_color': 'rgb',
 };
 
@@ -281,7 +281,6 @@ function render (timestamp)
   if (filter_size_changed)
     set_filter_dims ();
 
-
   if (filter_on)
   {
     if (filter_size < 100)
@@ -312,6 +311,8 @@ function render (timestamp)
   else
     SINK.putImageData (frame, 0, 0);
 
+  if (++counter == 1)
+    throw 'one and done'
 
   update_frame_rate (timestamp - render.last);
   render.last = timestamp;

@@ -15,23 +15,31 @@ function filter (input, width, height)
     pyramid[0] = rgb_to (buf0_color, input, width, height, pyramid[0], use_fscs, true);
   else
   {
+    console.log ('0:\t', 'pyramid:[0]', pyramid[0].slice(0,12));
     array_copy (input, pyramid[0]);
+    console.log ('1:\t', 'pyramid:[0]', pyramid[0].slice(0,12));
     pyramid[0] = rgb_to (buf0_color, pyramid[0], width, height, pyramid[0], use_fscs);
+    console.log ('2:\t', 'pyramid:[0]', pyramid[0].slice(0,12));
   }
   build_pyramid (width, height, 0);
+  console.log ('3:\t', 'pyramid:[0]', pyramid[0].slice(0,12));
 
   if (buf0_color != buf1_color)
   {
     pyramid[0] = to_rgb (buf0_color, pyramid[0], width, height, pyramid[0], use_fscs);
+    console.log ('4:\t', 'pyramid:[0]', pyramid[0].slice(0,12));
     pyramid[0] = rgb_to (buf1_color, pyramid[0], width, height, pyramid[0], use_fscs);
+    console.log ('5:\t', 'pyramid:[0]', pyramid[0].slice(0,12));
   }
 
-  // amplify (pyramid[0], width, height, pyramid[0], 1);
   if (buf1_color != 'rgb')
+  {
     pyramid[0] = to_rgb (buf1_color, pyramid[0], width, height, pyramid[0], use_fscs);
+    console.log ('6:\t', 'pyramid:[0]', pyramid[0].slice(0,12));
+  }
 
-  // return new Uint8ClampedArray (buf[1].map((x,i)=> (i%4!=3) ? (Math.round(x-input[i]) ? 255 : 0) : x));
-  // return new Uint8ClampedArray (buf[0].map((x,i)=> (i%4!=3) ? (Math.round(x-input[i]) ? x : 0) : x));
+  // return new Uint8ClampedArray (pyramid[0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? 255 : 0) : x));
+  // return new Uint8ClampedArray (pyramid[0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? x : 0) : x));
   // return new Uint8ClampedArray (pyramid[0].map((x,i)=> (i%4!=3) ? input[i]-x : x));
   return new Uint8ClampedArray (pyramid[0]);
 }
