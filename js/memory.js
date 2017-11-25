@@ -116,6 +116,7 @@ function malloc (ArrayType, length)
 
 function get_resized_array (array, width, height)
 {
+  console.log ('resizing... old:\t', array.width, 'x', array.height, '\nnew:\t\t\t\t', width, 'x', height);
   var resultArray = new IntermediateTypedArray (array.buffer, array.ptr, 4 * width * height);
   resultArray.width = width;
   resultArray.height = height;

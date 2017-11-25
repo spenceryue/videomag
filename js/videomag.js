@@ -8,12 +8,13 @@ function filter (input, width, height)
 {
   fulfill_resize (width, height);
 
+  input.width = width;
+  input.height = height;
+
   if (buf0_color == 'rgb')
     pyramid[0] = rgb_to (buf0_color, input, width, height, pyramid[0], use_fscs, true);
   else
   {
-    input.width = width;
-    input.height = height;
     array_copy (input, pyramid[0]);
     pyramid[0] = rgb_to (buf0_color, pyramid[0], width, height, pyramid[0], use_fscs);
   }

@@ -24,10 +24,10 @@ var defaults =
   'use_fscs': false,
   'show_pyramid': true,
   'use_wasm': true,
-  'blur_size': {min:1, max:50, step:1, value:5},
+  'blur_size': {min:1, max:50, step:1, value:2},
   'filter_size': {min:1, max:100, step:'any', value:100},
-  'buf0_color': 'ntsc',
-  'buf1_color': 'ntsc',
+  'buf0_color': 'rgb',
+  'buf1_color': 'rgb',
 };
 
 

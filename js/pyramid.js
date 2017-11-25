@@ -9,23 +9,26 @@ const PYRAMID_STRIDE = 2;
 function build_pyramid (width, height, level)
 {
   var depth = max_pyramid_depth (width, height, blur_size);
-  for (let i=0; i < depth-1; i++)
+  for (let i=0; i < 1; i++)
   {
-    var tmp = malloc (IntermediateTypedArray, pyramid[i].length);
-    tmp.width = pyramid[i].width;
-    tmp.height = pyramid[i].height;
+    // console.log ('pyramid i: ', i);
+    // var tmp = malloc (IntermediateTypedArray, pyramid[i].length);
+    // tmp.width = pyramid[i].width;
+    // tmp.height = pyramid[i].height;
     corr2_down (pyramid[i], buf[2], pyramid[i+1]);
     // array_copy (pyramid[i], pyramid[i+1], pyramid[i+1].height, pyramid[i+1].width);
-    corr2_up (pyramid[i+1], buf[2], tmp, false);
-    full_scale_contrast_stretch (tmp);
-    full_scale_contrast_stretch (pyramid[i]);
-    for (let j=0; j<tmp.length; j++)
+    // array_copy (pyramid[i+1], tmp);
+    corr2_up (pyramid[i+1], buf[2], pyramid[i], true);
+    // full_scale_contrast_stretch (tmp);
+    // full_scale_contrast_stretch (pyramid[i]);
+/*    for (let j=0; j<tmp.length; j++)
     {
       if (j%4==3)
         continue;
-      pyramid[i][j] -= tmp[j];
-    }
-    free (tmp);
+      // pyramid[i][j] -= tmp[j];
+      pyramid[i][j] = tmp[j];
+    }*/
+    // free (tmp);
   }
 }
 
@@ -50,11 +53,12 @@ function next_pyramid_dimensions (width, height)
 {
   const half = x => Math.floor ((x-1)/PYRAMID_STRIDE) + 1;
 
-  var result = [half(width), half(height)];
+  var result = [half (width), half (height)];
   var key = result.join (' ')
 
-  if (!pyramid_prev_dimension_map.has (key))
-    pyramid_prev_dimension_map.set (key, [width, height]);
+  pyramid_prev_dimension_map.set (key, [width, height]);
+
+  // console.log ('next_pyramid_dimensions:', '(', width, 'x', height, ')', '=>', '(', result[0], 'x', result[1], ')');
 
   return result;
 }
@@ -63,11 +67,14 @@ function next_pyramid_dimensions (width, height)
 function prev_pyramid_dimensions (width, height)
 {
   var key = [width, height].join (' ');
-  return pyramid_prev_dimension_map.get (key);
+  var result = pyramid_prev_dimension_map.get (key);
+
+  // console.log ('prev_pyramid_dimensions:', '(', result[0], 'x', result[1], ')', '<=', '(', width, 'x', height, ')');
+  return result;
 }
 
 
-function dump_prev_map (print=true,value=false)
+function dump_prev_map (print=true, value=false)
 {
   var a = Array.from(pyramid_prev_dimension_map.keys());
   var b = Array.from(pyramid_prev_dimension_map.values());
@@ -83,11 +90,13 @@ function dump_prev_map (print=true,value=false)
 
 function max_pyramid_depth (_filter_width=FILTER_BOUNDS.width, _filter_height=FILTER_BOUNDS.height, _blur_size=blur_size)
 {
-  var key = Array.from (arguments).join(' ');
-
+  var key = [_filter_width, _filter_height, _blur_size].join(' ');
 
   if (pyramid_depths_map.has(key))
+  {
+    // console.log ('max_pyramid_depth:', key, '=>', pyramid_depths_map.get(key));
     return pyramid_depths_map.get(key);
+  }
 
   var min_dim = Math.min(_filter_width, _filter_height);
   var depth = 0;
@@ -97,6 +106,7 @@ function max_pyramid_depth (_filter_width=FILTER_BOUNDS.width, _filter_height=FI
     [min_dim, ] = next_pyramid_dimensions (min_dim);
   }
 
+  // console.log ('max_pyramid_depth:', key, '=>', depth);
   pyramid_depths_map.set(key, depth);
   return depth;
 }
@@ -138,40 +148,56 @@ function display_pyramid ()
 }
 
 
+function draw_pyramid (context, i)
+{
+  pyramid[i] = to_rgb (
+    buf0_color,
+    pyramid[i],
+    pyramid[i].width,
+    pyramid[i].height,
+    pyramid[i],
+    use_fscs
+  );
+
+  let data = new ImageData (new Uint8ClampedArray (
+    pyramid[i]),
+    pyramid[i].width,
+    pyramid[i].height
+  );
+
+  context.putImageData (data, 0, 0);
+}
+
+
 function display_old_pyramid (c)
 {
   for (let i=0; i < c.length; i++)
   {
-    // c[i].getContext('2d').fillStyle = 'hsla(' + (Math.random() * 360) + ', 100%, 50%, 1)';
+    // c[i].getContext('2d').fillStyle = 'hsla(' + (Math.random() * 360) + ', 100%, 90%, .5)';
     // c[i].getContext ('2d').fillRect (0, 0, pyramid[i].width, pyramid[i].height);
-    let data = new ImageData (new Uint8ClampedArray (pyramid[i+1]), pyramid[i+1].width, pyramid[i+1].height);
-    c[i].getContext ('2d').putImageData (data, 0, 0);
+    draw_pyramid (c[i].getContext ('2d'), i+1);
   }
 }
 
 
 function display_new_pyramid ()
 {
-  var prev_width = FILTER_BOUNDS.width;
-  var prev_height = FILTER_BOUNDS.height;
-  var prev_x = FILTER_BOUNDS.x;
-  var prev_y = FILTER_BOUNDS.y;
+  var [prev_width, prev_height] = [FILTER_BOUNDS.width, FILTER_BOUNDS.height];
+  var [prev_x, prev_y] = [FILTER_BOUNDS.x, FILTER_BOUNDS.y];
   var x, y;
   var depth = max_pyramid_depth (prev_width, prev_height, blur_size);
+  var parentNode = SINK.canvas.parentNode;
 
   for (let level=1; level < depth; level++)
   {
-    let width = Math.floor(prev_width/2);
-    let height = Math.floor(prev_height/2);
+    let [width, height] = next_pyramid_dimensions (prev_width, prev_height);
     [x, y] = next_pyramid_position (prev_width, prev_height, prev_x, prev_y, level, width, height);
     let c = get_canvas (width, height, x, y);
-    c.getContext('2d').fillStyle = 'hsla(' + (Math.random() * 360) + ', 100%, 50%, 1)';
-    // c.getContext('2d').putImageData (new ImageData(new Uint8ClampedArray(pyramid[level].buffer, 0, 4*width*height), width, height), 0, 0);
-    c.getContext('2d').fillRect(0,0,width,height);
-    SINK.canvas.parentNode.append (c);
-    prev_width = width;
-    prev_height = height;
-    prev_x = x;
-    prev_y = y;
+    c.getContext ('2d').fillStyle = 'hsla(' + (Math.random() * 360) + ', 100%, 90%, .5)';
+    // draw_pyramid (c.getContext ('2d'), i+1);
+    c.getContext ('2d').fillRect(0,0, width, height);
+    parentNode.append (c);
+    [prev_width, prev_height] = [width, height];
+    [prev_x, prev_y] = [x, y];
   }
 }
