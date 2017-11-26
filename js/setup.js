@@ -12,8 +12,8 @@ var show_pyramid;
 var use_wasm;
 var blur_size;
 var filter_size;
-var buf0_color;
-var buf1_color;
+var gamma_correction;
+var color_space;
 
 
 var defaults =
@@ -21,13 +21,13 @@ var defaults =
   'reflect_x': false,
   'hide_original': false,
   'filter_on': true,
-  'use_fscs': false,
+  'use_fscs': true,
   'show_pyramid': true,
-  'use_wasm': false,
-  'blur_size': {min:1, max:50, step:1, value:2},
-  'filter_size': {min:1, max:100, step:'any', value:100},
-  'buf0_color': 'ntsc',
-  'buf1_color': 'rgb',
+  'use_wasm': true,
+  'blur_size': {min:1, max:50, step:2, value:5},
+  'filter_size': {min:1, max:100, step:1, value:50},
+  'gamma_correction': {min:0, max:100, step:1, value:50},
+  'color_space': 'ycbcr',
 };
 
 
@@ -37,7 +37,9 @@ var camera_constraints =
   video:
   {
     facingMode: "user",
-    // frameRate: 30,
+    width: {max: 640},
+    height: {max: 480},
+    frameRate: 30,
   }
 }
 
@@ -56,6 +58,7 @@ function camera_init (mediaStream)
   {
     FRAME_WIDTH = SINK.canvas.width = SOURCE.videoWidth;
     FRAME_HEIGHT = SINK.canvas.height = SOURCE.videoHeight;
+    FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
     loaded ();
     console.log('camera source loaded.')
     buffer_init ();
@@ -73,6 +76,7 @@ function image_init()
   {
     FRAME_WIDTH = SINK.canvas.width = SOURCE.width;
     FRAME_HEIGHT = SINK.canvas.height = SOURCE.height;
+    FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
     loaded ();
     console.log('image source loaded.')
     buffer_init ();
@@ -146,12 +150,18 @@ function bind_option (name, updater)
 function check_fscs ()
 {
   check_fscs.element = document.getElementsByName('use_fscs')[0];
-  check_fscs.element.disabled = buf0_color == 'rgb' && buf1_color == 'rgb';
+  check_fscs.element.disabled = color_space == 'rgb';
   if (check_fscs.element.disabled)
   {
     use_fscs = false;
     check_fscs.element.checked = false;
   }
+}
+
+
+function calculate_gamma (percent)
+{
+  return 2.2 ** ((percent - 50)/25);
 }
 
 
@@ -194,18 +204,14 @@ function options_init ()
   bind_option ('filter_size', event => update_filter_size(event.srcElement.value));
   filter_size_changed = true;
 
-  buf0_color = defaults['buf0_color'];
-  bind_option ('buf0_color', event => {
-    buf0_color = event.srcElement.value;
+  gamma_correction = calculate_gamma (defaults['gamma_correction'].value);
+  bind_option ('gamma_correction', event => gamma_correction = calculate_gamma (event.srcElement.value));
+
+  color_space = defaults['color_space'];
+  bind_option ('color_space', event => {
+    color_space = event.srcElement.value;
     check_fscs ();
   });
-
-  buf1_color = defaults['buf1_color'];
-  bind_option ('buf1_color', event => {
-    buf1_color = event.srcElement.value
-    check_fscs ();
-  });
-
   check_fscs ();
 
   console.log('options initialized.')
@@ -237,8 +243,6 @@ function loaded ()
 {
   document.querySelectorAll ('.loading').forEach (e=> e.classList.replace ('loading', 'fade_in'));
   spinner_init ();
-
-  FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
 }
 
 
@@ -311,8 +315,8 @@ function render (timestamp)
   else
     SINK.putImageData (frame, 0, 0);
 
-  if (++counter == 1)
-    throw 'one and done'
+  // if (++counter == 1)
+    // throw 'one and done'
 
   update_frame_rate (timestamp - render.last);
   render.last = timestamp;

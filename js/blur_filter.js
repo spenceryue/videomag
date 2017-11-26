@@ -79,7 +79,7 @@ function corr2_down (input, intermediate, output)
 }
 
 
-function corr2_up (input, intermediate, output, subtract_from_output)
+function corr2_up (input, intermediate, output, scale=1)
 {
   let [result_width, result_height] = prev_pyramid_dimensions (input.width, input.height);
 
@@ -97,12 +97,13 @@ function corr2_up (input, intermediate, output, subtract_from_output)
   );
   validate_pyramid_memory ();
 
-  if (subtract_from_output)
-    col_corr_up_sub (
+  if (scale != 1)
+    col_corr_up_mult_add (
       intermediate, intermediate.width,
       output, output.width,
       result_width, input.height,
       output.height,
+      scale,
       PYRAMID_STRIDE
     );
   else
@@ -117,7 +118,7 @@ function corr2_up (input, intermediate, output, subtract_from_output)
 }
 
 
-/* Candidate for C++ conversion. */
+/* Candidate for js->C->WebAssembly conversion. */
 function row_corr_down (
   input, in_width,
   output, out_width,
@@ -131,15 +132,15 @@ function row_corr_down (
       input.ptr, in_width,
       output.ptr, out_width,
       operate_width, operate_height,
-      stride,
+      // stride,
       kernel.ptr, kernel.length,
-      input.length, output.length, buffer_init.MAGIC.ptr
+      input.length, output.length
     );
     return;
   }
 
-  var pre = Math.ceil((kernel.length-1)/2);
-  var post = Math.floor((kernel.length-1)/2);
+  var pre = Math.ceil ((kernel.length-1) / 2);
+  var post = Math.floor ((kernel.length-1) / 2);
 
   for (let y=0; y < operate_height; y++)
   {
@@ -153,8 +154,7 @@ function row_corr_down (
       let output_idx = output_row_ofs + output_col_idx;
       let input_base_idx = row_ofs + col_idx;
 
-      console.assert (output_idx + 2 < output.length);
-      console.assert (input_base_idx + 2 < input.length);
+      console.assert (output_idx + 3 < output.length);
 
       output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
 
@@ -166,7 +166,7 @@ function row_corr_down (
           let input_idx = row_ofs + 4 * left_reflect (x + w, 0);
           let kernel_idx = w + pre;
 
-          console.assert (input_idx + 2 < input.length);
+          console.assert (input_idx + 3 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -178,7 +178,7 @@ function row_corr_down (
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 
-          console.assert (input_idx + 2 < input.length);
+          console.assert (input_idx + 3 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -194,7 +194,7 @@ function row_corr_down (
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 
-          console.assert (input_idx + 2 < input.length);
+          console.assert (input_idx + 3 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -205,7 +205,7 @@ function row_corr_down (
           let input_idx = row_ofs + 4 * right_reflect (x + w, operate_width);
           let kernel_idx = w + pre;
 
-          console.assert (input_idx + 2 < input.length);
+          console.assert (input_idx + 3 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -221,7 +221,7 @@ function row_corr_down (
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 
-          console.assert (input_idx + 2 < input.length);
+          console.assert (input_idx + 3 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -233,7 +233,7 @@ function row_corr_down (
 }
 
 
-/* Candidate for C++ conversion. */
+/* Candidate for js->C->WebAssembly conversion. */
 function col_corr_down (
   input, in_width,
   output, out_width,
@@ -247,15 +247,15 @@ function col_corr_down (
       input.ptr, in_width,
       output.ptr, out_width,
       operate_width, operate_height,
-      stride,
+      // stride,
       kernel.ptr, kernel.length,
-      input.length, output.length, buffer_init.MAGIC.ptr
+      input.length, output.length
     );
     return;
   }
 
-  var pre = Math.ceil((kernel.length-1)/2);
-  var post = Math.floor((kernel.length-1)/2);
+  var pre = Math.ceil ((kernel.length-1) / 2);
+  var post = Math.floor ((kernel.length-1) / 2);
 
   for (let y=0; y < operate_height; y+=stride)
   {
@@ -268,12 +268,11 @@ function col_corr_down (
       let output_idx = output_row_ofs + col_idx;
       let input_base_idx = row_ofs + col_idx;
 
-      console.assert (output_idx + 2 < output.length)
-      console.assert (input_base_idx + 2 < input.length);
+      console.assert (output_idx + 3 < output.length)
 
       output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
 
-      // left edge
+      // top edge
       if (y < pre)
       {
         for (let w=-pre; w <= 0; w++)
@@ -281,7 +280,7 @@ function col_corr_down (
           let input_idx = 4 * left_reflect (y + w, 0) * in_width + col_idx;
           let kernel_idx = w + pre;
 
-          console.assert (input_idx + 2 < input.length);
+          console.assert (input_idx + 3 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -293,14 +292,14 @@ function col_corr_down (
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 
-          console.assert (input_idx + 2 < input.length);
+          console.assert (input_idx + 3 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
           output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
         }
       }
-      // right edge
+      // bottom edge
       else if (y >= operate_height - post)
       {
         for (let w=-pre; w <= 0; w++)
@@ -309,7 +308,7 @@ function col_corr_down (
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 
-          console.assert (input_idx + 2 < input.length);
+          console.assert (input_idx + 3 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -320,7 +319,7 @@ function col_corr_down (
           let input_idx = 4 * right_reflect (y + w, operate_height) * in_width + col_idx;
           let kernel_idx = w + pre;
 
-          console.assert (input_idx + 2 < input.length);
+          console.assert (input_idx + 3 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -336,7 +335,7 @@ function col_corr_down (
           let input_idx = input_base_idx + block_ofs;
           let kernel_idx = w + pre;
 
-          console.assert (input_idx + 2 < input.length);
+          console.assert (input_idx + 3 < input.length);
 
           output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
           output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -348,7 +347,7 @@ function col_corr_down (
 }
 
 
-/* Candidate for C++ conversion. */
+/* Candidate for js->C->WebAssembly conversion. */
 function row_corr_up (
   input, in_width,
   output, out_width,
@@ -364,31 +363,31 @@ function row_corr_up (
       output.ptr, out_width,
       operate_width, operate_height,
       clip_width,
-      stride,
+      // stride,
       kernel.ptr, kernel.length,
-      input.length, output.length, buffer_init.MAGIC.ptr
+      input.length, output.length
     );
     return;
   }
 
-  var pre = Math.ceil((kernel.length-1)/2);
-  var post = Math.floor((kernel.length-1)/2);
+  var pre = Math.ceil ((kernel.length-1) / 2);
+  var post = Math.floor ((kernel.length-1) / 2);
 
   for (let y=0; y < operate_height; y++)
   {
-    let row_ofs = 4*y*in_width;
-    let output_row_ofs = 4*y*out_width;
+    let row_ofs = 4 * y * in_width;
+    let output_row_ofs = 4 * y * out_width;
 
     for (let x=0; x < operate_width; x++)
     {
-      let stop = Math.min((x+1)*stride, clip_width);
+      let stop = Math.min ((x+1) * stride, clip_width);
 
       for (let xx=x*stride; xx < stop; xx++)
       {
-        let output_col_idx = 4*xx;
+        let output_col_idx = 4 * xx;
         let output_idx = output_row_ofs + output_col_idx;
 
-        console.assert (output_idx + 2 < output.length);
+        console.assert (output_idx + 3 < output.length);
 
         output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
         // Start off aligned with a nonzero element of upsampled input.
@@ -419,7 +418,7 @@ function row_corr_up (
             We always use a non-negative offset so that the kernel array is not read out of bounds.
             The offset is calculated by the positive result of remainder(xx + pre, stride).
         */
-        let kernel_ofs = ((xx + pre) % stride + stride) % stride;
+        let kernel_ofs = mod_complement (xx + -pre, stride);
         let w = -pre + kernel_ofs;
 
         // left edge
@@ -427,11 +426,11 @@ function row_corr_up (
         {
           for (; w <= 0; w+=stride)
           {
-            let input_idx = row_ofs + 4 * left_reflect((xx + w)/stride, 0);
-            console.assert ((xx + w)%stride == 0);
+            let input_idx = row_ofs + 4 *   left_reflect ((xx + w) / stride, 0);
+            console.assert ((xx + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
             output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -439,12 +438,12 @@ function row_corr_up (
           }
           for (; w <= post; w+=stride)
           {
-            let block_ofs = 4*w;
-            let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
-            console.assert ((xx + w)%stride == 0);
+            let block_ofs = 4 * w;
+            let input_idx = row_ofs + (output_col_idx + block_ofs) / stride;
+            console.assert ((xx + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
             output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -456,12 +455,12 @@ function row_corr_up (
         {
           for (; w <= 0; w+=stride)
           {
-            let block_ofs = 4*w;
-            let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
-            console.assert ((xx + w)%stride == 0);
+            let block_ofs = 4 * w;
+            let input_idx = row_ofs + (output_col_idx + block_ofs) / stride;
+            console.assert ((xx + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
             output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -469,11 +468,11 @@ function row_corr_up (
           }
           for (; w <= post; w+=stride)
           {
-            let input_idx = row_ofs + 4 * right_reflect((xx + w)/stride, operate_width); // guaranteed to be divisible
-            console.assert ((xx + w)%stride == 0);
+            let input_idx = row_ofs + 4 * right_reflect((xx + w) / stride, operate_width);
+            console.assert ((xx + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
             output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -485,12 +484,12 @@ function row_corr_up (
         {
           for (; w <= post; w+=stride)
           {
-            let block_ofs = 4*w;
-            let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
-            console.assert ((xx + w)%stride == 0);
+            let block_ofs = 4 * w;
+            let input_idx = row_ofs + (output_col_idx + block_ofs) / stride;
+            console.assert ((xx + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
             output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -503,7 +502,7 @@ function row_corr_up (
 }
 
 
-/* Candidate for C++ conversion. */
+/* Candidate for js->C->WebAssembly conversion. */
 function col_corr_up (
   input, in_width,
   output, out_width,
@@ -519,44 +518,44 @@ function col_corr_up (
       output.ptr, out_width,
       operate_width, operate_height,
       clip_height,
-      stride,
+      // stride,
       kernel.ptr, kernel.length,
-      input.length, output.length, buffer_init.MAGIC.ptr
+      input.length, output.length
     );
     return;
   }
 
-  var pre = Math.ceil((kernel.length-1)/2);
-  var post = Math.floor((kernel.length-1)/2);
+  var pre = Math.ceil ((kernel.length-1) / 2);
+  var post = Math.floor ((kernel.length-1) / 2);
 
   for (let y=0; y < operate_height; y++)
   {
     for (let x=0; x < operate_width; x++)
     {
-      let col_idx = 4*x;
-      let stop = Math.min((y+1)*stride, clip_height);
+      let col_idx = 4 * x;
+      let stop = Math.min ((y+1) * stride, clip_height);
 
       for (let yy=y*stride; yy < stop; yy++)
       {
-        let output_row_ofs = 4*yy*out_width;
+        let output_row_ofs = 4 * yy * out_width;
         let output_idx = output_row_ofs + col_idx;
 
-        console.assert (output_idx + 2 < output.length);
+        console.assert (output_idx + 3 < output.length);
 
         output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
-        let kernel_ofs = ((yy + pre) % stride + stride) % stride;
+        let kernel_ofs = mod_complement (yy + -pre, stride);
         let w = -pre + kernel_ofs;
 
-        // left edge
+        // top edge
         if (yy < pre)
         {
           for (; w <= 0; w+=stride)
           {
-            let input_idx = 4*left_reflect((yy + w)/stride, 0)*in_width + col_idx; // guaranteed to be divisible
-            console.assert ((yy + w)%stride == 0);
+            let input_idx = 4 * left_reflect ((yy + w) / stride, 0) * in_width + col_idx;
+            console.assert ((yy + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
             output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -564,27 +563,27 @@ function col_corr_up (
           }
           for (; w <= post; w+=stride)
           {
-            let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
-            console.assert ((yy + w)%stride == 0);
+            let input_idx = 4 * (yy + w) / stride * in_width + col_idx;
+            console.assert ((yy + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
             output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
             output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
           }
         }
-        // right edge
+        // bottom edge
         else if (yy >= clip_height - post)
         {
           for (; w <= 0; w+=stride)
           {
-            let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
-            console.assert ((yy + w)%stride == 0);
+            let input_idx = 4 * (yy + w) / stride * in_width + col_idx;
+            console.assert ((yy + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
             output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -592,11 +591,11 @@ function col_corr_up (
           }
           for (; w <= post; w+=stride)
           {
-            let input_idx = 4*right_reflect((yy + w)/stride, operate_height)*in_width + col_idx; // guaranteed to be divisible
-            console.assert ((yy + w)%stride == 0);
+            let input_idx = 4 * right_reflect((yy + w) / stride, operate_height) * in_width + col_idx;
+            console.assert ((yy + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
             output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -608,11 +607,11 @@ function col_corr_up (
         {
           for (; w <= post; w+=stride)
           {
-            let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
-            console.assert ((yy + w)%stride == 0);
+            let input_idx = 4 * (yy + w) / stride * in_width + col_idx;
+            console.assert ((yy + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
             output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
             output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
@@ -625,49 +624,51 @@ function col_corr_up (
 }
 
 
-/* Candidate for C++ conversion. */
-function row_corr_up_sub (
+/* Candidate for js->C->WebAssembly conversion. */
+function row_corr_up_mult_add (
   input, in_width,
   output, out_width,
   operate_width, operate_height,
   clip_width,
+  scale,
   stride
   )
 {
   if (use_wasm)
   {
-    _row_corr_up_sub (
+    _row_corr_up_mult_add (
       input.ptr, in_width,
       output.ptr, out_width,
       operate_width, operate_height,
       clip_width,
-      stride,
+      scale,
+      // stride,
       kernel.ptr, kernel.length,
-      input.length, output.length, buffer_init.MAGIC.ptr
+      input.length, output.length
     );
     return;
   }
 
-  var pre = Math.ceil((kernel.length-1)/2);
-  var post = Math.floor((kernel.length-1)/2);
+  var pre = Math.ceil ((kernel.length-1) / 2);
+  var post = Math.floor ((kernel.length-1) / 2);
 
   for (let y=0; y < operate_height; y++)
   {
-    let row_ofs = 4*y*in_width;
-    let output_row_ofs = 4*y*out_width;
+    let row_ofs = 4 * y * in_width;
+    let output_row_ofs = 4 * y * out_width;
 
     for (let x=0; x < operate_width; x++)
     {
-      let stop = Math.min((x+1)*stride, clip_width);
+      let stop = Math.min ((x+1) * stride, clip_width);
 
       for (let xx=x*stride; xx < stop; xx++)
       {
-        let output_col_idx = 4*xx;
+        let output_col_idx = 4 * xx;
         let output_idx = output_row_ofs + output_col_idx;
 
-        console.assert (output_idx + 2 < output.length);
+        console.assert (output_idx + 3 < output.length);
 
-        let kernel_ofs = ((xx + pre) % stride + stride) % stride;
+        let kernel_ofs = mod_complement (xx + -pre, stride);
         let w = -pre + kernel_ofs;
 
         // left edge
@@ -675,28 +676,28 @@ function row_corr_up_sub (
         {
           for (; w <= 0; w+=stride)
           {
-            let input_idx = row_ofs + 4 * left_reflect((xx + w)/stride, 0);
-            console.assert ((xx + w)%stride == 0);
+            let input_idx = row_ofs + 4 *   left_reflect ((xx + w) / stride, 0);
+            console.assert ((xx + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
-            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
           }
           for (; w <= post; w+=stride)
           {
-            let block_ofs = 4*w;
-            let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
-            console.assert ((xx + w)%stride == 0);
+            let block_ofs = 4 * w;
+            let input_idx = row_ofs + (output_col_idx + block_ofs) / stride;
+            console.assert ((xx + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
-            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
           }
         }
         // right edge
@@ -704,28 +705,28 @@ function row_corr_up_sub (
         {
           for (; w <= 0; w+=stride)
           {
-            let block_ofs = 4*w;
-            let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
-            console.assert ((xx + w)%stride == 0);
+            let block_ofs = 4 * w;
+            let input_idx = row_ofs + (output_col_idx + block_ofs) / stride;
+            console.assert ((xx + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
-            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
           }
           for (; w <= post; w+=stride)
           {
-            let input_idx = row_ofs + 4 * right_reflect((xx + w)/stride, operate_width); // guaranteed to be divisible
-            console.assert ((xx + w)%stride == 0);
+            let input_idx = row_ofs + 4 * right_reflect((xx + w) / stride, operate_width);
+            console.assert ((xx + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
-            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
           }
         }
         // center
@@ -733,16 +734,16 @@ function row_corr_up_sub (
         {
           for (; w <= post; w+=stride)
           {
-            let block_ofs = 4*w;
-            let input_idx = row_ofs + (output_col_idx + block_ofs)/stride; // guaranteed to be divisible
-            console.assert ((xx + w)%stride == 0);
+            let block_ofs = 4 * w;
+            let input_idx = row_ofs + (output_col_idx + block_ofs) / stride;
+            console.assert ((xx + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
-            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
           }
         }
       }
@@ -751,103 +752,105 @@ function row_corr_up_sub (
 }
 
 
-/* Candidate for C++ conversion. */
-function col_corr_up_sub (
+/* Candidate for js->C->WebAssembly conversion. */
+function col_corr_up_mult_add (
   input, in_width,
   output, out_width,
   operate_width, operate_height,
   clip_height,
+  scale,
   stride
   )
 {
   if (use_wasm)
   {
-    _col_corr_up_sub (
+    _col_corr_up_mult_add (
       input.ptr, in_width,
       output.ptr, out_width,
       operate_width, operate_height,
       clip_height,
-      stride,
+      scale,
+      // stride,
       kernel.ptr, kernel.length,
-      input.length, output.length, buffer_init.MAGIC.ptr
+      input.length, output.length
     );
     return;
   }
 
-  var pre = Math.ceil((kernel.length-1)/2);
-  var post = Math.floor((kernel.length-1)/2);
+  var pre = Math.ceil ((kernel.length-1) / 2);
+  var post = Math.floor ((kernel.length-1) / 2);
 
   for (let y=0; y < operate_height; y++)
   {
     for (let x=0; x < operate_width; x++)
     {
-      let col_idx = 4*x;
-      let stop = Math.min((y+1)*stride, clip_height);
+      let col_idx = 4 * x;
+      let stop = Math.min ((y+1) * stride, clip_height);
 
       for (let yy=y*stride; yy < stop; yy++)
       {
-        let output_row_ofs = 4*yy*out_width;
+        let output_row_ofs = 4 * yy * out_width;
         let output_idx = output_row_ofs + col_idx;
 
-        console.assert (output_idx + 2 < output.length);
+        console.assert (output_idx + 3 < output.length);
 
-        let kernel_ofs = ((yy + pre) % stride + stride) % stride;
+        let kernel_ofs = mod_complement (yy + -pre, stride);
         let w = -pre + kernel_ofs;
 
-        // left edge
+        // top edge
         if (yy < pre)
         {
           for (; w <= 0; w+=stride)
           {
-            let input_idx = 4*left_reflect((yy + w)/stride, 0)*in_width + col_idx; // guaranteed to be divisible
-            console.assert ((yy + w)%stride == 0);
+            let input_idx = 4 * left_reflect ((yy + w) / stride, 0) * in_width + col_idx;
+            console.assert ((yy + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
-            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
           }
           for (; w <= post; w+=stride)
           {
-            let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
-            console.assert ((yy + w)%stride == 0);
+            let input_idx = 4 * (yy + w) / stride * in_width + col_idx;
+            console.assert ((yy + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
-            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
           }
         }
-        // right edge
+        // bottom edge
         else if (yy >= clip_height - post)
         {
           for (; w <= 0; w+=stride)
           {
-            let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
-            console.assert ((yy + w)%stride == 0);
+            let input_idx = 4 * (yy + w) / stride * in_width + col_idx;
+            console.assert ((yy + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
-            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
           }
           for (; w <= post; w+=stride)
           {
-            let input_idx = 4*right_reflect((yy + w)/stride, operate_height)*in_width + col_idx; // guaranteed to be divisible
-            console.assert ((yy + w)%stride == 0);
+            let input_idx = 4 * right_reflect((yy + w) / stride, operate_height) * in_width + col_idx;
+            console.assert ((yy + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
-            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
           }
         }
         // center
@@ -855,15 +858,15 @@ function col_corr_up_sub (
         {
           for (; w <= post; w+=stride)
           {
-            let input_idx = 4*(yy + w)/stride*in_width + col_idx; // guaranteed to be divisible
-            console.assert ((yy + w)%stride == 0);
+            let input_idx = 4 * (yy + w) / stride * in_width + col_idx;
+            console.assert ((yy + w) % stride == 0); // guaranteed to be divisible
             let kernel_idx = w + pre;
 
-            console.assert (input_idx + 2 < input.length);
+            console.assert (input_idx + 3 < input.length);
 
-            output[output_idx + 0] -= input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] -= input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] -= input[input_idx + 2] * kernel[kernel_idx];
+            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
+            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
+            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
           }
         }
       }
@@ -875,7 +878,7 @@ function col_corr_up_sub (
 /*
 For loop inspector:
 
-if (!(output_idx + 2 < output.length))
+if (!(output_idx + 3 < output.length))
 {
   window.dump = zip ($args(arguments.callee), Array.from (arguments));
   window.extra = ['x','y','yy','pre','post','output_idx','output.length','output.height','input.height'];
@@ -889,7 +892,7 @@ if (!(output_idx + 2 < output.length))
 /* Not used. */
 /*
 var gauss_kernels = [];
-var gaussian = (x, mu, sigma) => Math.exp (-Math.pow((x-mu)/sigma,2)/2);
+var gaussian = (x, mu, sigma) => Math.exp (-Math.pow((x-mu) / sigma,2) / 2);
 function get_gauss_kernel (window)
 {
   if (gauss_kernels[window - 1])

@@ -13,6 +13,7 @@
 #define END_DEMANGLE
 #endif
 
+#include <stdio.h>
 
 DEMANGLE
 EXPORT

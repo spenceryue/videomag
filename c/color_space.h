@@ -20,19 +20,19 @@
 
 DEMANGLE
 EXPORT
-void rgb2ntsc (float* input, int width, int height, float* output);
+void rgb2ntsc (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void rgb2ntsc_fscs (float* input, int width, int height, float* output);
+void rgb2ntsc_fscs (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void ntsc2rgb (float* input, int width, int height, float* output);
+void ntsc2rgb (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void ntsc2rgb_fscs (float* input, int width, int height, float* output);
+void ntsc2rgb_fscs (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 /*
@@ -42,19 +42,23 @@ void ntsc2rgb_fscs (float* input, int width, int height, float* output);
   FSCS packed in as well (not much effect).
 */
 EXPORT
-void rgb2ycbcr (float* input, int width, int height, float* output);
+void rgb2ycbcr (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void ycbcr2rgb (float* input, int width, int height, float* output);
+void ycbcr2rgb (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void rgb2ycbcr_fscs (float* input, int width, int height, float* output);
+void rgb2ycbcr_fscs (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void ycbcr2rgb_fscs (float* input, int width, int height, float* output);
+void ycbcr2rgb_fscs (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
+
+
+EXPORT
+void adjust_gamma (float* input, int width, int height, float* output, float gamma, int IN_LENGTH, int OUT_LENGTH);
 END_DEMANGLE
 
 

@@ -11,24 +11,8 @@ function build_pyramid (width, height, level)
   var depth = max_pyramid_depth (width, height, blur_size);
   for (let i=0; i < depth-1; i++)
   {
-    // console.log ('pyramid i: ', i);
-    // var tmp = malloc (IntermediateTypedArray, pyramid[i].length);
-    // tmp.width = pyramid[i].width;
-    // tmp.height = pyramid[i].height;
     corr2_down (pyramid[i], buf[2], pyramid[i+1]);
-    // array_copy (pyramid[i], pyramid[i+1], pyramid[i+1].height, pyramid[i+1].width);
-    // array_copy (pyramid[i+1], tmp);
-    corr2_up (pyramid[i+1], buf[2], pyramid[i], false);
-    // full_scale_contrast_stretch (tmp);
-    // full_scale_contrast_stretch (pyramid[i]);
-/*    for (let j=0; j<tmp.length; j++)
-    {
-      if (j%4==3)
-        continue;
-      // pyramid[i][j] -= tmp[j];
-      pyramid[i][j] = tmp[j];
-    }*/
-    // free (tmp);
+    corr2_up (pyramid[i+1], buf[2], pyramid[i], -(PYRAMID_STRIDE**2));
   }
 }
 
@@ -151,7 +135,7 @@ function display_pyramid ()
 function display_old_pyramid (c)
 {
   for (let i=0; i < c.length; i++)
-    show_image (c[i].getContext ('2d'), pyramid[i+1], buf0_color);
+    img_show (c[i].getContext ('2d'), pyramid[i+1]);
 }
 
 

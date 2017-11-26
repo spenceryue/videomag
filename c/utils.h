@@ -20,17 +20,37 @@
 
 DEMANGLE
 EXPORT
+void full_scale_contrast_stretch (float* input, int length, float min, float max);
+
+
+EXPORT
 void fill_alpha (float* input, int length, float value);
 
 
 EXPORT
-void full_scale_contrast_stretch (float* input, int length, float min, float max);
+void img_copy (float* input, int in_width, float* output, int out_width, int rows, int cols, int IN_LENGTH, int OUT_LENGTH);
+
+
+EXPORT
+void img_copy_a (float* input, int in_width, float* output, int out_width, int rows, int cols, int IN_LENGTH, int OUT_LENGTH);
 END_DEMANGLE
 
 
 static inline int next_multiple (int x, int m)
 {
   return x + (m - x % m) % m;
+}
+
+
+static inline int positive_mod (int x, int m)
+{
+  return (x < 0) ? ((x % m + m) % m) : (x % m);
+}
+
+
+static inline int mod_complement (int x, int m)
+{
+  return positive_mod (-x, m);
 }
 
 
@@ -68,6 +88,7 @@ static inline int min (int a, int b)
 #define ASSERT(args...) ((void) 0)
 #else
 #include <assert.h>
+#include <stdio.h>
 #define ASSERT(pred, msg...) do {if (!(pred)) {fprintf (stderr, "%s : %d : Assertion failed: %s\n", __FUNCTION__, __LINE__, #pred); fprintf (stderr, msg); assert ((pred));}} while(0)
 #endif
 
@@ -96,7 +117,11 @@ int main (int argc, char** argv)
   }
 
   if (argv[2][0] != '0')
+  {
     printf ("next_multiple (x=%d, m=%d) = %d\n", atoi ( argv[1] ), atoi ( argv[2] ), next_multiple ( atoi ( argv[1] ), atoi ( argv[2] ) ) );
+    printf ("positive_mod (x=%d, m=%d) = %d\n", atoi ( argv[1] ), atoi ( argv[2] ), positive_mod ( atoi ( argv[1] ), atoi ( argv[2] ) ) );
+    printf ("mod_complement (x=%d, m=%d) = %d\n", atoi ( argv[1] ), atoi ( argv[2] ), mod_complement ( atoi ( argv[1] ), atoi ( argv[2] ) ) );
+  }
   printf ("left_reflect (i=%d, min=%d) = %d\n", atoi ( argv[1] ), atoi ( argv[2] ), left_reflect ( atoi ( argv[1] ), atoi ( argv[2] ) ) );
   printf ("right_reflect (i=%d, max=%d) = %d\n", atoi ( argv[1] ), atoi ( argv[2] ), right_reflect ( atoi ( argv[1] ), atoi ( argv[2] ) ) );
   printf ("min (a=%d, a=%d) = %d\n", atoi ( argv[1] ), atoi ( argv[2] ), min ( atoi ( argv[1] ), atoi ( argv[2] ) ) );

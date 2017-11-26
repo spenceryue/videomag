@@ -1,26 +1,15 @@
 'use strict';
 
 
-/* Candidate for C->WebAssembly conversion. */
-function fill_alpha (input, value)
+/* Candidate for js->C->WebAssembly conversion. */
+function full_scale_contrast_stretch (input, min, max, _use_wasm=use_wasm)
 {
-  for (let i=0; i < input.length; i+=4)
-    input[i + 3] = value;
+  if (_use_wasm)
+  {
+    _full_scale_contrast_stretch (input.ptr, length, min, max);
+    return input;
+  }
 
-  return input;
-}
-
-
-/* Possible C->WebAssembly dependency. */
-function next_multiple (x, m)
-{
-  return x + (m - x % m) % m;
-}
-
-
-/* Candidate for C->WebAssembly conversion. */
-function full_scale_contrast_stretch (input, min, max)
-{
   if (min == undefined || max == undefined)
   {
     min = 255;
@@ -43,39 +32,38 @@ function full_scale_contrast_stretch (input, min, max)
 }
 
 
-/* Possible C->WebAssembly dependency. */
-function left_reflect (i, min)
+/* Candidate for js->C->WebAssembly conversion. */
+function fill_alpha (input, value, _use_wasm=use_wasm)
 {
-  // start + [ reflected distance ]
-  // (min) + [ (min - 1) - i ]
-  return (i < min) ? 2 * min - 1 - i : i;
+  if (_use_wasm)
+  {
+    _fill_alpha (input.ptr, input.length, value);
+    return input;
+  }
+
+  for (let i=0; i < input.length; i+=4)
+  {
+    console.assert (i + 3 < input.length, "i: %d, input.length: %d", i, input.length);
+    input[i + 3] = value;
+  }
+
+  return input;
 }
 
 
-/* Possible C->WebAssembly dependency. */
-function right_reflect (i, max)
-{
-  // (last valid) - (reflected distance)
-  // (max - 1) - (i - max)
-  return (i >= max) ? 2 * max - 1 - i : i;
-}
-
-
-/* Possible C->WebAssembly dependency. */
-function both_reflect (i, min, max)
-{
-  // (last valid) - (reflected distance)
-  // (max - 1) - (i - max)
-  return left_reflect (right_reflect (i, max), min);
-}
-
-
-function array_copy (input, output, rows = input.height, cols = input.width)
+/* Candidate for js->C->WebAssembly conversion. */
+function img_copy (input, output, rows=input.height, cols=input.width, _use_wasm=use_wasm)
 {
   console.assert (typeof input.width != 'undefined')
   console.assert (typeof input.height != 'undefined')
   console.assert (typeof output.width != 'undefined')
   console.assert (typeof output.height != 'undefined')
+
+  if (_use_wasm)
+  {
+    _img_copy (input.ptr, input.width, output, output.width, rows, cols, input.length, output.length);
+    return;
+  }
 
   for (let y=0; y < rows; y++)
   {
@@ -87,8 +75,8 @@ function array_copy (input, output, rows = input.height, cols = input.width)
       let input_idx = row_ofs + 4 * x;
       let output_idx = output_row_ofs + 4 * x;
 
-      console.assert (input_idx < input.length);
-      console.assert (output_idx < output.length);
+      console.assert (input_idx + 3 < input.length);
+      console.assert (output_idx + 3 < output.length);
 
       output[output_idx + 0] = input[input_idx + 0];
       output[output_idx + 1] = input[input_idx + 1];
@@ -99,12 +87,19 @@ function array_copy (input, output, rows = input.height, cols = input.width)
 }
 
 
-function array_copy_a (input, output, rows = input.height, cols = input.width)
+/* Candidate for js->C->WebAssembly conversion. */
+function img_copy_a (input, output, rows=input.height, cols=input.width, _use_wasm=use_wasm)
 {
   console.assert (typeof input.width != 'undefined')
   console.assert (typeof input.height != 'undefined')
   console.assert (typeof output.width != 'undefined')
   console.assert (typeof output.height != 'undefined')
+
+  if (_use_wasm)
+  {
+    _img_copy_a (input.ptr, input.width, output, output.width, rows, cols, input.length, output.length);
+    return;
+  }
 
   for (let y=0; y < rows; y++)
   {
@@ -116,8 +111,8 @@ function array_copy_a (input, output, rows = input.height, cols = input.width)
       let input_idx = row_ofs + 4 * x;
       let output_idx = output_row_ofs + 4 * x;
 
-      console.assert (input_idx < input.length);
-      console.assert (output_idx < output.length);
+      console.assert (input_idx + 3 < input.length);
+      console.assert (output_idx + 3 < output.length);
 
       output[output_idx + 0] = input[input_idx + 0];
       output[output_idx + 1] = input[input_idx + 1];
@@ -125,6 +120,77 @@ function array_copy_a (input, output, rows = input.height, cols = input.width)
       output[output_idx + 3] = input[input_idx + 3];
     }
   }
+}
+
+
+function img_show (context, img, x=0, y=0, from_color_space=color_space, fscs=use_fscs, from_gamma_correction=gamma_correction)
+{
+  to_rgb (
+    from_color_space,
+    img,
+    img.width,
+    img.height,
+    img,
+    fscs
+  );
+
+  adjust_gamma (img, img.width, img.height, img, 1/from_gamma_correction);
+
+  let data = new ImageData (
+    new Uint8ClampedArray (img),
+    img.width,
+    img.height
+  );
+
+  context.putImageData (data, x, y);
+}
+
+
+/* Possible js->C->WebAssembly dependency. */
+function next_multiple (x, m)
+{
+  return x + (m - x % m) % m;
+}
+
+
+/* Possible js->C->WebAssembly dependency. */
+function positive_mod (x, m)
+{
+  return (x < 0) ? ((x % m + m) % m) : (x % m);
+}
+
+
+/* Possible js->C->WebAssembly dependency. */
+function mod_complement (x, m)
+{
+  return positive_mod (-x, m);
+}
+
+
+/* Possible js->C->WebAssembly dependency. */
+function left_reflect (i, min)
+{
+  // start + [ reflected distance ]
+  // (min) + [ (min - 1) - i ]
+  return (i < min) ? 2 * min - 1 - i : i;
+}
+
+
+/* Possible js->C->WebAssembly dependency. */
+function right_reflect (i, max)
+{
+  // (last valid) - (reflected distance)
+  // (max - 1) - (i - max)
+  return (i >= max) ? 2 * max - 1 - i : i;
+}
+
+
+/* Possible js->C->WebAssembly dependency. */
+function both_reflect (i, min, max)
+{
+  // (last valid) - (reflected distance)
+  // (max - 1) - (i - max)
+  return left_reflect (right_reflect (i, max), min);
 }
 
 
@@ -163,25 +229,4 @@ function add_div (width, height, parent, left=0, top=0)
   }
 
   return a;
-}
-
-
-function show_image (context, img, from_color_space='rgb', x=0, y=0, fscs=use_fscs)
-{
-  img = to_rgb (
-    from_color_space,
-    img,
-    img.width,
-    img.height,
-    img,
-    fscs
-  );
-
-  let data = new ImageData (
-    new Uint8ClampedArray (img),
-    img.width,
-    img.height
-  );
-
-  context.putImageData (data, x, y);
 }

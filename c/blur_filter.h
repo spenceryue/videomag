@@ -18,29 +18,76 @@
 #endif
 
 
+#define STRIDE 2
+
+
 DEMANGLE
 EXPORT
-void row_corr_down (float* input, int in_width, float* output, int out_width, int operate_width, int operate_height, int stride, float* kernel, int window, int IN_LENGTH, int OUT_LENGTH, void** MAGIC);
+void row_corr_down (
+  float* input, int in_width,
+  float* output, int out_width,
+  int operate_width, int operate_height,
+  // int stride,
+  float* kernel, int window,
+  int IN_LENGTH, int OUT_LENGTH
+);
 
 
 EXPORT
-void col_corr_down (float* input, int in_width, float* output, int out_width, int operate_width, int operate_height, int stride, float* kernel, int window, int IN_LENGTH, int OUT_LENGTH, void** MAGIC);
+void col_corr_down (
+  float* input, int in_width,
+  float* output, int out_width,
+  int operate_width, int operate_height,
+  // int stride,
+  float* kernel, int window,
+  int IN_LENGTH, int OUT_LENGTH
+);
 
 
 EXPORT
-void row_corr_up (float* input, int in_width, float* output, int out_width, int operate_width, int operate_height, int clip_width, int stride, float* kernel, int window, int IN_LENGTH, int OUT_LENGTH, void** MAGIC);
+void row_corr_up (
+  float* input, int in_width,
+  float* output, int out_width,
+  int operate_width, int operate_height,
+  // int stride,
+  int clip_width, float* kernel,
+  int window, int IN_LENGTH, int OUT_LENGTH
+);
 
 
 EXPORT
-void col_corr_up (float* input, int in_width, float* output, int out_width, int operate_width, int operate_height, int clip_height, int stride, float* kernel, int window, int IN_LENGTH, int OUT_LENGTH, void** MAGIC);
+void col_corr_up (
+  float* input, int in_width,
+  float* output, int out_width,
+  int operate_width, int operate_height,
+  // int stride,
+  int clip_height, float* kernel,
+  int window, int IN_LENGTH, int OUT_LENGTH
+);
 
 
 EXPORT
-void row_corr_up_sub (float* input, int in_width, float* output, int out_width, int operate_width, int operate_height, int clip_width, int stride, float* kernel, int window, int IN_LENGTH, int OUT_LENGTH, void** MAGIC);
+void row_corr_up_mult_add (
+  float* input, int in_width,
+  float* output, int out_width,
+  int operate_width, int operate_height,
+  // int stride,
+  int clip_width, int scale,
+  float* kernel, int window,
+  int IN_LENGTH, int OUT_LENGTH
+ );
 
 
 EXPORT
-void col_corr_up_sub (float* input, int in_width, float* output, int out_width, int operate_width, int operate_height, int clip_height, int stride, float* kernel, int window, int IN_LENGTH, int OUT_LENGTH, void** MAGIC);
+void col_corr_up_mult_add (
+  float* input, int in_width,
+  float* output, int out_width,
+  int operate_width, int operate_height,
+  // int stride,
+  int clip_height, int scale,
+  float* kernel, int window,
+  int IN_LENGTH, int OUT_LENGTH
+ );
 END_DEMANGLE
 
 

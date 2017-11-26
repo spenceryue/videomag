@@ -12,13 +12,14 @@
   <div class='layer center loading'>
     <video class='source hide' muted loop autoplay playsinline></video>
     <img class='source hide' src='einstein.png'>
+    <img class='source hide' src='einstein.jpg'>
 
     <div class='wrapper loading'>
       <canvas class='sink'></canvas>
     </div>
   </div>
 
-  <div class='layer right loading' style='margin-right: 50px'>
+  <div class='layer right loading'>
     <div class='option'>
       <label>reflect horizontally</label>
       <input type="checkbox" name='reflect_x'>
@@ -40,7 +41,7 @@
       <input type="checkbox" name='show_pyramid'>
     </div>
     <div class='option'>
-      <label>compute with WebAssembly</label>
+      <label>run with WebAssembly</label>
       <input type="checkbox" name='use_wasm'>
     </div>
     <div class='option'>
@@ -52,21 +53,16 @@
       <input type="range" name='filter_size'>
     </div>
     <div class='option'>
-      <div>blur color space</div>
-      <input type="radio" name='buf0_color' value='rgb'>
-      <label>RGB</label>
-      <input type="radio" name='buf0_color' value='ntsc'>
-      <label>NTSC</label>
-      <input type="radio" name='buf0_color' value='ycbcr'>
-      <label>YCbCr</label>
+      <label>gamma correction</label>
+      <input type="range" name='gamma_correction'>
     </div>
     <div class='option'>
-      <div>magnification color space</div>
-      <input type="radio" name='buf1_color' value='rgb'>
+      <div>color space</div>
+      <input type="radio" name='color_space' value='rgb'>
       <label>RGB</label>
-      <input type="radio" name='buf1_color' value='ntsc'>
+      <input type="radio" name='color_space' value='ntsc'>
       <label>NTSC</label>
-      <input type="radio" name='buf1_color' value='ycbcr'>
+      <input type="radio" name='color_space' value='ycbcr'>
       <label>YCbCr</label>
     </div>
   </div>

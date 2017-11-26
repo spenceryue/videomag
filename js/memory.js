@@ -53,7 +53,6 @@ function buffer_init ()
   /* General purpose buffers. */
   for (let i=0; i < buf.length; i++)
   {
-
     buf[i] = fill_alpha (malloc (IntermediateTypedArray, 4 * FRAME_WIDTH * FRAME_HEIGHT), 255);
     buf[i].width = FRAME_WIDTH;
     buf[i].height = FRAME_HEIGHT;
@@ -99,6 +98,7 @@ function free (array)
 function malloc (ArrayType, length)
 {
   var bytes_needed = bytesPerElement_map.get(ArrayType) * length;
+  console.log (bytes_needed);
 
   var ptr = Module._malloc (bytes_needed);
   console.assert (!heap_map.has (ptr));

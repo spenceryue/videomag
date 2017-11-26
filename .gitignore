@@ -3,7 +3,8 @@
 **/*.pyc
 c/*.js
 c/*.wasm
+c/*.wasm.map
+c/*.wasm.pre
 c/*.wast
 c/*.o
-**/a.out
-c/utils
+c/a.out
