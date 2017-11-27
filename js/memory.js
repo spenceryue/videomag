@@ -129,7 +129,7 @@ function get_resized_array (array, width, height)
 
 function update_filter_size (new_filter_size)
 {
-  filter_size = Number(new_filter_size);
+  filter_size = new_filter_size;
   filter_size_changed = true;
 }
 
@@ -145,7 +145,7 @@ function set_filter_dims ()
 
 function update_blur_size (new_blur_size)
 {
-  blur_size = Number(new_blur_size);
+  blur_size = new_blur_size;
   blur_size_changed = true;
 }
 

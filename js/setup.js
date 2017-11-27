@@ -31,8 +31,8 @@ var defaults =
   'blur_size': {min:1, max:50, step:2, value:5, print:(x => x + 'px')},
   'filter_size': {min:1, max:100, step:1, value:50, print:(x => x + '%')},
   'gamma_correction': {min:0, max:100, step:1, value:50, print:(x => calculate_gamma(x).toFixed(2))},
-  'f_low': {min:0, max:15, step:'any', value:0.2, print:(x => x + 'Hz')},
-  'f_high': {min:0, max:15, step:'any', value:3, print:(x => x + 'Hz')},
+  'f_low': {min:0, max:15, step:.01, value:0.2, print:(x => x + 'Hz')},
+  'f_high': {min:0, max:15, step:.01, value:3, print:(x => x + 'Hz')},
   'color_space': 'ycbcr',
 };
 
@@ -113,7 +113,7 @@ function set_option (name, value)
   switch (document.getElementsByName(name)[0].type)
   {
     case 'checkbox':
-      document.getElementsByName(name)[0].checked = value || defaults[name];
+      document.getElementsByName(name)[0].checked = (value) ? value : defaults[name];
       break;
     case 'range':
       if (!value)
@@ -192,7 +192,7 @@ function range_ui_init (range_element)
     }
 
     var new_input = clamp (scale * x + offset, min, max);
-    element.value = Math.floor ((new_input - min + step/2) / step) * step + min;
+    element.value = Math.round ((new_input - min) / step) * step + min;
 
     label.innerHTML = print (element.value);
 
@@ -201,7 +201,6 @@ function range_ui_init (range_element)
 
   function detach ()
   {
-    console.log ('detaching')
     document.body.removeEventListener ('mousemove', handler);
     label.innerHTML = save;
     element.classList.toggle ('input_focus');
@@ -238,7 +237,6 @@ function radio_ui_init (radio_elements)
     if (event.target.type == 'radio')
       return;
 
-    console.log ('hi', event.currentTarget, event.target)
     current = (elements.findIndex (e => e.checked) + 1) % length;
     element = elements[current];
     element.checked = true;
@@ -340,19 +338,29 @@ function options_init ()
 
   blur_size = defaults['blur_size'].value;
   bind_option ('blur_size', function () {
-    update_blur_size(this.value);
+    update_blur_size(Number(this.value));
   });
   blur_size_changed = true;
 
   filter_size = defaults['filter_size'].value;
   bind_option ('filter_size', function () {
-    update_filter_size(this.value);
+    update_filter_size(Number(this.value));
   });
   filter_size_changed = true;
 
+  f_low = defaults['f_low'].value;
+  bind_option ('f_low', function () {
+    f_low = Number(this.value);
+  });
+
+  f_high = defaults['f_high'].value;
+  bind_option ('f_high', function () {
+    f_high = Number(this.value);
+  });
+
   gamma_correction = calculate_gamma (defaults['gamma_correction'].value);
   bind_option ('gamma_correction', function () {
-    gamma_correction = calculate_gamma (this.value);
+    gamma_correction = calculate_gamma (Number(this.value));
   });
 
   color_space = defaults['color_space'];
@@ -362,7 +370,6 @@ function options_init ()
   });
   check_fscs ();
 
-  document.querySelector('.options').classList.toggle ('hide');
   console.log('options initialized.')
 }
 
@@ -394,6 +401,7 @@ function loaded ()
   loading.forEach (e => e.classList.replace ('loading', 'fade_in'));
   setTimeout (() => loading.forEach (e => e.classList.toggle('fade_in')), 330);
   spinner_init ();
+  document.querySelector('.options').classList.toggle ('hide');
 }
 
 
