@@ -1,6 +1,6 @@
 'use strict';
 
-
+var kernel = null;
 var KernelTypedArray = Float32Array;
 var binomial_kernels =
 [

@@ -1,21 +1,10 @@
-*
+:root
 {
-  box-sizing: border-box;
-}
-
-@font-face
-{
-  font-family: Ubuntu;
-  font-style: normal;
-  font-weight: 400;
-  src: local('Ubuntu'),
-       url('https://fonts.googleapis.com/css?family=Ubuntu');
-  unicode-range: U+000-5FF; /* Latin glyphs */
+  font-family: 'Ubuntu';
 }
 
 body
 {
-  font-family: Ubuntu, sans-serif;
   margin: 0;
 }
 
@@ -26,7 +15,7 @@ body
 
 .hide
 {
-  display: none;
+  display: none !important;
 }
 
 .center
@@ -37,7 +26,14 @@ body
   transform: translate(-50%, -50%);
 }
 
-.middle
+.center_x
+{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.center_y
 {
   position: absolute;
   top: 50%;
@@ -56,6 +52,17 @@ body
   left: 0;
 }
 
+.bottom
+{
+  position: absolute;
+  bottom: 0;
+}
+
+.fixed
+{
+  position: fixed !important;
+}
+
 .debug_border
 {
   border: 2px solid green;
@@ -63,15 +70,17 @@ body
 
 .loading
 {
-  opacity: 0;
+  opacity: 0 !important;
 }
 
 .source
 {
+  user-select: none;
 }
 
 .sink
 {
+  user-select: none;
 }
 
 .wrapper
@@ -86,34 +95,149 @@ body
 
 input[type=checkbox]
 {
-  width: 50px;
+  min-width: 50px;
   height: 50px;
+
+  cursor: pointer;
+
+  box-shadow: none !important;
 }
 
 input[type=range]
 {
-  width: 150px;
-  height: 50px;
+  max-width: 38.1%;
+
+  -webkit-appearance: none;
+  width: 100%;
+  border-radius: 8px;
+  height: 7px;
+  border: 1px solid #bdc3c7;
+  background-color: #fff;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  background-color: #ecf0f1;
+  border: 1px solid #bdc3c7;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  cursor: pointer;
 }
 
 input[type=radio]
 {
-  width: 50px;
-  height: 50px;
+  min-width: 1.5rem;
+  height: 1.5rem;
+
+  box-shadow: none !important;
+}
+
+input:focus, .input_focus {
+    border-color: rgb(23, 143, 229);
+    outline: none;
+    box-shadow: 0 0px 1px rgba(23, 143, 229, 0.075) inset, 0 0 8px rgba(23, 143, 229, 0.6);
+}
+
+.option > label
+{
+  flex-grow: 1;
+
+  text-align: center;
+  user-select: none;
+}
+
+.option > input
+{
+  flex-grow: 0;
 }
 
 .option
 {
+  min-height: 50px;
+
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  padding-left: 2%;
+  padding-right: 2%;
+
+  color: rgba(0,0,0,.763);
+  text-shadow: 1px 1px rgba(255,255,255,.763);
+}
+
+.option:hover
+{
+  background-color: rgba(0,0,0,.236);
+
+  color: white;
+  text-shadow: 1px 1px rgba(0,0,0,.381);
+}
+
+.option:active
+{
+  background-color: rgba(0,0,0,.618);
+
+  color: white;
+  text-shadow: 1px 1px rgba(0,0,0,.381);
+}
+
+.options
+{
+  position: fixed;
+  width: 30vw;
+  max-width: 330px;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  background-color: rgba(255,255,255,.763);
+  border-left: 1px solid rgba(255,255,255,.763);
+  outline: 2px solid rgba(0,0,0,.236);
+
+  opacity: 0;
+  transition: opacity .15s ease-in;
+}
+
+.options:hover
+{
+  opacity: 1;
+  transition: opacity .15s ease-out;
+}
+
+.options_lock
+{
+  position: absolute;
+  left: 0;
+  top: 0;
+
+  opacity: .5;
+  transform: translate(-150%, 25%);
+  transition: all .15s ease-in;
+}
+
+.options_lock:hover
+{
+  opacity: 1;
+  transform: translate(-150%, 25%) scale(1.236);
+  transition: all .15s ease-out;
+}
+
+.options_lock_docked
+{
+  opacity: 1;
+  transform: translate(-150%, 25%) scale(1.236);
 }
 
 .stat
 {
-  display: flex;
+  /*display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-start;*/
+
+  font-family: 'Varela Round';
 }
 
 .spinner
@@ -122,6 +246,8 @@ input[type=radio]
   width: 120px;
   animation: .67s spin linear infinite;
 
+  user-select: none;
+
   border: 3px solid skyblue;
   border-top: 3px solid pink;
   border-radius: 50%;
@@ -129,14 +255,19 @@ input[type=radio]
 
 .fade_in
 {
-  opacity: 1;
-  transition: opacity .33s ease;
+  opacity: 1 !important;
+  transition: opacity .33s ease-in;
 }
 
 .fade_out
 {
-  opacity: 0;
-  transition: opacity .33s ease;
+  opacity: 0 !important;
+  transition: opacity .33s ease-out;
+}
+
+.visible
+{
+  opacity: 1 !important;
 }
 
 @keyframes spin

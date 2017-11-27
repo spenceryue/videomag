@@ -3,6 +3,7 @@
 <head>
   <title>Video Magnification</title>
   <link rel='stylesheet' href='styles.css'></link>
+  <link href="https://fonts.googleapis.com/css?family=Ubuntu|Varela+Round" rel="stylesheet">
 </head>
 <body>
   <div class='center'>
@@ -19,7 +20,8 @@
     </div>
   </div>
 
-  <div class='layer right loading'>
+  <div class='options layer right hide'>
+    <div class='options_lock'>&#x1F512;</div>
     <div class='option'>
       <label>reflect horizontally</label>
       <input type="checkbox" name='reflect_x'>
@@ -57,9 +59,15 @@
       <input type="range" name='gamma_correction'>
     </div>
     <div class='option'>
-      <div>color space</div>
-      <input type="radio" name='color_space' value='rgb'>
-      <label>RGB</label>
+      <label>low frequency (Hz)</label>
+      <input type="range" name='f_low'>
+    </div>
+    <div class='option'>
+      <label>high frequency (Hz)</label>
+      <input type="range" name='f_high'>
+    </div>
+    <div class='option'>
+      <label>color space</label>
       <input type="radio" name='color_space' value='ntsc'>
       <label>NTSC</label>
       <input type="radio" name='color_space' value='ycbcr'>
@@ -67,9 +75,10 @@
     </div>
   </div>
 
-  <div class='left middle loading'>
+  <div class='fixed left bottom loading'>
     <div class='stat'>
-      <label>FPS:&nbsp;</label><span class='fps'></span>
+      <span class='fps'></span>
+      <label>&nbsp;FPS</label>
     </div>
   </div>
 

@@ -7,7 +7,7 @@ function rgb_to (to, input, width, height, output, fscs, copy=false)
   {
     case 'rgb':
       if (copy)
-        img_copy (input, output, height, width);
+        img_copy (input, output, width, height);
       else
         output = input;
       break;
@@ -34,7 +34,7 @@ function to_rgb (from, input, width, height, output, fscs, copy=false)
   {
     case 'rgb':
       if (copy)
-        img_copy (input, output, height, width);
+        img_copy (input, output, width, height);
       else
         output = input;
       break;

@@ -1,18 +1,9 @@
 'use strict';
 
 
-var pyramid = [];
-var kernel = null;
-var low1_pyramid = null;
-var low2_pyramid = null;
-
-
+var pyramids = Array (1);
 var buf = Array (3);
 var IntermediateTypedArray = Float32Array;
-
-
-var blur_size_changed;
-var filter_size_changed;
 
 
 var heap_map = new Set();
@@ -59,16 +50,20 @@ function buffer_init ()
   }
 
   /* Pyramid buffers. */
-  var width = FRAME_WIDTH;
-  var height = FRAME_HEIGHT;
-  var depth = max_pyramid_depth(width, height, 1);
-  for (let i=0; i < depth; i++)
+  for (let i=0; i < pyramids.length; i++)
   {
-    pyramid[i] = fill_alpha (malloc (IntermediateTypedArray, 4 * width * height), 255);
-    pyramid[i].width = width;
-    pyramid[i].height = height;
+    let pyramid = pyramids[i] = [];
+    let width = FRAME_WIDTH;
+    let height = FRAME_HEIGHT;
+    let depth = max_pyramid_depth(width, height, 1);
+    for (let j=0; j < depth; j++)
+    {
+      pyramid[j] = fill_alpha (malloc (IntermediateTypedArray, 4 * width * height), 255);
+      pyramid[j].width = width;
+      pyramid[j].height = height;
 
-    [width, height] = next_pyramid_dimensions (width, height);
+      [width, height] = next_pyramid_dimensions (width, height);
+    }
   }
 
   /* To check for memory corruption.
@@ -98,7 +93,9 @@ function free (array)
 function malloc (ArrayType, length)
 {
   var bytes_needed = bytesPerElement_map.get(ArrayType) * length;
-  console.log (bytes_needed);
+  malloc.total += bytes_needed;
+  console.log ('malloc:\t%s bytes', bytes_needed.toLocaleString())
+  console.log ('\t   [%s total]', malloc.total.toLocaleString());
 
   var ptr = Module._malloc (bytes_needed);
   console.assert (!heap_map.has (ptr));
@@ -112,6 +109,7 @@ function malloc (ArrayType, length)
 
   return resultArray;
 }
+malloc.total = 0;
 
 
 function get_resized_array (array, width, height)
@@ -131,7 +129,7 @@ function get_resized_array (array, width, height)
 
 function update_filter_size (new_filter_size)
 {
-  filter_size = new_filter_size;
+  filter_size = Number(new_filter_size);
   filter_size_changed = true;
 }
 
@@ -147,7 +145,7 @@ function set_filter_dims ()
 
 function update_blur_size (new_blur_size)
 {
-  blur_size = new_blur_size;
+  blur_size = Number(new_blur_size);
   blur_size_changed = true;
 }
 
@@ -156,14 +154,18 @@ function fulfill_resize (width, height)
 {
   if (blur_size_changed || filter_size_changed)
   {
-    let w = width;
-    let h = height;
-    let depth = max_pyramid_depth(w, h, blur_size);
-    for (let i=0; i < depth; i++)
+    for (let i=0; i < pyramids.length; i++)
     {
-      pyramid[i] = get_resized_array (pyramid[i], w, h);
+      let pyramid = pyramids[i];
+      let w = width;
+      let h = height;
+      let depth = max_pyramid_depth(w, h, blur_size);
+      for (let j=0; j < depth; j++)
+      {
+        pyramid[j] = get_resized_array (pyramid[j], w, h);
 
-      [w, h] = next_pyramid_dimensions (w, h);
+        [w, h] = next_pyramid_dimensions (w, h);
+      }
     }
 
     if (blur_size_changed)

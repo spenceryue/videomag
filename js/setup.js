@@ -13,7 +13,11 @@ var use_wasm;
 var blur_size;
 var filter_size;
 var gamma_correction;
+var f_low;
+var f_high;
 var color_space;
+var blur_size_changed;
+var filter_size_changed;
 
 
 var defaults =
@@ -24,9 +28,11 @@ var defaults =
   'use_fscs': true,
   'show_pyramid': true,
   'use_wasm': true,
-  'blur_size': {min:1, max:50, step:2, value:5},
-  'filter_size': {min:1, max:100, step:1, value:50},
-  'gamma_correction': {min:0, max:100, step:1, value:50},
+  'blur_size': {min:1, max:50, step:2, value:5, print:(x => x + 'px')},
+  'filter_size': {min:1, max:100, step:1, value:50, print:(x => x + '%')},
+  'gamma_correction': {min:0, max:100, step:1, value:50, print:(x => calculate_gamma(x).toFixed(2))},
+  'f_low': {min:0, max:15, step:'any', value:0.2, print:(x => x + 'Hz')},
+  'f_high': {min:0, max:15, step:'any', value:3, print:(x => x + 'Hz')},
   'color_space': 'ycbcr',
 };
 
@@ -112,10 +118,14 @@ function set_option (name, value)
     case 'range':
       if (!value)
       {
-        document.getElementsByName(name)[0].value = defaults[name].value;
-        document.getElementsByName(name)[0].min = defaults[name].min;
-        document.getElementsByName(name)[0].max = defaults[name].max;
-        document.getElementsByName(name)[0].step = defaults[name].step;
+        let element = document.getElementsByName(name)[0];
+        element.defaultValue = defaults[name].value;
+        element.value = defaults[name].value;
+        element.min = defaults[name].min;
+        element.max = defaults[name].max;
+        element.step = defaults[name].step;
+        element.print = defaults[name].print;
+
       }
       else
         document.getElementsByName(name)[0].value = value;
@@ -146,6 +156,122 @@ function bind_option (name, updater)
 }
 
 
+function checkbox_ui_init (checkbox_element)
+{
+  var element = checkbox_element;
+  var parent = element.parentNode;
+
+  parent.onclick = function (event)
+  {
+    if (event.target == element)
+      return;
+
+    element.checked = !element.checked;
+    element.onchange();
+  };
+}
+
+
+function range_ui_init (range_element)
+{
+  var element = range_element;
+  var parent = element.parentNode;
+  var label = parent.querySelector('label');
+  var save = label.innerHTML;
+  var [min, step, max] = [Number (element.min), Number (element.step), Number (element.max)];
+  var print = (element.print) ? element.print : (x => x);
+  var left, right, start, width, scale, offset;
+
+  function handler (event)
+  {
+    var x = event.clientX + pageXOffset;
+    if (x < left || x > right)
+    {
+      detach ();
+      return;
+    }
+
+    var new_input = clamp (scale * x + offset, min, max);
+    element.value = Math.floor ((new_input - min + step/2) / step) * step + min;
+
+    label.innerHTML = print (element.value);
+
+    element.oninput();
+  }
+
+  function detach ()
+  {
+    console.log ('detaching')
+    document.body.removeEventListener ('mousemove', handler);
+    label.innerHTML = save;
+    element.classList.toggle ('input_focus');
+  }
+
+  parent.addEventListener ('mousedown', function (event)
+  {
+    left = parent.getBoundingClientRect().left + pageXOffset;
+    right = left + parent.getBoundingClientRect().width;
+    start = event.clientX + pageXOffset;
+    width = element.getBoundingClientRect().width;
+    scale = (Number(element.max) - Number(element.min)) / width;
+    offset = -start * scale + Number(element.value);
+
+    document.body.addEventListener('mousemove', handler);
+    element.classList.toggle ('input_focus');
+  });
+
+  parent.addEventListener('mouseup', detach);
+
+  element.onmousedown = event => event.preventDefault();
+}
+
+
+function radio_ui_init (radio_elements)
+{
+  var elements = Array.from (radio_elements);
+  var parent = elements[0].parentNode;
+  var length = elements.length;
+  var current, element;
+
+  parent.onclick = function (event)
+  {
+    if (event.target.type == 'radio')
+      return;
+
+    console.log ('hi', event.currentTarget, event.target)
+    current = (elements.findIndex (e => e.checked) + 1) % length;
+    element = elements[current];
+    element.checked = true;
+    element.onchange();
+    element.classList.toggle ('input_focus');
+  };
+}
+
+
+function custom_ui_init (name)
+{
+  var elements = document.getElementsByName(name);
+  switch (elements[0].type)
+  {
+    case 'checkbox':
+    {
+      checkbox_ui_init (elements[0]);
+      break;
+    }
+    case 'range':
+    {
+      range_ui_init (elements[0]);
+      break;
+    }
+    case 'radio':
+    {
+      radio_ui_init (elements);
+      break;
+    }
+  }
+}
+
+
 /* Disable full-scale contrast stretch option in RGB color space. */
 function check_fscs ()
 {
@@ -168,52 +294,75 @@ function calculate_gamma (percent)
 function options_init ()
 {
   for (let key in defaults)
+  {
     set_option (key);
+    custom_ui_init (key);
+  }
 
-  SOURCE.classList.toggle('hide', get_option('hide_original'));
-  bind_option ('hide_original', event => SOURCE.classList.toggle ('hide', event.srcElement.checked));
+  document.querySelector('.options_lock').addEventListener ('click', function () {
+    this.classList.toggle ('options_lock_docked');
+    this.parentNode.classList.toggle ('fade_in');
+  });
 
   SINK.canvas.classList.toggle('reflect_x', get_option('reflect_x'));
-  bind_option ('reflect_x', event => document.querySelectorAll('canvas').forEach(e => e.classList.toggle ('reflect_x', event.srcElement.checked)));
+  bind_option ('reflect_x', function () {
+    document.querySelectorAll('canvas').forEach(e => e.classList.toggle ('reflect_x', this.checked));
+  });
+
+  SOURCE.classList.toggle('hide', get_option('hide_original'));
+  bind_option ('hide_original', function () {
+    SOURCE.classList.toggle ('hide', this.checked);
+  });
 
   filter_on = defaults['filter_on'];
-  bind_option ('filter_on', event => {
-    filter_on = event.srcElement.checked;
+  bind_option ('filter_on', function () {
+    filter_on = this.checked;
     if (!filter_on)
       remove_previous_pyramids();
   });
 
   use_fscs = defaults['use_fscs'];
-  bind_option ('use_fscs', event => use_fscs = event.srcElement.checked);
+  bind_option ('use_fscs', function () {
+    use_fscs = this.checked;
+  });
 
   show_pyramid = defaults['show_pyramid'];
-  bind_option ('show_pyramid', event => {
-    show_pyramid = event.srcElement.checked;
+  bind_option ('show_pyramid', function () {
+    show_pyramid = this.checked;
     if (!show_pyramid)
       remove_previous_pyramids ();
   });
 
   use_wasm = defaults['use_wasm'];
-  bind_option ('use_wasm', event => use_wasm = event.srcElement.checked);
+  bind_option ('use_wasm', function () {
+    use_wasm = this.checked;
+  });
 
   blur_size = defaults['blur_size'].value;
-  bind_option ('blur_size', event => update_blur_size(event.srcElement.value));
+  bind_option ('blur_size', function () {
+    update_blur_size(this.value);
+  });
   blur_size_changed = true;
 
   filter_size = defaults['filter_size'].value;
-  bind_option ('filter_size', event => update_filter_size(event.srcElement.value));
+  bind_option ('filter_size', function () {
+    update_filter_size(this.value);
+  });
   filter_size_changed = true;
 
   gamma_correction = calculate_gamma (defaults['gamma_correction'].value);
-  bind_option ('gamma_correction', event => gamma_correction = calculate_gamma (event.srcElement.value));
+  bind_option ('gamma_correction', function () {
+    gamma_correction = calculate_gamma (this.value);
+  });
 
   color_space = defaults['color_space'];
-  bind_option ('color_space', event => {
-    color_space = event.srcElement.value;
+  bind_option ('color_space', function () {
+    color_space = this.value;
     check_fscs ();
   });
   check_fscs ();
 
+  document.querySelector('.options').classList.toggle ('hide');
   console.log('options initialized.')
 }
 
@@ -241,12 +390,14 @@ function init ()
 
 function loaded ()
 {
-  document.querySelectorAll ('.loading').forEach (e=> e.classList.replace ('loading', 'fade_in'));
+  var loading = document.querySelectorAll ('.loading');
+  loading.forEach (e => e.classList.replace ('loading', 'fade_in'));
+  setTimeout (() => loading.forEach (e => e.classList.toggle('fade_in')), 330);
   spinner_init ();
 }
 
 
-function spinner_init()
+function spinner_init ()
 {
   var spinnerElement = document.querySelector ('.spinner');
   spinnerElement.classList.toggle ('fade_out');
@@ -254,7 +405,7 @@ function spinner_init()
 }
 
 
-function fps_init()
+function fps_init ()
 {
   FPS = 1;
   DECAY = 14/15;
@@ -273,7 +424,7 @@ function update_frame_rate (delta)
     FPS = DECAY * FPS + (1 - DECAY) * 1000/delta;
 
   if (Math.trunc (FPS*10)/10 - Math.trunc (save*10)/10 != 0)
-    FPS_LABEL.innerHTML = Math.trunc (FPS*10)/10;
+    FPS_LABEL.innerHTML = parseFloat(FPS).toFixed(1);
 }
 
 

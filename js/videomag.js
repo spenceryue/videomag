@@ -9,37 +9,35 @@ function filter (input, width, height)
   fulfill_resize (width, height);
 
   input.width = width;
-  input.height = height;
-  img_copy (input, pyramid[0], height, width, false);
+  img_copy (input, pyramids[0][0], width, height, false);
 
-  adjust_gamma (pyramid[0], width, height, pyramid[0], gamma_correction);
-  rgb_to (color_space, pyramid[0], width, height, pyramid[0], use_fscs);
+  adjust_gamma (pyramids[0][0], width, height, pyramids[0][0], gamma_correction);
+  rgb_to (color_space, pyramids[0][0], width, height, pyramids[0][0], use_fscs);
 
-  build_pyramid (width, height, 0);
+  build_pyramid (width, height);
 
-  to_rgb (color_space, pyramid[0], width, height, pyramid[0], use_fscs);
-  adjust_gamma (pyramid[0], width, height, pyramid[0], 1/gamma_correction);
+  reconstruct_pyramid (width, height);
 
-  // return new Uint8ClampedArray (pyramid[0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? 255 : 0) : x));
-  // return new Uint8ClampedArray (pyramid[0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? x : 0) : x));
-  // return new Uint8ClampedArray (pyramid[0].map((x,i)=> (i%4!=3) ? input[i]-x : x));
-  return new Uint8ClampedArray (pyramid[0]);
+  to_rgb (color_space, pyramids[0][0], width, height, pyramids[0][0], use_fscs);
+  adjust_gamma (pyramids[0][0], width, height, pyramids[0][0], 1/gamma_correction);
+
+  // return new Uint8ClampedArray (pyramids[0][0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? 255 : 0) : x));
+  // return new Uint8ClampedArray (pyramids[0][0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? x : 0) : x));
+  // return new Uint8ClampedArray (pyramids[0][0].map((x,i)=> (i%4!=3) ? input[i]-x : x));
+  return new Uint8ClampedArray (pyramids[0][0]);
 }
 
 
-function amplify (input, width, height, output, alpha)
+/*function bandpass_exp_filter_pyramids (width, height)
 {
-  for (let y=0; y < height; y++)
+  var depth = max_pyramid_depth (width, height);
+  for (let i=depth-1; i >= 1; i--)
   {
-    let row_ofs = 4 * y * width;
-    for (let x=0; x < width; x++)
-    {
-      let index = row_ofs + 4 * x;
-      output[index + 0] = alpha * input[index + 0];
-      output[index + 1] = alpha * input[index + 1];
-      output[index + 2] = alpha * input[index + 2];
-    }
+    img_linear_combine (pyramids[0][i], pyramids[1][i], )
   }
 }
 
-
+period = 1/(1-r1) * 1/fps
+freq = fps * (1 - r1)
+30 * (1 - .4) = 18
+30 * (1 - .05) = 28.5*/

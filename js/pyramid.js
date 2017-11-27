@@ -6,13 +6,31 @@ var pyramid_prev_dimension_map = new Map ();
 const PYRAMID_STRIDE = 2;
 
 
-function build_pyramid (width, height, level)
+function build_pyramid (width, height)
 {
-  var depth = max_pyramid_depth (width, height, blur_size);
+  var pyramid = pyramids[0];
+
+  var depth = max_pyramid_depth (width, height);
   for (let i=0; i < depth-1; i++)
   {
-    corr2_down (pyramid[i], buf[2], pyramid[i+1]);
-    corr2_up (pyramid[i+1], buf[2], pyramid[i], -(PYRAMID_STRIDE**2));
+    corr2_down (pyramid[i], buf[0], pyramid[i+1]);
+    corr2_up (pyramid[i+1], buf[0], pyramid[i], -(PYRAMID_STRIDE**2));
+    // last argument is to normalize kernel weights after upsampling.
+    // negative sign is to subtract the result from pyramid[i]
+  }
+}
+
+
+function reconstruct_pyramid (width, height)
+{
+  var pyramid = pyramids[0];
+
+  var depth = max_pyramid_depth (width, height);
+  for (let i=depth-1; i >= 1; i--)
+  {
+    corr2_up (pyramid[i], buf[0], pyramid[i-1], +(PYRAMID_STRIDE**2));
+    // last argument is to normalize kernel weights after upsampling.
+    // positive sign is to add the result to pyramid[i-1]
   }
 }
 
@@ -134,6 +152,8 @@ function display_pyramid ()
 
 function display_old_pyramid (c)
 {
+  var pyramid = pyramids[0];
+
   for (let i=0; i < c.length; i++)
     img_show (c[i].getContext ('2d'), pyramid[i+1]);
 }

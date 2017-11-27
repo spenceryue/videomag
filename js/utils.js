@@ -52,25 +52,23 @@ function fill_alpha (input, value, _use_wasm=use_wasm)
 
 
 /* Candidate for js->C->WebAssembly conversion. */
-function img_copy (input, output, rows=input.height, cols=input.width, _use_wasm=use_wasm)
+function img_copy (input, output, operate_width=input.width, operate_height=input.height, _use_wasm=use_wasm)
 {
   console.assert (typeof input.width != 'undefined')
-  console.assert (typeof input.height != 'undefined')
   console.assert (typeof output.width != 'undefined')
-  console.assert (typeof output.height != 'undefined')
 
   if (_use_wasm)
   {
-    _img_copy (input.ptr, input.width, output, output.width, rows, cols, input.length, output.length);
+    _img_copy (input.ptr, input.width, output, output.width, operate_height, operate_width, input.length, output.length);
     return;
   }
 
-  for (let y=0; y < rows; y++)
+  for (let y=0; y < operate_height; y++)
   {
     let row_ofs = 4 * y * input.width;
     let output_row_ofs = 4 * y * output.width;
 
-    for (let x=0; x < cols; x++)
+    for (let x=0; x < operate_width; x++)
     {
       let input_idx = row_ofs + 4 * x;
       let output_idx = output_row_ofs + 4 * x;
@@ -88,25 +86,23 @@ function img_copy (input, output, rows=input.height, cols=input.width, _use_wasm
 
 
 /* Candidate for js->C->WebAssembly conversion. */
-function img_copy_a (input, output, rows=input.height, cols=input.width, _use_wasm=use_wasm)
+function img_copy_a (input, output, operate_width=input.width, operate_height=input.height, _use_wasm=use_wasm)
 {
   console.assert (typeof input.width != 'undefined')
-  console.assert (typeof input.height != 'undefined')
   console.assert (typeof output.width != 'undefined')
-  console.assert (typeof output.height != 'undefined')
 
   if (_use_wasm)
   {
-    _img_copy_a (input.ptr, input.width, output, output.width, rows, cols, input.length, output.length);
+    _img_copy_a (input.ptr, input.width, output, output.width, operate_height, operate_width, input.length, output.length);
     return;
   }
 
-  for (let y=0; y < rows; y++)
+  for (let y=0; y < operate_height; y++)
   {
     let row_ofs = 4 * y * input.width;
     let output_row_ofs = 4 * y * output.width;
 
-    for (let x=0; x < cols; x++)
+    for (let x=0; x < operate_width; x++)
     {
       let input_idx = row_ofs + 4 * x;
       let output_idx = output_row_ofs + 4 * x;
@@ -118,6 +114,76 @@ function img_copy_a (input, output, rows=input.height, cols=input.width, _use_wa
       output[output_idx + 1] = input[input_idx + 1];
       output[output_idx + 2] = input[input_idx + 2];
       output[output_idx + 3] = input[input_idx + 3];
+    }
+  }
+}
+
+
+/* Candidate for js->C->WebAssembly conversion. */
+function img_linear_combine (input_a, input_b, weight_a, weight_b, output, operate_width=input.width, operate_height=input.height, _use_wasm=use_wasm)
+{
+  console.assert (typeof input_a.width != 'undefined')
+  console.assert (typeof input_b.width != 'undefined')
+  console.assert (typeof output.width != 'undefined')
+
+  /*if (_use_wasm)
+  {
+    _img_linear_combine (input_a.ptr, input_b.ptr, weight_a, weight_b, output.ptr, operate_width, operate_height, input_a.length, input_b.length, output.length);
+    return;
+  }*/
+
+  for (let y=0; y < operate_height; y++)
+  {
+    let row_ofs = 4 * y * input_a.width;
+    let output_row_ofs = 4 * y * output.width;
+
+    for (let x=0; x < operate_width; x++)
+    {
+      let input_idx = row_ofs + 4 * x;
+      let output_idx = output_row_ofs + 4 * x;
+
+      console.assert (input_idx + 3 < input_a.length);
+      console.assert (input_idx + 3 < input_b.length);
+      console.assert (output_idx + 3 < output.length);
+
+      output[output_idx + 0] = weight_a * input_a[input_idx + 0] + weight_b * input_b[input_idx + 0];
+      output[output_idx + 1] = weight_a * input_a[input_idx + 1] + weight_b * input_b[input_idx + 1];
+      output[output_idx + 2] = weight_a * input_a[input_idx + 2] + weight_b * input_b[input_idx + 2];
+      // output[output_idx + 3] = input[input_idx + 3];
+    }
+  }
+}
+
+
+/* Candidate for js->C->WebAssembly conversion. */
+function img_scale (input, scale, output, operate_width=input.width, operate_height=input.height, _use_wasm=use_wasm)
+{
+  console.assert (typeof input.width != 'undefined')
+  console.assert (typeof output.width != 'undefined')
+
+  /*if (_use_wasm)
+  {
+    _img_linear_combine (input.ptr, scale, output.ptr, operate_width, operate_height, input_a.length, input_b.length, output.length);
+    return;
+  }*/
+
+  for (let y=0; y < operate_height; y++)
+  {
+    let row_ofs = 4 * y * input.width;
+    let output_row_ofs = 4 * y * output.width;
+
+    for (let x=0; x < operate_width; x++)
+    {
+      let input_idx = row_ofs + 4 * x;
+      let output_idx = output_row_ofs + 4 * x;
+
+      console.assert (input_idx + 3 < input.length);
+      console.assert (output_idx + 3 < output.length);
+
+      output[output_idx + 0] = scale * input[input_idx + 0];
+      output[output_idx + 1] = scale * input[input_idx + 1];
+      output[output_idx + 2] = scale * input[input_idx + 2];
+      // output[output_idx + 3] = input[input_idx + 3];
     }
   }
 }
@@ -194,6 +260,12 @@ function both_reflect (i, min, max)
 }
 
 
+function clamp (x, min, max)
+{
+  return Math.min (Math.max (x, min), max);
+}
+
+
 /* From here: https://stackoverflow.com/a/10284006/3624264 */
 function zip (...arrays)
 {
@@ -230,3 +302,27 @@ function add_div (width, height, parent, left=0, top=0)
 
   return a;
 }
+
+
+/* From here: http://javascript.info/coordinates */
+function getCoords (elem)
+{
+  let box = elem.getBoundingClientRect();
+
+  return {
+    top: box.top + pageYOffset,
+    left: box.left + pageXOffset
+  };
+}
+
+
+function within_bounds (mouse_event, element)
+{
+  var [x, y] = [mouse_event.clientX, mouse_event.clientY];
+  var bounds = element.getBoundingClientRect();
+  var [left, right, top, bottom] = [bounds.left, bounds.left + bounds.width,
+                                    bounds.top, bounds.top + bounds.height];
+
+  return (left <= x) && (x <= right) && (top <= y) && (y <= bottom);
+}
+
