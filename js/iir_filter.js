@@ -35,12 +35,25 @@ function update_iir_decays (fps_=FPS, f_low_=f_low, f_high_=f_high, use_exponent
 
 function iir_bandpass_filter_pyramid (width, height, depth)
 {
-  for (let i=depth-1; i >= 1; i--)
-  {
-    // lowerpass_pyramid = (1 - iir_weight_low) * PYRAMID + iir_decay_low * lowerpass_pyramid
-    img_linear_combine (PYRAMID[i], lowerpass_pyramid[i], 1 - iir_decay_low, iir_decay_low, lowerpass_pyramid[i]);
+  update_iir_decays ();
+  // iir_decay_low = (1 - .4/2);
+  // iir_decay_high = (1 - .05/2);
 
-    // higherpass_pyramid = (1 - iir_weight_high) * PYRAMID + iir_decay_high * higherpass_pyramid
-    img_linear_combine (PYRAMID[i], higherpass_pyramid[i], 1 - iir_decay_low, iir_decay_high, higherpass_pyramid[i]);
+  for (let i=0; i < depth-1; i++)
+  // "ignore the highest and lowest frequency band" -- comments from original authors' MATLAB code.
+  {
+    if (filter_size_changed || blur_size_changed)
+    {
+      img_copy (PYRAMID[i], lowerpass_pyramid[i]);
+      img_copy (PYRAMID[i], higherpass_pyramid[i]);
+    }
+    else
+    {
+      // lowerpass_pyramid = (1 - iir_weight_low) * PYRAMID + iir_decay_low * lowerpass_pyramid
+      img_linear_combine (PYRAMID[i], lowerpass_pyramid[i], 1 - iir_decay_low, iir_decay_low, lowerpass_pyramid[i]);
+
+      // higherpass_pyramid = (1 - iir_weight_high) * PYRAMID + iir_decay_high * higherpass_pyramid
+      img_linear_combine (PYRAMID[i], higherpass_pyramid[i], 1 - iir_decay_high, iir_decay_high, higherpass_pyramid[i]);
+    }
   }
 }

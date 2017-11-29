@@ -6,8 +6,9 @@ CFLAGS = -O3 -Wall -std=gnu99
 EMCC_FLAGS = -s WASM=1 -s NO_EXIT_RUNTIME=1
 # TOTAL_MEMORY:
 # ~ (frame # pixels * 4) * (sizeof float) * (# pyramids * 4/3) + (frame # pixels * 4) * (sizeof uint8_t) * (# output type pyramids * 4/3) + (? unaccounted for space)
-# ~ (640 * 480 * 4) * (4) * (4 * 4/3) + (640 * 480 * 4) * (1) * (1 * 4/3) + (4.5MB)
-EMCC_FLAGS += -s TOTAL_MEMORY=32MB
+# ~ (1024 * 1024 * 4) * (4) * (4 * 4/3) + (1024 * 1024 * 4) * (1) * (1 * 4/3) + (4.5MB)
+EMCC_FLAGS += -s TOTAL_MEMORY=100MB
+#EMCC_FLAGS += -s ALLOW_MEMORY_GROWTH=1
 SRCS = $(wildcard *.c)
 OBJS = $(SRCS:.c=.o)
 

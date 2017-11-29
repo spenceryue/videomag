@@ -22,11 +22,6 @@ function pyramids_init ()
   TEMP_PYRAMID = PYRAMIDS[1];
 
   iir_init(); // uses PYRAMIDS[2], PYRAMIDS[3];
-
-  /* To check for memory corruption.
-  (Assumes malloc() will hand out next piece of memory close to pyramid.) */
-  pyramids_init.MAGIC = malloc (Uint32Array, 1);
-  pyramids_init.MAGIC[0] = 0xdeadbeef;
 }
 
 
@@ -41,20 +36,27 @@ function make_pyramid (width, height, depth, type=PyramidTypedArray)
     pyramid[j].height = height;
 
     [width, height] = next_pyramid_dimensions (width, height);
+
+    /* To check for memory corruption.
+    (Assumes malloc() will hand out next piece of memory close to pyramid[j].) */
+    make_pyramid.MAGIC.push (malloc (Uint32Array, 1));
+    make_pyramid.MAGIC[make_pyramid.MAGIC.length-1][0] = 0xdeadbeef;
   }
 
   return pyramid;
 }
+make_pyramid.MAGIC = [];
 
 
 function validate_pyramid_memory ()
 {
-  if (pyramids_init.MAGIC[0] != 0xdeadbeef)
-  {
-    throw '\n(\u256F\u00B0\u25A1\u00B0)\u256F.-~ \u253B\u2501\u253B You ate my 0xdeadbeef !!!!\n'
-    + '\\(\u00B4\u0414` )/==3 And you pooped it out as:'
-    + '0x' + pyramids_init.MAGIC[0].toString(16);
-  }
+  for (let i=0; i<make_pyramid.MAGIC.length; i++)
+    if (make_pyramid.MAGIC[i][0] != 0xdeadbeef)
+    {
+      throw '\n(\u256F\u00B0\u25A1\u00B0)\u256F.-~ \u253B\u2501\u253B You ate my 0xdeadbeef !!!!\n'
+      + '\\(\u00B4\u0414` )/==3 And you pooped it out as:'
+      + '0x' + make_pyramid.MAGIC[i][0].toString(16);
+    }
 }
 
 
@@ -63,12 +65,6 @@ function build_pyramid (width, height, depth)
   for (let i=0; i < depth-1; i++)
   {
     corr2_down (PYRAMID[i], TEMP_PYRAMID[i], PYRAMID[i+1]);
-    console.assert (PYRAMID[i].width == TEMP_PYRAMID[i].width, "PYRAMID[i].width, TEMP_PYRAMID[i].width", PYRAMID[i].width, TEMP_PYRAMID[i].width);
-    console.assert (PYRAMID[i].height == TEMP_PYRAMID[i].height, "PYRAMID[i].height, TEMP_PYRAMID[i].height", PYRAMID[i].height, TEMP_PYRAMID[i].height);
-    console.assert (PYRAMID[i].width > PYRAMID[i+1].width, "PYRAMID[i].width, PYRAMID[i+1].width", PYRAMID[i].width, PYRAMID[i+1].width);
-    console.assert (PYRAMID[i].height > PYRAMID[i+1].height, "PYRAMID[i].height, PYRAMID[i+1].height", PYRAMID[i].height, PYRAMID[i+1].height);
-    console.assert (TEMP_PYRAMID[i].width > TEMP_PYRAMID[i+1].width, "TEMP_PYRAMID[i].width, TEMP_PYRAMID[i+1].width", TEMP_PYRAMID[i].width, TEMP_PYRAMID[i+1].width);
-    console.assert (TEMP_PYRAMID[i].height > TEMP_PYRAMID[i+1].height, "TEMP_PYRAMID[i].height, TEMP_PYRAMID[i+1].height", TEMP_PYRAMID[i].height, TEMP_PYRAMID[i+1].height);
     corr2_up (PYRAMID[i+1], TEMP_PYRAMID[i], PYRAMID[i], -(PYRAMID_STRIDE**2));
     // last argument is to normalize kernel weights after upsampling.
     // negative sign is to subtract the result from PYRAMID[i]

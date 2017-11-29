@@ -39,6 +39,14 @@ void img_copy (float* input, uint16_t in_width, float* output, uint16_t out_widt
 
 EXPORT
 void img_copy_to_Uint8 (float* input, uint16_t in_width, uint8_t* output, uint16_t out_width, uint16_t rows, uint16_t cols, uint32_t IN_LENGTH, uint32_t OUT_LENGTH);
+
+
+EXPORT
+void img_linear_combine (float* input_a, float* input_b, float weight_a, float weight_b, float* output, uint16_t operate_width, uint16_t operate_height, uint16_t in_width, uint16_t out_width, uint32_t IN_LENGTH, uint32_t OUT_LENGTH);
+
+
+EXPORT
+void img_scale (float* input, float scale, float* output, uint16_t operate_width, uint16_t operate_height, uint16_t in_width, uint16_t out_width, uint32_t IN_LENGTH, uint32_t OUT_LENGTH);
 END_DEMANGLE
 
 

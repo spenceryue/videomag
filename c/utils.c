@@ -15,6 +15,9 @@ void full_scale_contrast_stretch (float* input, uint32_t length, float min, floa
     }
   }
 
+  if (min == max)
+    return;
+
   float scale = 255 / (max - min);
   float offset = -min * scale;
 
@@ -89,3 +92,52 @@ void img_copy_to_Uint8 (float* input, uint16_t in_width, uint8_t* output, uint16
     }
   }
 }
+
+
+void img_linear_combine (float* input_a, float* input_b, float weight_a, float weight_b, float* output, uint16_t operate_width, uint16_t operate_height, uint16_t in_width, uint16_t out_width, uint32_t IN_LENGTH, uint32_t OUT_LENGTH)
+{
+  for (int y=0; y < operate_height; y++)
+  {
+    int row_ofs = 4 * y * in_width;
+    int output_row_ofs = 4 * y * out_width;
+
+    for (int x=0; x < operate_width; x++)
+    {
+      int input_idx = row_ofs + 4 * x;
+      int output_idx = output_row_ofs + 4 * x;
+
+      ASSERT (input_idx + 3 < IN_LENGTH, "");
+      ASSERT (output_idx + 3 < OUT_LENGTH, "");
+
+      output[output_idx + 0] = weight_a * input_a[input_idx + 0] + weight_b * input_b[input_idx + 0];
+      output[output_idx + 1] = weight_a * input_a[input_idx + 1] + weight_b * input_b[input_idx + 1];
+      output[output_idx + 2] = weight_a * input_a[input_idx + 2] + weight_b * input_b[input_idx + 2];
+      // output[output_idx + 3] = input[input_idx + 3];
+    }
+  }
+}
+
+
+void img_scale (float* input, float scale, float* output, uint16_t operate_width, uint16_t operate_height, uint16_t in_width, uint16_t out_width, uint32_t IN_LENGTH, uint32_t OUT_LENGTH)
+{
+  for (int y=0; y < operate_height; y++)
+  {
+    int row_ofs = 4 * y * in_width;
+    int output_row_ofs = 4 * y * out_width;
+
+    for (int x=0; x < operate_width; x++)
+    {
+      int input_idx = row_ofs + 4 * x;
+      int output_idx = output_row_ofs + 4 * x;
+
+      ASSERT (input_idx + 3 < IN_LENGTH, "");
+      ASSERT (output_idx + 3 < OUT_LENGTH, "");
+
+      output[output_idx + 0] = scale * input[input_idx + 0];
+      output[output_idx + 1] = scale * input[input_idx + 1];
+      output[output_idx + 2] = scale * input[input_idx + 2];
+      // output[output_idx + 3] = input[input_idx + 3];
+    }
+  }
+}
+

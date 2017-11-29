@@ -480,40 +480,36 @@ void blur5_corr_up_mult_add (
   {
     int input_row_ofs = 4 * y * in_width;
     int output_row_ofs = 4 * y * STRIDE * out_width;
-    int next_output_row_ofs = 4 * (y+1) * STRIDE * out_width;
+    int next_output_row_ofs = 4 * (y * STRIDE + 1) * out_width;
 
     for (int x=0; x < operate_width; x++)
     {
       int col_idx = 4 * x;
-      int input_idx[5];
-
-      input_idx[1] = input_row_ofs + col_idx;
-      ASSERT ((0 <= input_idx[0]) && (input_idx[0] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[0], IN_LENGTH);
-      input_idx[0] = left_reflect(input_idx[1] - 2, 0);
-      ASSERT ((0 <= input_idx[1]) && (input_idx[1] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[1], IN_LENGTH);
-      input_idx[2] = right_reflect(input_idx[1] + 2, IN_LENGTH);
-      ASSERT ((0 <= input_idx[2]) && (input_idx[2] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[2], IN_LENGTH);
-
+      int input_idx[3];
       int output_idx = output_row_ofs + col_idx;
       ASSERT (output_idx + 3 < OUT_LENGTH, "y: %d, x: %d, output_idx: %d, OUT_LENGTH: %d\n", y, x, output_idx, OUT_LENGTH);
+
+      input_idx[0] = 4 * left_reflect (y - 1, 0) * in_width + col_idx;
+      ASSERT ((0 <= input_idx[0]) && (input_idx[0] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[0], IN_LENGTH);
+
+      input_idx[1] = input_row_ofs + col_idx;
+      ASSERT ((0 <= input_idx[1]) && (input_idx[1] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[1], IN_LENGTH);
+
+      input_idx[2] = 4 * right_reflect (y + 1, operate_height) * in_width + col_idx;
+      ASSERT ((0 <= input_idx[2]) && (input_idx[2] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[2], IN_LENGTH);
 
       output[output_idx + 0] += scale * (kernel[0] * input[input_idx[0] + 0] + kernel[2] * input[input_idx[1] + 0] + kernel[4] * input[input_idx[2] + 0]);
       output[output_idx + 1] += scale * (kernel[0] * input[input_idx[0] + 1] + kernel[2] * input[input_idx[1] + 1] + kernel[4] * input[input_idx[2] + 1]);
       output[output_idx + 2] += scale * (kernel[0] * input[input_idx[0] + 2] + kernel[2] * input[input_idx[1] + 2] + kernel[4] * input[input_idx[2] + 2]);
 
-      if ((y+1)*STRIDE < clip_height)
+      if (y * STRIDE + 1 < clip_height)
       {
-        input_idx[3] = left_reflect(input_idx[1] - 1, 0);
-        ASSERT ((0 <= input_idx[3]) && (input_idx[3] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[3], IN_LENGTH);
-        input_idx[4] = right_reflect(input_idx[1] + 1, IN_LENGTH);
-        ASSERT ((0 <= input_idx[4]) && (input_idx[4] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[4], IN_LENGTH);
-
         output_idx = next_output_row_ofs + col_idx;
         ASSERT (output_idx + 3 < OUT_LENGTH, "y: %d, x: %d, output_idx: %d, OUT_LENGTH: %d\n", y, x, output_idx, OUT_LENGTH);
 
-        output[output_idx + 0] += scale * (kernel[1] * input[input_idx[3] + 0] + kernel[3] * input[input_idx[4] + 0]);
-        output[output_idx + 1] += scale * (kernel[1] * input[input_idx[3] + 1] + kernel[3] * input[input_idx[4] + 1]);
-        output[output_idx + 2] += scale * (kernel[1] * input[input_idx[3] + 2] + kernel[3] * input[input_idx[4] + 2]);
+        output[output_idx + 0] += scale * (kernel[1] * input[input_idx[1] + 0] + kernel[3] * input[input_idx[2] + 0]);
+        output[output_idx + 1] += scale * (kernel[1] * input[input_idx[1] + 1] + kernel[3] * input[input_idx[2] + 1]);
+        output[output_idx + 2] += scale * (kernel[1] * input[input_idx[1] + 2] + kernel[3] * input[input_idx[2] + 2]);
       }
     }
   }

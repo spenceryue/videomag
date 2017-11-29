@@ -8,6 +8,11 @@ body
   margin: 0;
 }
 
+div
+{
+  user-select: none;
+}
+
 .layer
 {
   position: absolute;

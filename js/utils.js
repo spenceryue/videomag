@@ -22,6 +22,9 @@ function full_scale_contrast_stretch (input, min, max, _use_wasm=use_wasm)
     }
   }
 
+  if (min == max)
+    return;
+
   var scale = 255 / (max - min);
   var offset = -min * scale;
 
@@ -102,16 +105,18 @@ function img_copy (input, output, operate_width=input.width, operate_height=inpu
 function img_linear_combine (input_a, input_b, weight_a, weight_b, output, operate_width=input_a.width, operate_height=input_a.height, _use_wasm=use_wasm)
 {
   console.assert (typeof input_a.width != 'undefined')
-  console.assert (typeof input_b.width != 'undefined')
   console.assert (typeof output.width != 'undefined')
+  console.assert (input_a.width == input_b.width);
+  console.assert (input_a.height == input_b.height);
+  console.assert (input_a.length == input_b.length);
 
-  /*if (_use_wasm)
+  if (_use_wasm)
   {
-    _img_linear_combine (input_a.ptr, input_b.ptr, weight_a, weight_b, output.ptr, operate_width, operate_height, input_a.length, input_b.length, output.length);
+    _img_linear_combine (input_a.ptr, input_b.ptr, weight_a, weight_b, output.ptr, operate_width, operate_height, input_a.width, output.width, input_a.length, input_b.length, output.length);
     validate_pyramid_memory ()
 
     return;
-  }*/
+  }
 
   for (let y=0; y < operate_height; y++)
   {
@@ -144,13 +149,13 @@ function img_scale (input, scale, output, operate_width=input.width, operate_hei
   console.assert (typeof input.width != 'undefined')
   console.assert (typeof output.width != 'undefined')
 
-  /*if (_use_wasm)
+  if (_use_wasm)
   {
-    _img_linear_combine (input.ptr, scale, output.ptr, operate_width, operate_height, input_a.length, input_b.length, output.length);
+    _img_linear_combine (input.ptr, scale, output.ptr, operate_width, operate_height, input.width, output.width, input.length, output.length);
     validate_pyramid_memory ()
 
     return;
-  }*/
+  }
 
   for (let y=0; y < operate_height; y++)
   {

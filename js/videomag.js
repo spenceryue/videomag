@@ -32,18 +32,27 @@ function videomag (input, width, height)
   }
 
   input.width = width;
+  input.height = height;
   img_copy (input, PYRAMID[0], width, height, false);
 
   adjust_gamma (PYRAMID[0], width, height, PYRAMID[0], gamma_correction);
-  rgb_to (color_space, PYRAMID[0], width, height, PYRAMID[0]);
+  rgb_to (color_space, PYRAMID[0], width, height);
 
   build_pyramid (width, height, depth);
   iir_bandpass_filter_pyramid (width, height, depth);
+  // console.log (lowerpass_pyramid[0].slice(0,12));
+  // console.log (higherpass_pyramid[0].slice(0,12));
+  // console.log (PYRAMID[0].slice(0,12));
+  magnify_iir (width, height, depth, 100, 16, 20);
+  // console.log (PYRAMID[0].slice(0,12));
 
   reconstruct_pyramid (width, height, depth);
 
-  to_rgb (color_space, PYRAMID[0], width, height, PYRAMID[0]);
-  adjust_gamma (PYRAMID[0], width, height, OUTPUT[0], 1 / gamma_correction);
+  // to_rgb (color_space, PYRAMID[0], width, height);
+  // adjust_gamma (PYRAMID[0], width, height, OUTPUT[0], 1 / gamma_correction);
+  var test = higherpass_pyramid[0];
+  to_rgb (color_space, test, test.width, test.height, test);
+  adjust_gamma (test, test.width, test.height, OUTPUT[0], 1 / gamma_correction);
 
   // if (gamma_correction != 1)
 
@@ -56,22 +65,33 @@ function videomag (input, width, height)
 }
 
 
-/*function magnify (input, width, height, depth, amplification_factor, minimum_wavelength, exaggeration)
+function magnify_iir (width, height, depth, amplification_amount, minimum_wavelength, exaggeration=1)
 {
-  var alpha = amplification_factor;
-  var lambda_c = minimum_wavelength;
-  var minimum_delta = lambda_c / 8 / (1 + alpha);
+  var alpha = amplification_amount; // (1 + amplification_amount) is the amplification factor
+  var lambda_c = minimum_wavelength; // in pixels
+  var max_delta = lambda_c / 8 / (1 + alpha);
 
   // representative wavelength of lowest level of pyramid.
   // "3 is experimental constant" -- comments from original authors' MATLAB code.
   var lambda = (width**2 + height**2)**0.5 / 3;
 
-  for (let i=0; i < depth; i++)
+  for (let i=1; i < depth-1; i++)
+  // "ignore the highest and lowest frequency band" -- comments from original authors' MATLAB code.
   {
-    let current_alpha;
+    // "amplify each spatial frequency bands according to Figure 6 of our paper"
+    // -- comments from original authors' MATLAB code.
+    // Note: in the original code, when the ceiling alpha value is reached,
+    // the exaggeration is NOT applied. I think this is a mistake, hence I
+    // have applied exaggeration regardless (after the min() is applied).
+    let current_alpha = Math.min (lambda / 8 / max_delta - 1, alpha) * exaggeration;
+    /*let current_alpha = lambda / 8 / max_delta;
+    if (current_alpha > alpha) current_alpha = alpha;
+    else current_alpha *= exaggeration;*/
 
-    if (lambda < lambda_c)
-      let current_alpha = lambda / 8 / minimum_delta - 1;
-    // img_linear_combine (PYRAMID[i], lowerpass_pyramid[i], 1 - iir_decay_low, iir_decay_low, lowerpass_pyramid[i]);
+    img_linear_combine (higherpass_pyramid[i], lowerpass_pyramid[i], current_alpha, -current_alpha, TEMP_PYRAMID[i]);
+    img_linear_combine (PYRAMID[i], TEMP_PYRAMID[i], 1, 1, PYRAMID[i]);
+
+
+    lambda /= 2;
   }
-}*/
+}

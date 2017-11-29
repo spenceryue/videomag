@@ -38,11 +38,6 @@ function camera_init (mediaStream)
     FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
     loaded ();
     console.log('camera source loaded.')
-    pyramids_init ();
-    videomag_init ();
-    blur_init ();
-
-    requestAnimationFrame (render);
   };
   SOURCE.srcObject = mediaStream;
 }
@@ -57,12 +52,24 @@ function image_init()
     FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
     loaded ();
     console.log('image source loaded.')
-    pyramids_init ();
-    videomag_init ();
-    blur_init ();
-
-    requestAnimationFrame (render);
   }
+  SOURCE.src = SOURCE.src;
+}
+
+
+function video_source_init ()
+{
+  SOURCE.onloadeddata = function(e)
+  {
+    if (this.readyState < 2)
+      return;
+
+    FRAME_WIDTH = SINK.canvas.width = SOURCE.videoWidth;
+    FRAME_HEIGHT = SINK.canvas.height = SOURCE.videoHeight;
+    FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
+    loaded ();
+    console.log('video source loaded.')
+  };
   SOURCE.src = SOURCE.src;
 }
 
@@ -82,6 +89,9 @@ function init ()
       if (SOURCE.src === '')
         navigator.mediaDevices.getUserMedia(camera_constraints).
         then(camera_init).catch(camera_error);
+      else
+        video_source_init ();
+      break;
     case 'IMG':
       image_init ();
   }
@@ -90,11 +100,17 @@ function init ()
 
 function loaded ()
 {
+  pyramids_init ();
+  videomag_init ();
+  blur_init ();
+
   var loading = document.querySelectorAll ('.loading');
   loading.forEach (e => e.classList.replace ('loading', 'fade_in'));
-  setTimeout (() => loading.forEach (e => e.classList.toggle('fade_in')), 330);
+  setTimeout (() => loading.forEach (e => e.classList.toggle ('fade_in')), 330);
   spinner_init ();
   document.querySelector('.options').classList.toggle ('hide');
+
+  requestAnimationFrame (render);
 }
 
 
@@ -133,7 +149,6 @@ function update_frame_rate (delta)
 function render (timestamp)
 {
   SINK.drawImage (SOURCE, 0, 0);
-  var frame = SINK.getImageData (0, 0, FRAME_WIDTH, FRAME_HEIGHT);
 
   if (filter_size_changed)
     set_filter_dims ();
@@ -142,20 +157,18 @@ function render (timestamp)
   {
     if (filter_size < 100)
     {
-      SINK.putImageData (frame, 0, 0);
-
       let width = FILTER_BOUNDS.width;
       let height = FILTER_BOUNDS.height;
       let x = FILTER_BOUNDS.x;
       let y = FILTER_BOUNDS.y;
 
-      frame = SINK.getImageData (x, y, width, height);
+      let frame = SINK.getImageData (x, y, width, height);
       let processed = videomag (frame.data, width, height);
-
       SINK.putImageData (new ImageData(processed, width, height), x, y);
     }
     else
     {
+      let frame = SINK.getImageData (0, 0, FRAME_WIDTH, FRAME_HEIGHT);
       let processed = videomag (frame.data, FRAME_WIDTH, FRAME_HEIGHT);
       SINK.putImageData (new ImageData(processed, FRAME_WIDTH, FRAME_HEIGHT), 0, 0);
     }
@@ -166,11 +179,9 @@ function render (timestamp)
     blur_size_changed = false;
     filter_size_changed = false;
   }
-  else
-    SINK.putImageData (frame, 0, 0);
 
-  // if (++counter == 1)
-  //   throw 'one and done'
+  /*if (++counter == 1)
+    throw 'one and done'*/
 
   update_frame_rate (timestamp - render.last);
   render.last = timestamp;
