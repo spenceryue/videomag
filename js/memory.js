@@ -1,11 +1,6 @@
 'use strict';
 
 
-var pyramids = Array (1);
-var buf = Array (3);
-var IntermediateTypedArray = Float32Array;
-
-
 var heap_map = new Set();
 var bytesPerElement_map = new Map
 ([
@@ -39,51 +34,6 @@ function heap_init ()
 }
 
 
-function buffer_init ()
-{
-  /* General purpose buffers. */
-  for (let i=0; i < buf.length; i++)
-  {
-    buf[i] = fill_alpha (malloc (IntermediateTypedArray, 4 * FRAME_WIDTH * FRAME_HEIGHT), 255);
-    buf[i].width = FRAME_WIDTH;
-    buf[i].height = FRAME_HEIGHT;
-  }
-
-  /* Pyramid buffers. */
-  for (let i=0; i < pyramids.length; i++)
-  {
-    let pyramid = pyramids[i] = [];
-    let width = FRAME_WIDTH;
-    let height = FRAME_HEIGHT;
-    let depth = max_pyramid_depth(width, height, 1);
-    for (let j=0; j < depth; j++)
-    {
-      pyramid[j] = fill_alpha (malloc (IntermediateTypedArray, 4 * width * height), 255);
-      pyramid[j].width = width;
-      pyramid[j].height = height;
-
-      [width, height] = next_pyramid_dimensions (width, height);
-    }
-  }
-
-  /* To check for memory corruption.
-  (Assumes malloc() will hand out next piece of memory close to pyramid.) */
-  buffer_init.MAGIC = malloc (Uint32Array, 1);
-  buffer_init.MAGIC[0] = 0xdeadbeef;
-}
-
-
-function validate_pyramid_memory ()
-{
-  if (buffer_init.MAGIC[0] != 0xdeadbeef)
-  {
-    throw '\n(\u256F\u00B0\u25A1\u00B0)\u256F.-~ \u253B\u2501\u253B You ate my 0xdeadbeef !!!!\n'
-    + '\\(\u00B4\u0414` )/==3 And you pooped it out as:'
-    + '0x' + buffer_init.MAGIC[0].toString(16);
-  }
-}
-
-
 function free (array)
 {
   Module._free (array.ptr);
@@ -114,69 +64,14 @@ malloc.total = 0;
 
 function get_resized_array (array, width, height)
 {
-  console.log ('resizing... old:\t', array.width, 'x', array.height);
-  console.log ('new:\t\t\t\t', width, 'x', height);
+  /*console.log ('resizing... old:\t', array.width, 'x', array.height);
+  console.log ('new:\t\t\t\t', width, 'x', height);*/
 
-  var resultArray = new IntermediateTypedArray (array.buffer, array.ptr, 4 * width * height);
+  var resultArray = new array.__proto__.constructor (array.buffer, array.ptr, 4 * width * height);
   resultArray.width = width;
   resultArray.height = height;
   resultArray.ptr = array.ptr;
   resultArray.heapView = array.heapView;
 
   return resultArray;
-}
-
-
-function update_filter_size (new_filter_size)
-{
-  filter_size = new_filter_size;
-  filter_size_changed = true;
-}
-
-
-function set_filter_dims ()
-{
-  FILTER_BOUNDS.width = Math.floor (FRAME_WIDTH * filter_size / 100);
-  FILTER_BOUNDS.height = Math.floor (FRAME_HEIGHT * filter_size / 100);
-  FILTER_BOUNDS.x = Math.floor ((FRAME_WIDTH - FILTER_BOUNDS.width) / 2);
-  FILTER_BOUNDS.y = Math.floor ((FRAME_HEIGHT - FILTER_BOUNDS.height) / 2);
-}
-
-
-function update_blur_size (new_blur_size)
-{
-  blur_size = new_blur_size;
-  blur_size_changed = true;
-}
-
-
-function fulfill_resize (width, height)
-{
-  if (blur_size_changed || filter_size_changed)
-  {
-    for (let i=0; i < pyramids.length; i++)
-    {
-      let pyramid = pyramids[i];
-      let w = width;
-      let h = height;
-      let depth = max_pyramid_depth(w, h, blur_size);
-      for (let j=0; j < depth; j++)
-      {
-        pyramid[j] = get_resized_array (pyramid[j], w, h);
-
-        [w, h] = next_pyramid_dimensions (w, h);
-      }
-    }
-
-    if (blur_size_changed)
-      kernel = get_blur_kernel (blur_size);
-
-    if (filter_size_changed)
-    {
-      for (let i=0; i < buf.length; i++)
-        buf[i] = get_resized_array (buf[i], width, height);
-    }
-
-    validate_pyramid_memory ();
-  }
 }

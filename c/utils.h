@@ -17,22 +17,28 @@
 #define END_DEMANGLE
 #endif
 
+#include <stdint.h>
+
 
 DEMANGLE
 EXPORT
-void full_scale_contrast_stretch (float* input, int length, float min, float max);
+void full_scale_contrast_stretch (float* input, uint32_t length, float min, float max);
 
 
 EXPORT
-void fill_alpha (float* input, int length, float value);
+void fill_alpha (float* input, uint32_t length, float value);
 
 
 EXPORT
-void img_copy (float* input, int in_width, float* output, int out_width, int rows, int cols, int IN_LENGTH, int OUT_LENGTH);
+void fill_alpha_Uint8 (uint8_t* input, uint32_t length, uint8_t value);
 
 
 EXPORT
-void img_copy_a (float* input, int in_width, float* output, int out_width, int rows, int cols, int IN_LENGTH, int OUT_LENGTH);
+void img_copy (float* input, uint16_t in_width, float* output, uint16_t out_width, uint16_t rows, uint16_t cols, uint32_t IN_LENGTH, uint32_t OUT_LENGTH);
+
+
+EXPORT
+void img_copy_to_Uint8 (float* input, uint16_t in_width, uint8_t* output, uint16_t out_width, uint16_t rows, uint16_t cols, uint32_t IN_LENGTH, uint32_t OUT_LENGTH);
 END_DEMANGLE
 
 
@@ -81,6 +87,18 @@ static inline int both_reflect (int i, int min, int max)
 static inline int min (int a, int b)
 {
   return (a<b) ? a : b;
+}
+
+
+static inline int max (int a, int b)
+{
+  return (a>b) ? a : b;
+}
+
+
+static inline int clamp (int x, int min_, int max_)
+{
+  return min (max (x, min_), max_);
 }
 
 

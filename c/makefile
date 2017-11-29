@@ -5,9 +5,9 @@ CC = emcc
 CFLAGS = -O3 -Wall -std=gnu99
 EMCC_FLAGS = -s WASM=1 -s NO_EXIT_RUNTIME=1
 # TOTAL_MEMORY:
-# (frame # pixels * 4) * (sizeof float) * (# general purpose buffers + # pyramids * 2) + (1.5M for program and library code)
-# ~ (640 * 480 * 4) * (4) * (3 + 1 * 2) + (1.5M)
-EMCC_FLAGS += -s TOTAL_MEMORY=26MB
+# ~ (frame # pixels * 4) * (sizeof float) * (# pyramids * 4/3) + (frame # pixels * 4) * (sizeof uint8_t) * (# output type pyramids * 4/3) + (? unaccounted for space)
+# ~ (640 * 480 * 4) * (4) * (4 * 4/3) + (640 * 480 * 4) * (1) * (1 * 4/3) + (4.5MB)
+EMCC_FLAGS += -s TOTAL_MEMORY=32MB
 SRCS = $(wildcard *.c)
 OBJS = $(SRCS:.c=.o)
 
@@ -19,7 +19,7 @@ CFLAGS += -DNDEBUG
 endif
 
 
-videomag.js: $(OBJS)
+wasm.js: $(OBJS)
 	$(CC) -o $@ $^ $(CFLAGS) $(EMCC_FLAGS)
 
 utils: utils.h
@@ -30,4 +30,4 @@ hello: hello.c
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS) videomag.js videomag.wasm* videomag.wast* a.out
+	rm -f $(OBJS) wasm.js wasm.wasm* wasm.wast* a.out

@@ -37,7 +37,10 @@ function fill_alpha (input, value, _use_wasm=use_wasm)
 {
   if (_use_wasm)
   {
-    _fill_alpha (input.ptr, input.length, value);
+    if (input instanceof Uint8ClampedArray || input instanceof Uint8Array)
+      _fill_alpha_Uint8 (input.ptr, input.length, value);
+    else if (input instanceof Float32Array || input instanceof Float64Array)
+      _fill_alpha (input.ptr, input.length, value);
     return input;
   }
 
@@ -59,7 +62,15 @@ function img_copy (input, output, operate_width=input.width, operate_height=inpu
 
   if (_use_wasm)
   {
-    _img_copy (input.ptr, input.width, output, output.width, operate_height, operate_width, input.length, output.length);
+    if (output instanceof Uint8ClampedArray || output instanceof Uint8Array)
+      _img_copy_to_Uint8 (input.ptr, input.width, output.ptr, output.width, operate_height, operate_width, input.length, output.length);
+    else if (output instanceof Float32Array || output instanceof Float64Array)
+      _img_copy (input.ptr, input.width, output.ptr, output.width, operate_height, operate_width, input.length, output.length);
+    else
+      throw 'invalid output array type!'
+
+    validate_pyramid_memory ()
+
     return;
   }
 
@@ -82,45 +93,13 @@ function img_copy (input, output, operate_width=input.width, operate_height=inpu
       // output[output_idx + 3] = input[input_idx + 3];
     }
   }
+
+  validate_pyramid_memory ()
 }
 
 
 /* Candidate for js->C->WebAssembly conversion. */
-function img_copy_a (input, output, operate_width=input.width, operate_height=input.height, _use_wasm=use_wasm)
-{
-  console.assert (typeof input.width != 'undefined')
-  console.assert (typeof output.width != 'undefined')
-
-  if (_use_wasm)
-  {
-    _img_copy_a (input.ptr, input.width, output, output.width, operate_height, operate_width, input.length, output.length);
-    return;
-  }
-
-  for (let y=0; y < operate_height; y++)
-  {
-    let row_ofs = 4 * y * input.width;
-    let output_row_ofs = 4 * y * output.width;
-
-    for (let x=0; x < operate_width; x++)
-    {
-      let input_idx = row_ofs + 4 * x;
-      let output_idx = output_row_ofs + 4 * x;
-
-      console.assert (input_idx + 3 < input.length);
-      console.assert (output_idx + 3 < output.length);
-
-      output[output_idx + 0] = input[input_idx + 0];
-      output[output_idx + 1] = input[input_idx + 1];
-      output[output_idx + 2] = input[input_idx + 2];
-      output[output_idx + 3] = input[input_idx + 3];
-    }
-  }
-}
-
-
-/* Candidate for js->C->WebAssembly conversion. */
-function img_linear_combine (input_a, input_b, weight_a, weight_b, output, operate_width=input.width, operate_height=input.height, _use_wasm=use_wasm)
+function img_linear_combine (input_a, input_b, weight_a, weight_b, output, operate_width=input_a.width, operate_height=input_a.height, _use_wasm=use_wasm)
 {
   console.assert (typeof input_a.width != 'undefined')
   console.assert (typeof input_b.width != 'undefined')
@@ -129,6 +108,8 @@ function img_linear_combine (input_a, input_b, weight_a, weight_b, output, opera
   /*if (_use_wasm)
   {
     _img_linear_combine (input_a.ptr, input_b.ptr, weight_a, weight_b, output.ptr, operate_width, operate_height, input_a.length, input_b.length, output.length);
+    validate_pyramid_memory ()
+
     return;
   }*/
 
@@ -152,6 +133,8 @@ function img_linear_combine (input_a, input_b, weight_a, weight_b, output, opera
       // output[output_idx + 3] = input[input_idx + 3];
     }
   }
+
+  validate_pyramid_memory ()
 }
 
 
@@ -164,6 +147,8 @@ function img_scale (input, scale, output, operate_width=input.width, operate_hei
   /*if (_use_wasm)
   {
     _img_linear_combine (input.ptr, scale, output.ptr, operate_width, operate_height, input_a.length, input_b.length, output.length);
+    validate_pyramid_memory ()
+
     return;
   }*/
 
@@ -186,24 +171,15 @@ function img_scale (input, scale, output, operate_width=input.width, operate_hei
       // output[output_idx + 3] = input[input_idx + 3];
     }
   }
+
+  validate_pyramid_memory ()
 }
 
 
-function img_show (context, img, x=0, y=0, from_color_space=color_space, fscs=use_fscs, from_gamma_correction=gamma_correction)
+function img_show (context, img, x=0, y=0)
 {
-  to_rgb (
-    from_color_space,
-    img,
-    img.width,
-    img.height,
-    img,
-    fscs
-  );
-
-  adjust_gamma (img, img.width, img.height, img, 1/from_gamma_correction);
-
   let data = new ImageData (
-    new Uint8ClampedArray (img),
+    img,
     img.width,
     img.height
   );
@@ -260,6 +236,7 @@ function both_reflect (i, min, max)
 }
 
 
+/* Possible js->C->WebAssembly dependency. */
 function clamp (x, min, max)
 {
   return Math.min (Math.max (x, min), max);

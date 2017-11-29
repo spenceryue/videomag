@@ -6,7 +6,7 @@ var Module =
   preRun: [],
   onRuntimeInitialized: init,
   postRun: [],
-  wasmBinaryFile: 'c/videomag.wasm',
+  wasmBinaryFile: 'c/wasm.wasm',
   print: (text) => console.log(text),
   printErr: (text) => console.warn(text)
 };

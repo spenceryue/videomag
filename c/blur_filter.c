@@ -5,10 +5,10 @@
 void row_corr_down (
   float* input, int in_width,
   float* output, int out_width,
-  int operate_width, int operate_height,
-  // int stride,
-  float* kernel, int window,
-  int IN_LENGTH, int OUT_LENGTH
+  uint16_t operate_width, uint16_t operate_height,
+  // uint8_t stride,
+  float* kernel, uint8_t window,
+  uint32_t IN_LENGTH, uint32_t OUT_LENGTH
   )
 {
   int pre = (window-1 + 1) / 2;
@@ -108,10 +108,10 @@ void row_corr_down (
 void col_corr_down (
   float* input, int in_width,
   float* output, int out_width,
-  int operate_width, int operate_height,
-  // int stride,
-  float* kernel, int window,
-  int IN_LENGTH, int OUT_LENGTH
+  uint16_t operate_width, uint16_t operate_height,
+  // uint8_t stride,
+  float* kernel, uint8_t window,
+  uint32_t IN_LENGTH, uint32_t OUT_LENGTH
   )
 {
   int pre = (window-1 + 1) / 2;
@@ -210,11 +210,11 @@ void col_corr_down (
 void row_corr_up (
   float* input, int in_width,
   float* output, int out_width,
-  int operate_width, int operate_height,
-  int clip_width,
-  // int stride,
-  float* kernel, int window,
-  int IN_LENGTH, int OUT_LENGTH
+  uint16_t operate_width, uint16_t operate_height,
+  uint16_t clip_width,
+  // uint8_t stride,
+  float* kernel, uint8_t window,
+  uint32_t IN_LENGTH, uint32_t OUT_LENGTH
   )
 {
   int pre = (window-1 + 1) / 2;
@@ -227,7 +227,7 @@ void row_corr_up (
 
     for (int x=0; x < operate_width; x++)
     {
-      int stop = min ((x+1) * STRIDE, clip_width);
+      int stop = min ((x + 1) * STRIDE, clip_width);
 
       for (int xx=x*STRIDE; xx < stop; xx++)
       {
@@ -349,238 +349,15 @@ void row_corr_up (
 }
 
 
-void col_corr_up (
-  float* input, int in_width,
-  float* output, int out_width,
-  int operate_width, int operate_height,
-  int clip_height,
-  // int stride,
-  float* kernel, int window,
-  int IN_LENGTH, int OUT_LENGTH
-  )
-{
-  int pre = (window-1 + 1) / 2;
-  int post = (window-1) / 2;
-
-  for (int y=0; y < operate_height; y++)
-  {
-    for (int x=0; x < operate_width; x++)
-    {
-      int col_idx = 4 * x;
-      int stop = min ((y+1) * STRIDE, clip_height);
-
-      for (int yy=y*STRIDE; yy < stop; yy++)
-      {
-        int output_row_ofs = 4 * yy * out_width;
-        int output_idx = output_row_ofs + col_idx;
-
-        ASSERT (output_idx + 3 < OUT_LENGTH, "y: %d, x: %d, output_idx: %d, OUT_LENGTH: %d\n", y, x, output_idx, OUT_LENGTH);;
-
-        output[output_idx + 0] = output[output_idx + 1] = output[output_idx + 2] = 0;
-        int kernel_ofs = mod_complement (yy + -pre, STRIDE);
-        int w = -pre + kernel_ofs;
-
-        // top edge
-        if (yy < pre)
-        {
-          for (; w <= 0; w+=STRIDE)
-          {
-            int input_idx = 4 * left_reflect ((yy + w) / STRIDE, 0) * in_width + col_idx;
-            ASSERT ((yy + w)%STRIDE == 0, "yy+w: %d, (yy+w)%%STRIDE: %d\n", yy+w, (yy+w)%STRIDE);  // guaranteed to be divisible
-            int kernel_idx = w + pre;
-
-            ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
-
-            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
-          }
-          for (; w <= post; w+=STRIDE)
-          {
-            int input_idx = 4 * (yy + w) / STRIDE * in_width + col_idx;
-            ASSERT ((yy + w)%STRIDE == 0, "yy+w: %d, (yy+w)%%STRIDE: %d\n", yy+w, (yy+w)%STRIDE);  // guaranteed to be divisible
-            int kernel_idx = w + pre;
-
-            ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
-
-            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
-          }
-        }
-        // bottom edge
-        else if (yy >= clip_height - post)
-        {
-          for (; w <= 0; w+=STRIDE)
-          {
-            int input_idx = 4 * (yy + w) / STRIDE * in_width + col_idx;
-            ASSERT ((yy + w)%STRIDE == 0, "yy+w: %d, (yy+w)%%STRIDE: %d\n", yy+w, (yy+w)%STRIDE);  // guaranteed to be divisible
-            int kernel_idx = w + pre;
-
-            ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
-
-            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
-          }
-          for (; w <= post; w+=STRIDE)
-          {
-            int input_idx = 4 * right_reflect((yy + w) / STRIDE, operate_height) * in_width + col_idx;
-            ASSERT ((yy + w)%STRIDE == 0, "yy+w: %d, (yy+w)%%STRIDE: %d\n", yy+w, (yy+w)%STRIDE);  // guaranteed to be divisible
-            int kernel_idx = w + pre;
-
-            ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
-
-            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
-          }
-        }
-        // center
-        else
-        {
-          for (; w <= post; w+=STRIDE)
-          {
-            int input_idx = 4 * (yy + w) / STRIDE * in_width + col_idx;
-            ASSERT ((yy + w)%STRIDE == 0, "yy+w: %d, (yy+w)%%STRIDE: %d\n", yy+w, (yy+w)%STRIDE);  // guaranteed to be divisible
-            int kernel_idx = w + pre;
-
-            ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
-
-            output[output_idx + 0] += input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += input[input_idx + 2] * kernel[kernel_idx];
-          }
-        }
-      }
-    }
-  }
-}
-
-
-void row_corr_up_mult_add (
-  float* input, int in_width,
-  float* output, int out_width,
-  int operate_width, int operate_height,
-  int clip_width,
-  int scale,
-  // int stride,
-  float* kernel, int window,
-  int IN_LENGTH, int OUT_LENGTH
-  )
-{
-  int pre = (window-1 + 1) / 2;
-  int post = (window-1) / 2;
-
-  for (int y=0; y < operate_height; y++)
-  {
-    int row_ofs = 4 * y * in_width;
-    int output_row_ofs = 4 * y * out_width;
-
-    for (int x=0; x < operate_width; x++)
-    {
-      int stop = min ((x+1) * STRIDE, clip_width);
-
-      for (int xx=x*STRIDE; xx < stop; xx++)
-      {
-        int output_col_idx = 4 * xx;
-        int output_idx = output_row_ofs + output_col_idx;
-
-        ASSERT (output_idx + 3 < OUT_LENGTH, "y: %d, x: %d, output_idx: %d, OUT_LENGTH: %d\n", y, x, output_idx, OUT_LENGTH);;
-
-        int kernel_ofs = mod_complement (xx + -pre, STRIDE);
-        int w = -pre + kernel_ofs;
-
-        // left edge
-        if (xx < pre)
-        {
-          for (; w <= 0; w+=STRIDE)
-          {
-            int input_idx = row_ofs + 4 *   left_reflect ((xx + w) / STRIDE, 0);
-            ASSERT ((xx + w)%STRIDE == 0, "xx+w: %d, (xx+w)%%STRIDE: %d\n", xx+w, (xx+w)%STRIDE);  // guaranteed to be divisible
-            int kernel_idx = w + pre;
-
-            ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
-
-            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
-          }
-          for (; w <= post; w+=STRIDE)
-          {
-            int block_ofs = 4 * w;
-            int input_idx = row_ofs + (output_col_idx + block_ofs) / STRIDE;
-            ASSERT ((xx + w)%STRIDE == 0, "xx+w: %d, (xx+w)%%STRIDE: %d\n", xx+w, (xx+w)%STRIDE);  // guaranteed to be divisible
-            int kernel_idx = w + pre;
-
-            ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
-
-            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
-          }
-        }
-        // right edge
-        else if (xx >= clip_width - post)
-        {
-          for (; w <= 0; w+=STRIDE)
-          {
-            int block_ofs = 4 * w;
-            int input_idx = row_ofs + (output_col_idx + block_ofs) / STRIDE;
-            ASSERT ((xx + w)%STRIDE == 0, "xx+w: %d, (xx+w)%%STRIDE: %d\n", xx+w, (xx+w)%STRIDE);  // guaranteed to be divisible
-            int kernel_idx = w + pre;
-
-            ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
-
-            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
-          }
-          for (; w <= post; w+=STRIDE)
-          {
-            int input_idx = row_ofs + 4 * right_reflect((xx + w) / STRIDE, operate_width);
-            ASSERT ((xx + w)%STRIDE == 0, "xx+w: %d, (xx+w)%%STRIDE: %d\n", xx+w, (xx+w)%STRIDE);  // guaranteed to be divisible
-            int kernel_idx = w + pre;
-
-            ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
-
-            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
-          }
-        }
-        // center
-        else
-        {
-          for (; w <= post; w+=STRIDE)
-          {
-            int block_ofs = 4 * w;
-            int input_idx = row_ofs + (output_col_idx + block_ofs) / STRIDE;
-            ASSERT ((xx + w)%STRIDE == 0, "xx+w: %d, (xx+w)%%STRIDE: %d\n", xx+w, (xx+w)%STRIDE);  // guaranteed to be divisible
-            int kernel_idx = w + pre;
-
-            ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
-
-            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
-          }
-        }
-      }
-    }
-  }
-}
-
-
 void col_corr_up_mult_add (
   float* input, int in_width,
   float* output, int out_width,
-  int operate_width, int operate_height,
-  int clip_height,
-  int scale,
-  // int stride,
-  float* kernel, int window,
-  int IN_LENGTH, int OUT_LENGTH
+  uint16_t operate_width, uint16_t operate_height,
+  uint16_t clip_height,
+  float scale,
+  // uint8_t stride,
+  float* kernel, uint8_t window,
+  uint32_t IN_LENGTH, uint32_t OUT_LENGTH
   )
 {
   int pre = (window-1 + 1) / 2;
@@ -591,7 +368,7 @@ void col_corr_up_mult_add (
     for (int x=0; x < operate_width; x++)
     {
       int col_idx = 4 * x;
-      int stop = min ((y+1) * STRIDE, clip_height);
+      int stop = min ((y + 1) * STRIDE, clip_height);
 
       for (int yy=y*STRIDE; yy < stop; yy++)
       {
@@ -602,6 +379,8 @@ void col_corr_up_mult_add (
 
         int kernel_ofs = mod_complement (yy + -pre, STRIDE);
         int w = -pre + kernel_ofs;
+
+        float scratch_2, scratch_1, scratch_0 = scratch_1 = scratch_2 = 0;
 
         // top edge
         if (yy < pre)
@@ -614,9 +393,9 @@ void col_corr_up_mult_add (
 
             ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
 
-            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
+            scratch_0 += input[input_idx + 0] * kernel[kernel_idx];
+            scratch_1 += input[input_idx + 1] * kernel[kernel_idx];
+            scratch_2 += input[input_idx + 2] * kernel[kernel_idx];
           }
           for (; w <= post; w+=STRIDE)
           {
@@ -626,9 +405,9 @@ void col_corr_up_mult_add (
 
             ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
 
-            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
+            scratch_0 += input[input_idx + 0] * kernel[kernel_idx];
+            scratch_1 += input[input_idx + 1] * kernel[kernel_idx];
+            scratch_2 += input[input_idx + 2] * kernel[kernel_idx];
           }
         }
         // bottom edge
@@ -642,9 +421,9 @@ void col_corr_up_mult_add (
 
             ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
 
-            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
+            scratch_0 += input[input_idx + 0] * kernel[kernel_idx];
+            scratch_1 += input[input_idx + 1] * kernel[kernel_idx];
+            scratch_2 += input[input_idx + 2] * kernel[kernel_idx];
           }
           for (; w <= post; w+=STRIDE)
           {
@@ -654,9 +433,9 @@ void col_corr_up_mult_add (
 
             ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
 
-            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
+            scratch_0 += input[input_idx + 0] * kernel[kernel_idx];
+            scratch_1 += input[input_idx + 1] * kernel[kernel_idx];
+            scratch_2 += input[input_idx + 2] * kernel[kernel_idx];
           }
         }
         // center
@@ -670,11 +449,71 @@ void col_corr_up_mult_add (
 
             ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d\n", input_idx, IN_LENGTH);
 
-            output[output_idx + 0] += scale * input[input_idx + 0] * kernel[kernel_idx];
-            output[output_idx + 1] += scale * input[input_idx + 1] * kernel[kernel_idx];
-            output[output_idx + 2] += scale * input[input_idx + 2] * kernel[kernel_idx];
+            scratch_0 += input[input_idx + 0] * kernel[kernel_idx];
+            scratch_1 += input[input_idx + 1] * kernel[kernel_idx];
+            scratch_2 += input[input_idx + 2] * kernel[kernel_idx];
           }
         }
+
+        output[output_idx + 0] += scale * scratch_0;
+        output[output_idx + 1] += scale * scratch_1;
+        output[output_idx + 2] += scale * scratch_2;
+      }
+    }
+  }
+}
+
+
+void blur5_corr_up_mult_add (
+  float* input, int in_width,
+  float* output, int out_width,
+  uint16_t operate_width, uint16_t operate_height,
+  uint16_t clip_height,
+  float scale,
+  // uint8_t stride,
+  uint32_t IN_LENGTH, uint32_t OUT_LENGTH
+  )
+{
+  const float kernel[5] = {0.0625, 0.25, 0.375, 0.25, 0.0625};
+
+  for (int y=0; y < operate_height; y++)
+  {
+    int input_row_ofs = 4 * y * in_width;
+    int output_row_ofs = 4 * y * STRIDE * out_width;
+    int next_output_row_ofs = 4 * (y+1) * STRIDE * out_width;
+
+    for (int x=0; x < operate_width; x++)
+    {
+      int col_idx = 4 * x;
+      int input_idx[5];
+
+      input_idx[1] = input_row_ofs + col_idx;
+      ASSERT ((0 <= input_idx[0]) && (input_idx[0] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[0], IN_LENGTH);
+      input_idx[0] = left_reflect(input_idx[1] - 2, 0);
+      ASSERT ((0 <= input_idx[1]) && (input_idx[1] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[1], IN_LENGTH);
+      input_idx[2] = right_reflect(input_idx[1] + 2, IN_LENGTH);
+      ASSERT ((0 <= input_idx[2]) && (input_idx[2] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[2], IN_LENGTH);
+
+      int output_idx = output_row_ofs + col_idx;
+      ASSERT (output_idx + 3 < OUT_LENGTH, "y: %d, x: %d, output_idx: %d, OUT_LENGTH: %d\n", y, x, output_idx, OUT_LENGTH);
+
+      output[output_idx + 0] += scale * (kernel[0] * input[input_idx[0] + 0] + kernel[2] * input[input_idx[1] + 0] + kernel[4] * input[input_idx[2] + 0]);
+      output[output_idx + 1] += scale * (kernel[0] * input[input_idx[0] + 1] + kernel[2] * input[input_idx[1] + 1] + kernel[4] * input[input_idx[2] + 1]);
+      output[output_idx + 2] += scale * (kernel[0] * input[input_idx[0] + 2] + kernel[2] * input[input_idx[1] + 2] + kernel[4] * input[input_idx[2] + 2]);
+
+      if ((y+1)*STRIDE < clip_height)
+      {
+        input_idx[3] = left_reflect(input_idx[1] - 1, 0);
+        ASSERT ((0 <= input_idx[3]) && (input_idx[3] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[3], IN_LENGTH);
+        input_idx[4] = right_reflect(input_idx[1] + 1, IN_LENGTH);
+        ASSERT ((0 <= input_idx[4]) && (input_idx[4] + 3 < IN_LENGTH), "input_idx: %d, IN_LENGTH: %d\n", input_idx[4], IN_LENGTH);
+
+        output_idx = next_output_row_ofs + col_idx;
+        ASSERT (output_idx + 3 < OUT_LENGTH, "y: %d, x: %d, output_idx: %d, OUT_LENGTH: %d\n", y, x, output_idx, OUT_LENGTH);
+
+        output[output_idx + 0] += scale * (kernel[1] * input[input_idx[3] + 0] + kernel[3] * input[input_idx[4] + 0]);
+        output[output_idx + 1] += scale * (kernel[1] * input[input_idx[3] + 1] + kernel[3] * input[input_idx[4] + 1]);
+        output[output_idx + 2] += scale * (kernel[1] * input[input_idx[3] + 2] + kernel[3] * input[input_idx[4] + 2]);
       }
     }
   }

@@ -1,7 +1,7 @@
 'use strict';
 
 
-function rgb_to (to, input, width, height, output, fscs, copy=false)
+function rgb_to (to, input, width, height, output=input, fscs=use_fscs, copy=(input!=output))
 {
   switch (to)
   {
@@ -28,7 +28,7 @@ function rgb_to (to, input, width, height, output, fscs, copy=false)
 }
 
 
-function to_rgb (from, input, width, height, output, fscs, copy=false)
+function to_rgb (from, input, width, height, output=input, fscs=use_fscs, copy=(input!=output))
 {
   switch (from)
   {
@@ -332,12 +332,13 @@ function ycbcr2rgb_fscs (input, width, height, output)
 }
 
 
-function adjust_gamma (input, width, height, output, gamma, copy=false)
+function adjust_gamma (input, width, height, output, gamma, copy=(input!=output))
 {
   if (gamma == 1)
   {
     if (copy)
-      img_copy (input, output, height, width);
+      img_copy (input, output, width, height);
+
     return;
   }
 

@@ -1,7 +1,7 @@
 #include "utils.h"
 
 
-void full_scale_contrast_stretch (float* input, int length, float min, float max)
+void full_scale_contrast_stretch (float* input, uint32_t length, float min, float max)
 {
   if (min < 0 || max < 0)
   {
@@ -23,7 +23,7 @@ void full_scale_contrast_stretch (float* input, int length, float min, float max
 }
 
 
-void fill_alpha (float* input, int length, float value)
+void fill_alpha (float* input, uint32_t length, float value)
 {
   for (int i=0; i < length; i+=4)
   {
@@ -33,7 +33,17 @@ void fill_alpha (float* input, int length, float value)
 }
 
 
-void img_copy (float* input, int in_width, float* output, int out_width, int rows, int cols, int IN_LENGTH, int OUT_LENGTH)
+void fill_alpha_Uint8 (uint8_t* input, uint32_t length, uint8_t value)
+{
+  for (int i=0; i < length; i+=4)
+  {
+    ASSERT (i + 3 < length, "i: %d, length: %d", i, length);
+    input[i + 3] = value;
+  }
+}
+
+
+void img_copy (float* input, uint16_t in_width, float* output, uint16_t out_width, uint16_t rows, uint16_t cols, uint32_t IN_LENGTH, uint32_t OUT_LENGTH)
 {
   for (int y=0; y < rows; y++)
   {
@@ -57,7 +67,7 @@ void img_copy (float* input, int in_width, float* output, int out_width, int row
 }
 
 
-void img_copy_a (float* input, int in_width, float* output, int out_width, int rows, int cols, int IN_LENGTH, int OUT_LENGTH)
+void img_copy_to_Uint8 (float* input, uint16_t in_width, uint8_t* output, uint16_t out_width, uint16_t rows, uint16_t cols, uint32_t IN_LENGTH, uint32_t OUT_LENGTH)
 {
   for (int y=0; y < rows; y++)
   {
@@ -72,10 +82,10 @@ void img_copy_a (float* input, int in_width, float* output, int out_width, int r
       ASSERT (input_idx + 3 < IN_LENGTH, "input_idx: %d, IN_LENGTH: %d", input_idx, IN_LENGTH);
       ASSERT (output_idx + 3 < OUT_LENGTH, "output_idx: %d, OUT_LENGTH: %d", output_idx, OUT_LENGTH);
 
-      output[output_idx + 0] = input[input_idx + 0];
-      output[output_idx + 1] = input[input_idx + 1];
-      output[output_idx + 2] = input[input_idx + 2];
-      output[output_idx + 3] = input[input_idx + 3];
+      output[output_idx + 0] = clamp (input[input_idx + 0], 0, 255);
+      output[output_idx + 1] = clamp (input[input_idx + 1], 0, 255);
+      output[output_idx + 2] = clamp (input[input_idx + 2], 0, 255);
+      // output[output_idx + 3] = input[input_idx + 3];
     }
   }
 }
