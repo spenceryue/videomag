@@ -4,7 +4,6 @@
 var SOURCE, SINK;
 var FRAME_WIDTH, FRAME_HEIGHT;
 var FPS, FPS_LABEL, DECAY, FPS_DECAY_THRESHOLD;
-var FRAME_BOUNDS = {};
 var FILTER_BOUNDS = {};
 
 
@@ -35,7 +34,6 @@ function camera_init (mediaStream)
   {
     FRAME_WIDTH = SINK.canvas.width = SOURCE.videoWidth;
     FRAME_HEIGHT = SINK.canvas.height = SOURCE.videoHeight;
-    FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
     loaded ();
     console.log('camera source loaded.')
   };
@@ -49,7 +47,6 @@ function image_init()
   {
     FRAME_WIDTH = SINK.canvas.width = SOURCE.width;
     FRAME_HEIGHT = SINK.canvas.height = SOURCE.height;
-    FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
     loaded ();
     console.log('image source loaded.')
   }
@@ -66,7 +63,6 @@ function video_source_init ()
 
     FRAME_WIDTH = SINK.canvas.width = SOURCE.videoWidth;
     FRAME_HEIGHT = SINK.canvas.height = SOURCE.videoHeight;
-    FRAME_BOUNDS = SINK.canvas.getBoundingClientRect();
     loaded ();
     console.log('video source loaded.')
   };
@@ -148,10 +144,12 @@ function update_frame_rate (delta)
 
 function render (timestamp)
 {
-  SINK.drawImage (SOURCE, 0, 0);
-
   if (filter_size_changed)
     set_filter_dims ();
+
+  // downsample input
+
+  SINK.drawImage (SOURCE, 0, 0);
 
   if (filter_on)
   {
@@ -178,6 +176,7 @@ function render (timestamp)
 
     blur_size_changed = false;
     filter_size_changed = false;
+    filter_toggled = false;
   }
 
   /*if (++counter == 1)

@@ -43,25 +43,27 @@ function videomag (input, width, height)
   // console.log (lowerpass_pyramid[0].slice(0,12));
   // console.log (higherpass_pyramid[0].slice(0,12));
   // console.log (PYRAMID[0].slice(0,12));
-  magnify_iir (width, height, depth, 100, 16, 20);
+  // magnify_iir (width, height, depth, 100, 50, 200);
   // console.log (PYRAMID[0].slice(0,12));
 
   reconstruct_pyramid (width, height, depth);
 
   // to_rgb (color_space, PYRAMID[0], width, height);
   // adjust_gamma (PYRAMID[0], width, height, OUTPUT[0], 1 / gamma_correction);
-  var test = higherpass_pyramid[0];
-  to_rgb (color_space, test, test.width, test.height, test);
+  // var test = lowerpass_pyramid[0];
+  // var test = higherpass_pyramid[0];
+  var test = PYRAMID[0];
+  to_rgb (color_space, test, test.width, test.height);
   adjust_gamma (test, test.width, test.height, OUTPUT[0], 1 / gamma_correction);
 
   // if (gamma_correction != 1)
 
-  // return new Uint8ClampedArray (PYRAMID[0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? 255 : 0) : x));
-  // return new Uint8ClampedArray (PYRAMID[0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? x : 0) : x));
-  // return new Uint8ClampedArray (PYRAMID[0].map((x,i)=> (i%4!=3) ? input[i]-x : x));
+  // return new Uint8ClampedArray (OUTPUT[0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? 255 : 0) : x));
+  // return new Uint8ClampedArray (OUTPUT[0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? x : 0) : x));
+  // return new Uint8ClampedArray (OUTPUT[0].map((x,i)=> (i%4!=3) ? input[i]-x : x));
+  // return new Uint8ClampedArray (lowerpass_pyramid[0].map((x,i)=> (i%4!=3) ? (higherpass_pyramid[i]-x) ? 255 : 0 : x));
 
   return OUTPUT[0];
-  // return new Uint8ClampedArray (pyramid[0]);
 }
 
 
@@ -75,7 +77,7 @@ function magnify_iir (width, height, depth, amplification_amount, minimum_wavele
   // "3 is experimental constant" -- comments from original authors' MATLAB code.
   var lambda = (width**2 + height**2)**0.5 / 3;
 
-  for (let i=1; i < depth-1; i++)
+  for (let i=0; i < depth; i++)
   // "ignore the highest and lowest frequency band" -- comments from original authors' MATLAB code.
   {
     // "amplify each spatial frequency bands according to Figure 6 of our paper"
@@ -84,12 +86,13 @@ function magnify_iir (width, height, depth, amplification_amount, minimum_wavele
     // the exaggeration is NOT applied. I think this is a mistake, hence I
     // have applied exaggeration regardless (after the min() is applied).
     let current_alpha = Math.min (lambda / 8 / max_delta - 1, alpha) * exaggeration;
+    // let current_alpha = alpha * exaggeration;
     /*let current_alpha = lambda / 8 / max_delta;
     if (current_alpha > alpha) current_alpha = alpha;
     else current_alpha *= exaggeration;*/
 
     img_linear_combine (higherpass_pyramid[i], lowerpass_pyramid[i], current_alpha, -current_alpha, TEMP_PYRAMID[i]);
-    img_linear_combine (PYRAMID[i], TEMP_PYRAMID[i], 1, 1, PYRAMID[i]);
+    img_linear_combine (PYRAMID[i], TEMP_PYRAMID[i], 0, 1, PYRAMID[i]);
 
 
     lambda /= 2;

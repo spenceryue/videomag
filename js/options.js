@@ -13,6 +13,7 @@ var f_high;
 var color_space;
 var blur_size_changed;
 var filter_size_changed;
+var filter_toggled;
 
 
 var defaults =
@@ -27,7 +28,7 @@ var defaults =
   'filter_size': {min:1, max:100, step:1, value:50, print:(x => x + '%')},
   'gamma_correction': {min:0, max:100, step:1, value:50, print:(x => calculate_gamma(x).toFixed(2))},
   'f_low': {min:0, max:15, step:.01, value:0.2, print:(x => x + 'Hz')},
-  'f_high': {min:0, max:15, step:.01, value:3, print:(x => x + 'Hz')},
+  'f_high': {min:0, max:15, step:.01, value:1, print:(x => x + 'Hz')},
   'color_space': 'ycbcr',
 };
 
@@ -164,6 +165,7 @@ function options_init ()
     filter_on = this.checked;
     if (!filter_on)
       remove_previous_pyramids();
+    filter_toggled = true;
   });
 
   use_fscs = defaults['use_fscs'];
