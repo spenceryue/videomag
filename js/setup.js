@@ -19,6 +19,30 @@ var camera_constraints =
   }
 }
 
+function reset_frame_parameters ()
+{
+  SOURCE = document.querySelector('.source');
+  SINK = document.querySelector('.sink').getContext('2d');
+
+  if (SOURCE.tagName == 'VIDEO')
+  {
+    FRAME_WIDTH = SOURCE.videoWidth;
+    FRAME_HEIGHT = SOURCE.videoHeight;
+  }
+  else
+  {
+    FRAME_WIDTH = SOURCE.width;
+    FRAME_HEIGHT = SOURCE.height;
+  }
+
+  document.querySelectorAll ('.sink').forEach (canvas => {
+    canvas.width = FRAME_WIDTH;
+    canvas.height = FRAME_HEIGHT;
+  });
+
+  filter_size_changed = true;
+}
+
 
 function camera_error (error)
 {
@@ -32,8 +56,8 @@ function camera_init (mediaStream)
 
   SOURCE.onloadedmetadata = function(e)
   {
-    FRAME_WIDTH = SINK.canvas.width = SOURCE.videoWidth;
-    FRAME_HEIGHT = SINK.canvas.height = SOURCE.videoHeight;
+    reset_frame_parameters ();
+
     loaded ();
     console.log('camera source loaded.')
   };
@@ -45,8 +69,8 @@ function image_init()
 {
   SOURCE.onload = function ()
   {
-    FRAME_WIDTH = SINK.canvas.width = SOURCE.width;
-    FRAME_HEIGHT = SINK.canvas.height = SOURCE.height;
+    reset_frame_parameters ();
+
     loaded ();
     console.log('image source loaded.')
   }
@@ -61,8 +85,8 @@ function video_source_init ()
     if (this.readyState < 2)
       return;
 
-    FRAME_WIDTH = SINK.canvas.width = SOURCE.videoWidth;
-    FRAME_HEIGHT = SINK.canvas.height = SOURCE.videoHeight;
+    reset_frame_parameters ();
+
     loaded ();
     console.log('video source loaded.')
   };
@@ -126,64 +150,3 @@ function fps_init ()
   FPS_LABEL = document.querySelector('.fps');
   FPS_LABEL.innerHTML = FPS;
 }
-
-
-function update_frame_rate (delta)
-{
-  var save = FPS;
-  DECAY = get_iir_decay (1/4, delta/1000);
-  if (delta > FPS_DECAY_THRESHOLD)
-    FPS = 1000/delta;
-  else
-    FPS = (1 - DECAY) * FPS + DECAY * 1000/delta;
-
-  if (Math.trunc (FPS*10)/10 - Math.trunc (save*10)/10 != 0)
-    FPS_LABEL.innerHTML = parseFloat(FPS).toFixed(1);
-}
-
-
-function render (timestamp)
-{
-  if (filter_size_changed)
-    set_filter_dims ();
-
-  // downsample input
-
-  SINK.drawImage (SOURCE, 0, 0);
-
-  if (filter_on)
-  {
-    if (filter_size < 100)
-    {
-      let width = FILTER_BOUNDS.width;
-      let height = FILTER_BOUNDS.height;
-      let x = FILTER_BOUNDS.x;
-      let y = FILTER_BOUNDS.y;
-
-      let frame = SINK.getImageData (x, y, width, height);
-      let processed = videomag (frame.data, width, height);
-      SINK.putImageData (new ImageData(processed, width, height), x, y);
-    }
-    else
-    {
-      let frame = SINK.getImageData (0, 0, FRAME_WIDTH, FRAME_HEIGHT);
-      let processed = videomag (frame.data, FRAME_WIDTH, FRAME_HEIGHT);
-      SINK.putImageData (new ImageData(processed, FRAME_WIDTH, FRAME_HEIGHT), 0, 0);
-    }
-
-    if (show_pyramid)
-      display_pyramid();
-
-    blur_size_changed = false;
-    filter_size_changed = false;
-    filter_toggled = false;
-  }
-
-  /*if (++counter == 1)
-    throw 'one and done'*/
-
-  update_frame_rate (timestamp - render.last);
-  render.last = timestamp;
-  requestAnimationFrame (render);
-}
-render.last = 0;

@@ -1,6 +1,6 @@
 :root
 {
-  font-family: 'Ubuntu';
+  font-family: 'Varela Round';
 }
 
 body
@@ -70,7 +70,7 @@ div
 
 .debug_border
 {
-  border: 2px solid green;
+  outline: 2px solid green;
 }
 
 .loading
@@ -99,7 +99,14 @@ div
   justify-content: center;
   align-items: flex-start;
 
-  font-size: 1.5rem;
+}
+
+@media screen and (min-width: 800px)
+{
+  .source_select
+  {
+    font-size: 1.5rem;
+  }
 }
 
 .source_select > ul > li:hover:after
@@ -136,8 +143,8 @@ div
 
 input[type=checkbox]
 {
-  min-width: 50px;
-  height: 50px;
+  min-width: 30.9px;
+  height: 30.9px;
 
   cursor: pointer;
 
@@ -226,8 +233,8 @@ input:focus, .input_focus {
 .options
 {
   position: fixed;
-  width: 30vw;
-  max-width: 330px;
+  width: 28vw;
+  max-width: 250px;
   height: 100vh;
 
   display: flex;

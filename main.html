@@ -3,7 +3,7 @@
 <head>
   <title>Video Magnification</title>
   <link rel='stylesheet' href='styles.css'></link>
-  <link href="https://fonts.googleapis.com/css?family=Ubuntu|Varela+Round" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Varela+Round" rel="stylesheet">
 </head>
 <body>
   <div class='center'>
@@ -12,10 +12,10 @@
 
   <div class='source_select layer loading'>
     <ul>
-      <li>baby.mp4</li>
-      <li>webcam</li>
-      <li>3</li>
-      <li>4</li>
+      <li>baby.mp4 &#x1F39E;&#xFE0F;</li>
+      <li>webcam &#x1F4F7;</li>
+      <li>3 &#x1F39E;&#xFE0F;</li>
+      <li>4 &#x1F39E;&#xFE0F;</li>
     </ul>
   </div>
 
@@ -29,9 +29,12 @@
 
     <div class='wrapper'>
       <canvas class='sink'></canvas>
-      <!-- <canvas class='dummy hide'></canvas> -->
-      <!-- <canvas class='layer a'></canvas>
-      <canvas class='layer b'></canvas> -->
+    </div>
+    <div class='wrapper draggable'>
+      <canvas class='a debug_border sink'></canvas>
+    </div>
+    <div class='wrapper draggable'>
+      <canvas class='b debug_border sink'></canvas>
     </div>
   </div>
 
@@ -106,6 +109,7 @@
   <script src='js/color_space.js'></script>
   <script src='js/options.js'></script>
   <script src='js/controls.js'></script>
+  <script src='js/draggable.js'></script>
   <script src='js/setup.js'></script>
   <script src='js/wasm_init.js'></script>
   <script src='c/wasm.js'></script>

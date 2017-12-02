@@ -183,12 +183,15 @@ function max_pyramid_depth (_filter_width=FILTER_BOUNDS.width, _filter_height=FI
 }
 
 
-function get_canvas (width, height, x, y)
+function get_canvas (width, height, x, y, style_scale=1)
 {
   var canvas = document.createElement('canvas');
   canvas.style.position = 'absolute';
-  canvas.style.left = parseInt(x) + 'px';
-  canvas.style.top  = parseInt(y) + 'px';
+  canvas.style.left = parseFloat (x * style_scale) + 'px';
+  canvas.style.top  = parseFloat (y * style_scale) + 'px';
+  canvas.style.width = parseFloat (width * style_scale) + 'px';
+  canvas.style.height = parseFloat (height * style_scale) + 'px';
+
   canvas.width = width;
   canvas.height = height;
   canvas.classList.toggle('pyramid');
@@ -198,58 +201,79 @@ function get_canvas (width, height, x, y)
 }
 
 
-function remove_previous_pyramids ()
+function remove_previous_pyramids (base=SINK.canvas.parentNode)
 {
-  document.querySelectorAll('.pyramid').forEach(e => e.remove());
+  Array.from (base.children).forEach (e => e.classList.contains ('pyramid') ? e.remove () : undefined);
 }
 
 
-function display_pyramid ()
+function display_pyramid (INPUT=PYRAMID, OUTPUT_=OUTPUT[0], base=SINK.canvas.parentNode, skip_first=true)
 {
-  var canvases = document.querySelectorAll('.pyramid');
+  var canvases = Array.from (base.children).filter (e => e.classList.contains ('pyramid'));
 
   if (blur_size_changed || filter_size_changed || !canvases.length)
   {
     if (canvases.length)
       canvases.forEach (e => e.remove());
-    display_new_pyramid ();
+    display_new_pyramid (base, skip_first);
   }
   else
-    display_old_pyramid (canvases);
+    display_old_pyramid (canvases, INPUT, OUTPUT_, skip_first);
 }
 
 
-function display_old_pyramid (c)
+function display_old_pyramid (c, INPUT=PYRAMID, OUTPUT_=OUTPUT[0], skip_first=true)
 {
+  if (skip_first)
+  {
+    INPUT = INPUT.slice (1);
+    OUTPUT_ = OUTPUT_.slice (1);
+  }
+
   for (let i=0; i < c.length; i++)
   {
-    let img = PYRAMID[i+1];
+    let img = INPUT[i];
     to_rgb (color_space, img, img.width, img.height);
 
-    adjust_gamma (img, img.width, img.height, OUTPUT[i+1], 1/gamma_correction);
+    adjust_gamma (img, img.width, img.height, OUTPUT_[i], 1/gamma_correction);
 
-    img_show (c[i].getContext ('2d'), OUTPUT[i+1]);
+    img_show (c[i].getContext ('2d'), OUTPUT_[i]);
   }
 }
 
 
-function display_new_pyramid ()
+function display_new_pyramid (base=SINK.canvas.parentNode, skip_first=true)
 {
-  var [prev_width, prev_height] = [FILTER_BOUNDS.width, FILTER_BOUNDS.height];
+  var style_scale = SINK.canvas.getBoundingClientRect().width / FRAME_WIDTH;
+  /*var [prev_width, prev_height] = [FILTER_BOUNDS.width, FILTER_BOUNDS.height];
   var [prev_x, prev_y] = [FILTER_BOUNDS.x, FILTER_BOUNDS.y];
   var x, y;
-  var depth = max_pyramid_depth (prev_width, prev_height, blur_size);
-  var parentNode = SINK.canvas.parentNode;
+  var depth = max_pyramid_depth (prev_width, prev_height, blur_size);*/
+  var [width, height] = [FILTER_BOUNDS.width, FILTER_BOUNDS.height];
+  var [x, y] = [FILTER_BOUNDS.x, FILTER_BOUNDS.y];
+  var depth = max_pyramid_depth (width, height, blur_size);
 
-  for (let level=1; level < depth; level++)
+  for (let level=0; level < depth; level++)
   {
-    let [width, height] = next_pyramid_dimensions (prev_width, prev_height);
+    if (!skip_first || level > 0)
+    {
+      let c = get_canvas (width, height, x, y, style_scale);
+      c.getContext ('2d').fillStyle = 'hsla(' + (Math.random() * 360) + ', 100%, 90%, .5)';
+      c.getContext ('2d').fillRect(0,0, width, height);
+      base.append (c);
+    }
+    let [prev_width, prev_height] = [width, height];
+    let [prev_x, prev_y] = [x, y];
+    [width, height] = next_pyramid_dimensions (width, height);
+    [x, y] = next_pyramid_position (prev_width, prev_height, prev_x, prev_y, level+1, width, height);
+
+    /*let [width, height] = next_pyramid_dimensions (prev_width, prev_height);
     [x, y] = next_pyramid_position (prev_width, prev_height, prev_x, prev_y, level, width, height);
-    let c = get_canvas (width, height, x, y);
+    let c = get_canvas (width, height, x, y, style_scale);
     c.getContext ('2d').fillStyle = 'hsla(' + (Math.random() * 360) + ', 100%, 90%, .5)';
     c.getContext ('2d').fillRect(0,0, width, height);
-    parentNode.append (c);
+    base.append (c);
     [prev_width, prev_height] = [width, height];
-    [prev_x, prev_y] = [x, y];
+    [prev_x, prev_y] = [x, y];*/
   }
 }

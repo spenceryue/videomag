@@ -63,4 +63,9 @@ function iir_bandpass_filter_pyramid (width, height, depth)
       // full_scale_contrast_stretch (higherpass_pyramid[i])
     }
   }
+
+  display_pyramid (lowerpass_pyramid, OUTPUT[1], document.body.querySelector ('.sink.a').parentNode, false)
+
+  display_pyramid (higherpass_pyramid, OUTPUT[2], document.body.querySelector ('.sink.b').parentNode, false)
+  document.body.querySelector ('.sink.b').style.outline = '2px solid blue'
 }
