@@ -1,6 +1,7 @@
 'use strict';
 
 
+var hide_original;
 var filter_on;
 var use_fscs;
 var show_pyramid;
@@ -21,14 +22,14 @@ var defaults =
   'reflect_x': false,
   'hide_original': false,
   'filter_on': true,
-  'use_fscs': true,
-  'show_pyramid': true,
+  'use_fscs': false,
+  'show_pyramid': false,
   'use_wasm': true,
   'blur_size': {min:1, max:50, step:2, value:5, print:(x => x + 'px')},
   'filter_size': {min:1, max:100, step:1, value:50, print:(x => x + '%')},
   'gamma_correction': {min:0, max:100, step:1, value:50, print:(x => calculate_gamma(x).toFixed(2))},
-  'f_low': {min:0, max:15, step:.01, value:0.2, print:(x => x + 'Hz')},
-  'f_high': {min:0, max:15, step:.01, value:1, print:(x => x + 'Hz')},
+  'f_low': {min:0, max:15, step:.01, value:0.4, print:(x => x + 'Hz')},
+  'f_high': {min:0, max:15, step:.01, value:3, print:(x => x + 'Hz')},
   'color_space': 'ycbcr',
 };
 
@@ -137,6 +138,75 @@ function update_blur_size (new_blur_size)
 }
 
 
+function source_select_init ()
+{
+  let sources = document.querySelectorAll ('.source_select > div');
+  let queued = [];
+  let current = 0;
+
+  sources.forEach ((element, i) => {
+    let next = SOURCE.parentNode.children[i];
+
+    if (i == current)
+      element.classList.toggle ('selected');
+
+    element.onclick = function () {
+      var save = SOURCE;
+
+      if (SOURCE == next)
+        return;
+
+      SOURCE = next;
+      filter_on = false;
+
+      sources[current].classList.toggle ('selected');
+      element.classList.toggle ('selected');
+      current = i;
+
+      if (!hide_original)
+      {
+        detach (save);
+        save.classList.toggle ('fade_out', true);
+
+        next.classList.toggle ('fade_in', true);
+        next.classList.toggle ('hide', false);
+      }
+
+      queued.push (() => {
+        if (!hide_original)
+        {
+          save.classList.toggle ('hide', true);
+          undo_detach (save);
+          save.classList.toggle ('fade_out', false);
+
+          next.classList.toggle ('fade_in', false);
+        }
+
+        if (next.loaded)
+        {
+          next.currentTime = 0;
+          render.lastTime = -1;
+          next.play ()
+        }
+
+        filter_on = true;
+      });
+
+      setTimeout (() => queued.shift()(), 1000);
+
+      if (next.tagName == 'VIDEO' && !next.loaded)
+        if (next.src === '' && next.srcObject == null)
+          navigator.mediaDevices.getUserMedia(camera_constraints).
+          then(camera_init.bind (next)).catch(camera_error);
+        else
+          video_source_init ();
+      else
+        reset_frame_parameters (next);
+    }
+  });
+}
+
+
 function options_init ()
 {
   for (let key in defaults)
@@ -147,7 +217,7 @@ function options_init ()
 
   window.onresize = reset_frame_parameters;
 
-  if (is_mobile_or_tablet() || document.body.getBoundingClientRect().width > 800)
+  if (is_mobile_or_tablet() || document.body.getBoundingClientRect().width > 825)
   {
     let element = document.querySelector('.options_lock');
     element.classList.toggle ('options_lock_docked');
@@ -167,6 +237,7 @@ function options_init ()
   SOURCE.classList.toggle('hide', get_option('hide_original'));
   bind_option ('hide_original', function () {
     SOURCE.classList.toggle ('hide', this.checked);
+    hide_original = this.checked;
   });
 
   filter_on = defaults['filter_on'];
@@ -227,6 +298,8 @@ function options_init ()
     check_fscs ();
   });
   check_fscs ();
+
+  source_select_init ();
 
   console.log('options initialized.')
 }

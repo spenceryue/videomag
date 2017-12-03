@@ -101,7 +101,7 @@ div
 
 }
 
-@media screen and (min-width: 800px)
+@media screen and (min-width: 825px)
 {
   .source_select
   {
@@ -109,14 +109,42 @@ div
   }
 }
 
-.source_select > ul > li:hover:after
+.source_select > div
 {
-  content: attr(data-hint);
-  position: absolute;
-  left: 1rem;
-  color: rgba(0,0,0,.5);
-  display: block;
-  width:0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  height: 2rem;
+  padding-left: 2%;
+  padding-right: 2%;
+  box-sizing: border-box;
+  opacity: .381;
+
+  transition: opacity .15 ease-out;
+}
+.source_select > div:hover
+{
+  opacity: 1;
+
+  transition: opacity .15 ease-in;
+}
+
+.source_select > div > span:nth-child(1)
+{
+  flex-grow: 1;
+  text-align: center;
+}
+
+.source_select > div > span:nth-child(2)
+{
+  flex-grow: 0;
+  font-size: 1.5rem;
+}
+
+.source_select .selected
+{
+  opacity: .763;
 }
 
 .source
@@ -261,7 +289,7 @@ input:focus, .input_focus {
   left: 0;
   top: 0;
 
-  opacity: .5;
+  opacity: .381;
   transform: translate(-150%, 25%);
   transition: all .15s ease-in;
 }
@@ -281,10 +309,6 @@ input:focus, .input_focus {
 
 .stat
 {
-  /*display: flex;
-  align-items: center;
-  justify-content: flex-start;*/
-
   font-family: 'Varela Round';
 }
 
@@ -292,7 +316,7 @@ input:focus, .input_focus {
 {
   height: 120px;
   width: 120px;
-  animation: .67s spin linear infinite;
+  animation: .67s linear infinite spin;
 
   user-select: none;
 
@@ -303,19 +327,29 @@ input:focus, .input_focus {
 
 .fade_in
 {
-  opacity: 1 !important;
-  transition: opacity .33s ease-in;
+  animation: .33s ease-in both fade_in;
 }
 
 .fade_out
 {
-  opacity: 0 !important;
-  transition: opacity .33s ease-out;
+  animation: .33s ease-out both fade_out;
 }
 
 .visible
 {
   opacity: 1 !important;
+}
+
+@keyframes fade_out
+{
+  from {opacity: 1}
+  to {opacity: 0}
+}
+
+@keyframes fade_in
+{
+  from {opacity: 0}
+  to {opacity: 1}
 }
 
 @keyframes spin

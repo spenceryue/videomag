@@ -11,31 +11,30 @@
   </div>
 
   <div class='source_select layer loading'>
-    <ul>
-      <li>baby.mp4 &#x1F39E;&#xFE0F;</li>
-      <li>webcam &#x1F4F7;</li>
-      <li>3 &#x1F39E;&#xFE0F;</li>
-      <li>4 &#x1F39E;&#xFE0F;</li>
-    </ul>
+    <!-- <ul> -->
+      <div><span>baby.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
+      <div><span>face.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
+      <div><span>webcam</span><span>&#x1F4F7;</span></div>
+      <!-- <div>4 &#x1F39E;&#xFE0F;</div> -->
+    <!-- </ul> -->
   </div>
 
   <div class='main layer center_x loading'>
     <div class='wrapper'>
       <video class='source hide' src='/EVM_Matlab/data/baby.mp4' muted loop autoplay playsinline></video>
+      <video class='source hide' src='/EVM_Matlab/data/face.mp4' muted loop autoplay playsinline></video>
       <video class='source hide' muted loop autoplay playsinline></video>
-      <img class='source hide' src='einstein.png'>
-      <img class='source hide' src='einstein.jpg'>
     </div>
 
     <div class='wrapper'>
       <canvas class='sink'></canvas>
     </div>
-    <div class='wrapper draggable'>
+    <!-- <div class='wrapper draggable'>
       <canvas class='a debug_border sink'></canvas>
     </div>
     <div class='wrapper draggable'>
       <canvas class='b debug_border sink'></canvas>
-    </div>
+    </div> -->
   </div>
 
   <div class='options layer right hide'>

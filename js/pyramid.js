@@ -65,8 +65,8 @@ function build_pyramid (width, height, depth)
   for (let i=0; i < depth-1; i++)
   {
     corr2_down (PYRAMID[i], TEMP_PYRAMID[i], PYRAMID[i+1]);
-    // full_scale_contrast_stretch (PYRAMID[i+1])
     corr2_up (PYRAMID[i+1], TEMP_PYRAMID[i], PYRAMID[i], -(PYRAMID_STRIDE**2));
+    full_scale_contrast_stretch (PYRAMID[i]);
     // last argument is to normalize kernel weights after upsampling.
     // negative sign is to subtract the result from PYRAMID[i]
   }

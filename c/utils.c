@@ -1,6 +1,6 @@
 #include "utils.h"
 
-
+#include <stdio.h>
 void full_scale_contrast_stretch (float* input, uint32_t length, float min, float max)
 {
   if (min < 0 || max < 0)
@@ -15,6 +15,7 @@ void full_scale_contrast_stretch (float* input, uint32_t length, float min, floa
     }
   }
 
+  // printf ("_fscs min: %.4f, max:%.4f\n", min, max);
   if (min == max)
     return;
 
@@ -46,7 +47,12 @@ void fill_alpha_Uint8 (uint8_t* input, uint32_t length, uint8_t value)
 }
 
 
-void img_copy (float* input, uint16_t in_width, float* output, uint16_t out_width, uint16_t rows, uint16_t cols, uint32_t IN_LENGTH, uint32_t OUT_LENGTH)
+void img_copy (
+  float* input, uint16_t in_width,
+  float* output, uint16_t out_width,
+  uint16_t rows, uint16_t cols,
+  uint32_t IN_LENGTH, uint32_t OUT_LENGTH
+  )
 {
   for (int y=0; y < rows; y++)
   {
@@ -70,7 +76,12 @@ void img_copy (float* input, uint16_t in_width, float* output, uint16_t out_widt
 }
 
 
-void img_copy_to_Uint8 (float* input, uint16_t in_width, uint8_t* output, uint16_t out_width, uint16_t rows, uint16_t cols, uint32_t IN_LENGTH, uint32_t OUT_LENGTH)
+void img_copy_to_Uint8 (
+  float* input, uint16_t in_width,
+  uint8_t* output, uint16_t out_width,
+  uint16_t rows, uint16_t cols,
+  uint32_t IN_LENGTH, uint32_t OUT_LENGTH
+  )
 {
   for (int y=0; y < rows; y++)
   {
@@ -94,7 +105,14 @@ void img_copy_to_Uint8 (float* input, uint16_t in_width, uint8_t* output, uint16
 }
 
 
-void img_linear_combine (float* input_a, float* input_b, float weight_a, float weight_b, float* output, uint16_t operate_width, uint16_t operate_height, uint16_t in_width, uint16_t out_width, uint32_t IN_LENGTH, uint32_t OUT_LENGTH)
+void img_linear_combine (
+  float* input_a, float* input_b,
+  float weight_a, float weight_b,
+  float* output,
+  uint16_t operate_width, uint16_t operate_height,
+  uint16_t in_width, uint16_t out_width,
+  uint32_t IN_LENGTH, uint32_t OUT_LENGTH
+  )
 {
   for (int y=0; y < operate_height; y++)
   {
@@ -118,7 +136,14 @@ void img_linear_combine (float* input_a, float* input_b, float weight_a, float w
 }
 
 
-void img_scale (float* input, float scale, float* output, uint16_t operate_width, uint16_t operate_height, uint16_t in_width, uint16_t out_width, uint32_t IN_LENGTH, uint32_t OUT_LENGTH)
+void img_scale (
+  float* input,
+  float scale,
+  float* output,
+  uint16_t operate_width, uint16_t operate_height,
+  uint16_t in_width, uint16_t out_width,
+  uint32_t IN_LENGTH, uint32_t OUT_LENGTH
+  )
 {
   for (int y=0; y < operate_height; y++)
   {
@@ -141,3 +166,33 @@ void img_scale (float* input, float scale, float* output, uint16_t operate_width
   }
 }
 
+
+void img_add (
+  float* input_a, float* input_b,
+  float chroma_attenuate_b,
+  float* output,
+  uint16_t operate_width, uint16_t operate_height,
+  uint16_t in_width, uint16_t out_width,
+  uint32_t IN_LENGTH, uint32_t OUT_LENGTH
+  )
+{
+  for (int y=0; y < operate_height; y++)
+  {
+    int row_ofs = 4 * y * in_width;
+    int output_row_ofs = 4 * y * out_width;
+
+    for (int x=0; x < operate_width; x++)
+    {
+      int input_idx = row_ofs + 4 * x;
+      int output_idx = output_row_ofs + 4 * x;
+
+      ASSERT (input_idx + 3 < IN_LENGTH, "");
+      ASSERT (output_idx + 3 < OUT_LENGTH, "");
+
+      output[output_idx + 0] = input_a[input_idx + 0] + input_b[input_idx + 0];
+      output[output_idx + 1] = input_a[input_idx + 1] + chroma_attenuate_b * input_b[input_idx + 1];
+      output[output_idx + 2] = input_a[input_idx + 2] + chroma_attenuate_b * input_b[input_idx + 2];
+      // output[output_idx + 3] = input[input_idx + 3];
+    }
+  }
+}

@@ -30,12 +30,34 @@ function update_frame_rate (delta)
 }
 
 
+function play_loop_notification ()
+{
+  var element = document.createElement ('div');
+  element.innerHTML = '&#x27F2;';
+  element.style.width = '25vw';
+  element.style.height = '25vw';
+  element.style.fontSize = '25vw';
+  element.style.color = 'rgba(255,255,255,.618)';
+  element.style.position = 'absolute';
+  element.style.opacity = 1;
+  element.classList.toggle ('center');
+  element.style.animation = '1s ease-out both fade_out';
+  SINK.canvas.parentNode.appendChild (element);
+  setTimeout (() => element.remove (), 2000);
+}
+
+
 function render (timestamp)
 {
+  if (SOURCE.currentTime < render.lastTime)
+  {
+    play_loop_notification ();
+    filter_toggled = true;
+  }
+  render.lastTime = SOURCE.currentTime;
+
   if (filter_size_changed)
     set_filter_dims ();
-
-  // downsample input
 
   SINK.drawImage (SOURCE, 0, 0);
 
@@ -67,14 +89,16 @@ function render (timestamp)
     filter_toggled = false;
   }
 
-  /*if (++counter == 1)
-    throw 'one and done'*/
+  // if (++counter == 1)
+    // throw 'one and done'
 
   update_frame_rate (timestamp - render.last);
   render.last = timestamp;
-  requestAnimationFrame (render);
+
+  render.id = requestAnimationFrame (render);
 }
 render.last = 0;
+render.lastTime = 0;
 
 
 function videomag (input, width, height)
@@ -85,12 +109,12 @@ function videomag (input, width, height)
   {
     resize_all (PYRAMIDS, width, height, depth);
     resize_all (OUTPUT, width, height, depth);
-    validate_pyramid_memory ()
+    validate_pyramid_memory ();
 
     if (blur_size_changed)
     {
       kernel = get_blur_kernel (blur_size);
-      validate_pyramid_memory ()
+      validate_pyramid_memory ();
     }
   }
 
@@ -103,28 +127,19 @@ function videomag (input, width, height)
 
   build_pyramid (width, height, depth);
   iir_bandpass_filter_pyramid (width, height, depth);
-  // console.log (lowerpass_pyramid[0].slice(0,12));
-  // console.log (higherpass_pyramid[0].slice(0,12));
-  // console.log (PYRAMID[0].slice(0,12));
-  // magnify_iir (width, height, depth, 100, 50, 200);
-  // console.log (PYRAMID[0].slice(0,12));
+
+  if (!blur_size_changed && !filter_size_changed && !filter_toggled)
+    magnify_iir (width, height, depth, 10, 16, 2);
 
   if (!show_pyramid)
     reconstruct_pyramid (width, height, depth);
 
-  // to_rgb (color_space, PYRAMID[0], width, height);
-  // adjust_gamma (PYRAMID[0], width, height, OUTPUT[0], 1 / gamma_correction);
-  // var test = lowerpass_pyramid[0];
-  // var test = higherpass_pyramid[0];
-  var test = PYRAMID[0];
-  to_rgb (color_space, test, test.width, test.height);
-  adjust_gamma (test, test.width, test.height, OUTPUT[0][0], 1 / gamma_correction);
+  to_rgb (color_space, PYRAMID[0], width, height);
+  adjust_gamma (PYRAMID[0], width, height, OUTPUT[0][0], 1 / gamma_correction);
 
-  // if (gamma_correction != 1)
-
-  // return new Uint8ClampedArray (OUTPUT[0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? 255 : 0) : x));
-  // return new Uint8ClampedArray (OUTPUT[0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? x : 0) : x));
-  // return new Uint8ClampedArray (OUTPUT[0].map((x,i)=> (i%4!=3) ? input[i]-x : x));
+  // return new Uint8ClampedArray (OUTPUT[0][0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? 255 : 0) : x));
+  // return new Uint8ClampedArray (OUTPUT[0][0].map((x,i)=> (i%4!=3) ? (Math.round(input[i]-x) ? x : 0) : x));
+  // return new Uint8ClampedArray (OUTPUT[0][0].map((x,i)=> (i%4!=3) ? input[i]-x : x));
   // return new Uint8ClampedArray (lowerpass_pyramid[0].map((x,i)=> (i%4!=3) ? (higherpass_pyramid[i]-x) ? 255 : 0 : x));
 
   return OUTPUT[0][0];
@@ -141,7 +156,8 @@ function magnify_iir (width, height, depth, amplification_amount, minimum_wavele
   // "3 is experimental constant" -- comments from original authors' MATLAB code.
   var lambda = (width**2 + height**2)**0.5 / 3;
 
-  for (let i=0; i < depth; i++)
+  lambda /= 2;
+  for (let i=1; i < depth-1; i++)
   // "ignore the highest and lowest frequency band" -- comments from original authors' MATLAB code.
   {
     // "amplify each spatial frequency bands according to Figure 6 of our paper"
@@ -149,15 +165,15 @@ function magnify_iir (width, height, depth, amplification_amount, minimum_wavele
     // Note: in the original code, when the ceiling alpha value is reached,
     // the exaggeration is NOT applied. I think this is a mistake, hence I
     // have applied exaggeration regardless (after the min() is applied).
-    let current_alpha = Math.min (lambda / 8 / max_delta - 1, alpha) * exaggeration;
+    // let current_alpha = Math.min (lambda / 8 / max_delta - 1, alpha) * exaggeration;
     // let current_alpha = alpha * exaggeration;
-    /*let current_alpha = lambda / 8 / max_delta;
+    let current_alpha = lambda / 8 / max_delta;
     if (current_alpha > alpha) current_alpha = alpha;
-    else current_alpha *= exaggeration;*/
+    else current_alpha *= exaggeration;
 
     img_linear_combine (higherpass_pyramid[i], lowerpass_pyramid[i], current_alpha, -current_alpha, TEMP_PYRAMID[i]);
-    img_linear_combine (PYRAMID[i], TEMP_PYRAMID[i], 0, 1, PYRAMID[i]);
-
+    // console.log (current_alpha, higherpass_pyramid[i], lowerpass_pyramid[i], TEMP_PYRAMID[i])
+    img_add (PYRAMID[i], TEMP_PYRAMID[i], 0.1, PYRAMID[i]);
 
     lambda /= 2;
   }

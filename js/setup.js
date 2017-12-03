@@ -19,11 +19,8 @@ var camera_constraints =
   }
 }
 
-function reset_frame_parameters ()
+function reset_frame_parameters (source=SOURCE)
 {
-  SOURCE = document.querySelector('.source');
-  SINK = document.querySelector('.sink').getContext('2d');
-
   if (SOURCE.tagName == 'VIDEO')
   {
     FRAME_WIDTH = SOURCE.videoWidth;
@@ -54,14 +51,15 @@ function camera_init (mediaStream)
 {
   window.stream = mediaStream;
 
-  SOURCE.onloadedmetadata = function(e)
+  this.onloadedmetadata = function(e)
   {
-    reset_frame_parameters ();
+    this.loaded = true;
+    reset_frame_parameters (this);
 
     loaded ();
     console.log('camera source loaded.')
   };
-  SOURCE.srcObject = mediaStream;
+  this.srcObject = mediaStream;
 }
 
 
@@ -69,7 +67,8 @@ function image_init()
 {
   SOURCE.onload = function ()
   {
-    reset_frame_parameters ();
+    this.loaded = true;
+    reset_frame_parameters (this);
 
     loaded ();
     console.log('image source loaded.')
@@ -85,6 +84,7 @@ function video_source_init ()
     if (this.readyState < 2)
       return;
 
+    this.loaded = true;
     reset_frame_parameters ();
 
     loaded ();
@@ -108,7 +108,7 @@ function init ()
     case 'VIDEO':
       if (SOURCE.src === '')
         navigator.mediaDevices.getUserMedia(camera_constraints).
-        then(camera_init).catch(camera_error);
+        then(camera_init.bind (SOURCE)).catch(camera_error);
       else
         video_source_init ();
       break;
@@ -120,17 +120,22 @@ function init ()
 
 function loaded ()
 {
+  if (!loaded.done)
+    loaded.done = true;
+  else
+    return;
+
   pyramids_init ();
   videomag_init ();
   blur_init ();
 
   var loading = document.querySelectorAll ('.loading');
   loading.forEach (e => e.classList.replace ('loading', 'fade_in'));
-  setTimeout (() => loading.forEach (e => e.classList.toggle ('fade_in')), 330);
   spinner_init ();
+  setTimeout (() => loading.forEach (e => e.classList.toggle ('fade_in')), 1000);
   document.querySelector('.options').classList.toggle ('hide');
 
-  requestAnimationFrame (render);
+  render.id = requestAnimationFrame (render);
 }
 
 
@@ -138,7 +143,7 @@ function spinner_init ()
 {
   var spinnerElement = document.querySelector ('.spinner');
   spinnerElement.classList.toggle ('fade_out');
-  setTimeout (() => spinnerElement.remove(), 330);
+  setTimeout (() => spinnerElement.remove(), 1000);
 }
 
 
