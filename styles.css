@@ -1,6 +1,13 @@
+*
+{
+  box-sizing: border-box;
+}
+
 :root
 {
   font-family: 'Varela Round';
+  --pink: rgba(237,0,180,1);
+  --blue: rgba(0,180,237,1);
 }
 
 body
@@ -11,6 +18,78 @@ body
 div
 {
   user-select: none;
+}
+
+header
+{
+  width: 100%;
+  min-height: 15vh;
+  padding: 2rem;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  font-family: 'Ubuntu', sans-serif;
+  font-size: 2rem;
+  border-bottom: 2px solid rgba(0,0,0,.618);
+  /*color: rgba(0,0,0,1);*/
+}
+
+.blur_focus
+{
+  animation: .5s ease both blur_focus;
+}
+
+@keyframes blur_focus
+{
+  0%
+  {
+    filter: blur(0px);
+    color: rgba(255,255,255,0);
+    text-shadow: -2px -1px var(--blue), 1px 3px var(--pink);
+    font-style: bold;
+  }
+  50%
+  {
+    filter: blur(1px);
+  }
+  100%
+  {
+    filter: blur(0px);
+    color: rgba(0,0,0,1);
+    text-shadow: 0px 0px var(--blue), 0px 0px var(--pink);
+    font-style: normal;
+  }
+}
+
+main
+{
+  width: 100%;
+  min-height: 85vh;
+  background-color: rgba(180,180,180);
+}
+
+.github
+{
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: black;
+  fill: white;
+  opacity: .381;
+}
+
+.github:hover
+{
+  opacity: .618;
+}
+
+.github_bg
+{
+  fill: currentColor;
 }
 
 .layer
@@ -78,15 +157,18 @@ div
   opacity: 0 !important;
 }
 
-.main
+.content
 {
+  top: 0;
   width: 61.8%;
   max-width: 61.8%;
   min-height: 100%;
+  margin: 1rem auto;
 
   display: flex;
   flex-direction: column;
   justify-content: center;
+  text-align: center;
 }
 
 .source_select
@@ -98,7 +180,6 @@ div
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-
 }
 
 @media screen and (min-width: 825px)
@@ -118,7 +199,6 @@ div
   height: 2rem;
   padding-left: 2%;
   padding-right: 2%;
-  box-sizing: border-box;
   opacity: .381;
 
   transition: opacity .15 ease-out;
@@ -132,13 +212,14 @@ div
 
 .source_select > div > span:nth-child(1)
 {
-  flex-grow: 1;
+  flex-grow: 4;
   text-align: center;
 }
 
 .source_select > div > span:nth-child(2)
 {
-  flex-grow: 0;
+  flex-grow: 1;
+  text-align: right;
   font-size: 1.5rem;
 }
 
@@ -231,6 +312,7 @@ input:focus, .input_focus {
 .option
 {
   min-height: 50px;
+  flex-grow: 1;
 
   display: flex;
   align-items: center;
@@ -260,10 +342,10 @@ input:focus, .input_focus {
 
 .options
 {
-  position: fixed;
+  top: 0;
+  height: 100%;
   width: 28vw;
   max-width: 250px;
-  height: 100vh;
 
   display: flex;
   flex-direction: column;
@@ -320,8 +402,10 @@ input:focus, .input_focus {
 
   user-select: none;
 
-  border: 3px solid skyblue;
-  border-top: 3px solid pink;
+  /*border: 3px solid skyblue;
+  border-top: 3px solid pink;*/
+  border: 3px solid var(--blue);
+  border-top: 3px solid var(--pink);
   border-radius: 50%;
 }
 

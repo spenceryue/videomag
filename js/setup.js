@@ -132,10 +132,23 @@ function loaded ()
   var loading = document.querySelectorAll ('.loading');
   loading.forEach (e => e.classList.replace ('loading', 'fade_in'));
   spinner_init ();
+  options_pane_init ();
+  header_init ();
   setTimeout (() => loading.forEach (e => e.classList.toggle ('fade_in')), 1000);
-  document.querySelector('.options').classList.toggle ('hide');
 
   render.id = requestAnimationFrame (render);
+}
+
+
+function header_init ()
+{
+  var element = document.body.querySelector('header > span');
+  element.classList.toggle ('blur_focus');
+  element.addEventListener ('mouseover', () => {
+    element.classList.toggle ('blur_focus');
+    element.getBoundingClientRect();
+    element.classList.toggle ('blur_focus');
+  })
 }
 
 
@@ -144,6 +157,17 @@ function spinner_init ()
   var spinnerElement = document.querySelector ('.spinner');
   spinnerElement.classList.toggle ('fade_out');
   setTimeout (() => spinnerElement.remove(), 1000);
+}
+
+
+function options_pane_init ()
+{
+  if (is_mobile_or_tablet() || document.body.getBoundingClientRect().width > 825)
+  {
+    let element = document.querySelector('.options_lock');
+    element.classList.toggle ('options_lock_docked');
+    element.parentNode.classList.replace ('hide','fade_in');
+  }
 }
 
 

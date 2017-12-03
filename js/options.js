@@ -219,13 +219,6 @@ function options_init ()
 
   window.onresize = reset_frame_parameters;
 
-  if (is_mobile_or_tablet() || document.body.getBoundingClientRect().width > 825)
-  {
-    let element = document.querySelector('.options_lock');
-    element.classList.toggle ('options_lock_docked');
-    element.parentNode.classList.toggle ('fade_in');
-  }
-
   document.querySelector('.options_lock').addEventListener ('click', function () {
     this.classList.toggle ('options_lock_docked');
     this.parentNode.classList.toggle ('fade_in');

@@ -23,7 +23,7 @@ function update_frame_rate (delta)
   if (delta > FPS_DECAY_THRESHOLD)
     FPS = 1000/delta;
   else
-    FPS = (1 - DECAY) * FPS + DECAY * 1000/delta;
+    FPS = DECAY * FPS + (1 - DECAY) * 1000/delta;
 
   if (Math.trunc (FPS*10)/10 - Math.trunc (save*10)/10 != 0)
     FPS_LABEL.innerHTML = parseFloat(FPS).toFixed(1);
