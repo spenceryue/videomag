@@ -20,9 +20,9 @@ function get_iir_decay (cutoff_frequency, sampling_time, use_exponential=true)
   var time_constant = 1 / (2 * Math.PI * cutoff_frequency);
 
   if (use_exponential)
-    return 1 - Math.exp (- sampling_time / time_constant);
+    return Math.exp (- sampling_time / time_constant);
   else
-    return 1 - time_constant / (sampling_time + time_constant);
+    return time_constant / (sampling_time + time_constant);
 }
 
 
@@ -30,6 +30,9 @@ function update_iir_decays (fps_=FPS, f_low_=f_low, f_high_=f_high, use_exponent
 {
   iir_decay_low = get_iir_decay (f_low, 1/fps_, use_exponential);
   iir_decay_high = get_iir_decay (f_high, 1/fps_, use_exponential);
+
+  // iir_decay_low = 1 - .05;
+  // iir_decay_high = 1 - .4;
 
   console.assert (0 <= iir_decay_low && iir_decay_low <= 1);
   console.assert (0 <= iir_decay_high && iir_decay_high <= 1);

@@ -202,6 +202,8 @@ function source_select_init ()
           video_source_init ();
       else
         reset_frame_parameters (next);
+
+      remove_previous_pyramids ();
     }
   });
 }
