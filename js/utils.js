@@ -92,6 +92,7 @@ function img_copy (
 
     validate_pyramid_memory ()
 
+
     return;
   }
 
@@ -176,60 +177,9 @@ function img_linear_combine (
 
 
 /* Candidate for js->C->WebAssembly conversion. */
-function img_scale (
-  input,
-  scale,
-  output,
-  operate_width=input.width, operate_height=input.height,
-  _use_wasm=use_wasm
-  )
-{
-  console.assert (typeof input.width != 'undefined')
-  console.assert (typeof output.width != 'undefined')
-
-  if (_use_wasm)
-  {
-    _img_scale (
-      input.ptr,
-      scale,
-      output.ptr,
-      operate_width, operate_height,
-      input.width, output.width,
-      input.length, output.length
-    );
-    validate_pyramid_memory ()
-
-    return;
-  }
-
-  for (let y=0; y < operate_height; y++)
-  {
-    let row_ofs = 4 * y * input.width;
-    let output_row_ofs = 4 * y * output.width;
-
-    for (let x=0; x < operate_width; x++)
-    {
-      let input_idx = row_ofs + 4 * x;
-      let output_idx = output_row_ofs + 4 * x;
-
-      console.assert (input_idx + 3 < input.length);
-      console.assert (output_idx + 3 < output.length);
-
-      output[output_idx + 0] = scale * input[input_idx + 0];
-      output[output_idx + 1] = scale * input[input_idx + 1];
-      output[output_idx + 2] = scale * input[input_idx + 2];
-      // output[output_idx + 3] = input[input_idx + 3];
-    }
-  }
-
-  validate_pyramid_memory ()
-}
-
-
-/* Candidate for js->C->WebAssembly conversion. */
-function img_add (
+function img_linear_combine_chroma_attenuate (
   input_a, input_b,
-  chroma_attenuate_b,
+  weight_a, weight_b, chroma_attenuation,
   output,
   operate_width=input_a.width, operate_height=input_a.height,
   _use_wasm=use_wasm
@@ -241,11 +191,68 @@ function img_add (
   console.assert (input_a.height == input_b.height);
   console.assert (input_a.length == input_b.length);
 
-  if (_use_wasm && 0)
+  if (_use_wasm)
   {
-    _img_add (
+    _img_linear_combine_chroma_attenuate (
       input_a.ptr, input_b.ptr,
-      chroma_attenuation,
+      weight_a, weight_b, chroma_attenuation,
+      output.ptr,
+      operate_width, operate_height,
+      input_a.width, output.width,
+      input_a.length, output.length
+    );
+    validate_pyramid_memory ()
+
+    return;
+  }
+
+  var weight_a_attenuate = weight_a * chroma_attenuation;
+  var weight_b_attenuate = weight_b * chroma_attenuation;
+
+  for (let y=0; y < operate_height; y++)
+  {
+    let row_ofs = 4 * y * input_a.width;
+    let output_row_ofs = 4 * y * output.width;
+
+    for (let x=0; x < operate_width; x++)
+    {
+      let input_idx = row_ofs + 4 * x;
+      let output_idx = output_row_ofs + 4 * x;
+
+      console.assert (input_idx + 3 < input_a.length);
+      console.assert (input_idx + 3 < input_b.length);
+      console.assert (output_idx + 3 < output.length);
+
+      output[output_idx + 0] = weight_a * input_a[input_idx + 0] + weight_b * input_b[input_idx + 0];
+      output[output_idx + 1] = weight_a_attenuate * input_a[input_idx + 1] + weight_b_attenuate * input_b[input_idx + 1];
+      output[output_idx + 2] = weight_a_attenuate * input_a[input_idx + 2] + weight_b_attenuate * input_b[input_idx + 2];
+      // output[output_idx + 3] = input[input_idx + 3];
+
+    }
+  }
+
+  validate_pyramid_memory ()
+}
+
+
+/* Candidate for js->C->WebAssembly conversion. */
+function img_subtract (
+  input_a, input_b,
+  output,
+  operate_width=input_a.width, operate_height=input_a.height,
+  _use_wasm=use_wasm
+  )
+{
+  console.assert (typeof input_a.width != 'undefined')
+  console.assert (typeof output.width != 'undefined')
+  console.assert (input_a.width == input_b.width);
+  console.assert (input_a.height == input_b.height);
+  console.assert (input_a.length == input_b.length);
+
+  if (_use_wasm)
+  {
+    _img_subtract (
+      input_a.ptr, input_b.ptr,
       output.ptr,
       operate_width, operate_height,
       input_a.width, output.width,
@@ -270,9 +277,9 @@ function img_add (
       console.assert (input_idx + 3 < input_b.length);
       console.assert (output_idx + 3 < output.length);
 
-      output[output_idx + 0] = input_a[input_idx + 0] + input_b[input_idx + 0];
-      output[output_idx + 1] = input_a[input_idx + 1] + chroma_attenuate_b * input_b[input_idx + 1];
-      output[output_idx + 2] = input_a[input_idx + 2] + chroma_attenuate_b * input_b[input_idx + 2];
+      output[output_idx + 0] = input_a[input_idx + 0] - input_b[input_idx + 0];
+      output[output_idx + 1] = input_a[input_idx + 1] - input_b[input_idx + 1];
+      output[output_idx + 2] = input_a[input_idx + 2] - input_b[input_idx + 2];
       // output[output_idx + 3] = input[input_idx + 3];
     }
   }

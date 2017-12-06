@@ -1,4 +1,6 @@
-# Copied from
+#! /usr/bin/env python
+
+# Modified from base
 # https://gist.github.com/ftiasch/1fc81dc1e82df7c8f721
 
 import SimpleHTTPServer

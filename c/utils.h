@@ -60,20 +60,18 @@ void img_linear_combine (
 );
 
 EXPORT
-void img_scale (
-  float* input,
-  float scale,
+void img_linear_combine_chroma_attenuate (
+  float* input_a, float* input_b,
+  float weight_a, float weight_b, float chroma_attenuation,
   float* output,
   uint16_t operate_width, uint16_t operate_height,
   uint16_t in_width, uint16_t out_width,
   uint32_t IN_LENGTH, uint32_t OUT_LENGTH
 );
 
-
 EXPORT
-void img_add (
+void img_subtract (
   float* input_a, float* input_b,
-  float chroma_attenuate_b,
   float* output,
   uint16_t operate_width, uint16_t operate_height,
   uint16_t in_width, uint16_t out_width,

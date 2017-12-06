@@ -1,17 +1,20 @@
 'use strict';
 
 
-var hide_original;
-var filter_on;
+var show_original;
+var show_filtered;
 var use_fscs;
 var show_pyramid;
 var use_wasm;
 var blur_size;
 var filter_size;
 var gamma_correction;
+var exaggeration;
+var chroma_attenuation;
 var f_low;
 var f_high;
 var color_space;
+var time_filter;
 var blur_size_changed;
 var filter_size_changed;
 var filter_toggled;
@@ -20,17 +23,34 @@ var filter_toggled;
 var defaults =
 {
   'reflect_x': false,
-  'hide_original': false,
-  'filter_on': true,
+  'show_original': true,
+  'show_filtered': true,
   'use_fscs': false,
   'show_pyramid': false,
   'use_wasm': true,
   'blur_size': {min:1, max:50, step:2, value:5, print:(x => x + 'px')},
   'filter_size': {min:1, max:100, step:1, value:50, print:(x => x + '%')},
-  'gamma_correction': {min:0, max:100, step:1, value:50, print:(x => calculate_gamma(x).toFixed(2))},
-  'f_low': {min:0, max:15, step:.01, value:0.4, print:(x => x + 'Hz')},
-  'f_high': {min:0, max:15, step:.01, value:3, print:(x => x + 'Hz')},
+  'gamma_correction': {min:0, max:100, step:1, value:50, print:(x => calculate_gamma(x).toFixed(2) + 'power')},
+  'exaggeration': {min:1, max:10, step:1, value:2, print:(x => x + 'x')},
+  'chroma_attenuation': {min:0, max:100, step:1, value:10, print:(x => x + '%')},
+  'f_low': {min:0, max:15, step:.01, value:0.4},
+  'f_high': {min:0, max:15, step:.01, value:3},
+  'amplification_factor': {min:0, max:150, step:.01, value:10},
+  'minimum_wavelength': {min:0, max:100, step:.01, value:16},
   'color_space': 'ycbcr',
+  'time_filter': 'iir',
+};
+
+
+var recommended = {
+  'baby.mp4': {
+    'amplification_factor': 10,
+    'minimum_wavelength': 16,
+    'f_low': .4,
+    'f_high': 3,
+    'exaggeration': 2,
+    'chroma_attenuation': .1
+  },
 };
 
 
@@ -44,6 +64,8 @@ function get_option (name)
       return document.getElementsByName(name)[0].value;
     case 'radio':
       return document.getElementsByName(name).find(element => element.checked).value;
+    case 'number':
+      return document.getElementsByName(name)[0].value;
   }
 }
 
@@ -65,7 +87,6 @@ function set_option (name, value)
         element.max = defaults[name].max;
         element.step = defaults[name].step;
         element.print = defaults[name].print;
-
       }
       else
         document.getElementsByName(name)[0].value = value;
@@ -74,6 +95,20 @@ function set_option (name, value)
       if (!value)
         value = defaults[name];
       document.getElementsByName(name).forEach(element => element.checked = element.value == value);
+      break;
+    case 'number':
+      if (!value)
+      {
+        let element = document.getElementsByName(name)[0];
+        element.defaultValue = defaults[name].value;
+        element.value = defaults[name].value;
+        element.min = defaults[name].min;
+        element.max = defaults[name].max;
+        element.step = defaults[name].step;
+        element.print = defaults[name].print;
+      }
+      else
+        document.getElementsByName(name)[0].value = value;
       break;
   }
 }
@@ -92,19 +127,10 @@ function bind_option (name, updater)
     case 'radio':
       document.getElementsByName(name).forEach(element => element.onchange = updater);
       break;
-  }
-}
-
-
-/* Disable full-scale contrast stretch option in RGB color space. */
-function check_fscs ()
-{
-  check_fscs.element = document.getElementsByName('use_fscs')[0];
-  check_fscs.element.disabled = color_space == 'rgb';
-  if (check_fscs.element.disabled)
-  {
-    use_fscs = false;
-    check_fscs.element.checked = false;
+    case 'number':
+    console.log('hi there')
+      document.getElementsByName(name)[0].onchange = updater
+      break;
   }
 }
 
@@ -152,18 +178,19 @@ function source_select_init ()
 
     element.onclick = function () {
       var save = SOURCE;
+      var save_show_filtered = show_filtered;
 
       if (SOURCE == next)
         return;
 
       SOURCE = next;
-      filter_on = false;
+      show_filtered = false;
 
       sources[current].classList.toggle ('selected');
       element.classList.toggle ('selected');
       current = i;
 
-      if (!hide_original)
+      if (show_original)
       {
         detach (save);
         save.classList.toggle ('fade_out', true);
@@ -173,7 +200,7 @@ function source_select_init ()
       }
 
       queued.push (() => {
-        if (!hide_original)
+        if (show_original)
         {
           save.classList.toggle ('hide', true);
           undo_detach (save);
@@ -184,12 +211,11 @@ function source_select_init ()
 
         if (next.loaded)
         {
-          next.currentTime = 0;
-          render.lastTime = -1;
-          next.play ()
+          render.lastTime = next.currentTime;
+          next.play ();
         }
 
-        filter_on = true;
+        show_filtered = save_show_filtered;
       });
 
       setTimeout (() => queued.shift()(), 1000);
@@ -209,6 +235,29 @@ function source_select_init ()
 }
 
 
+function options_lock_init ()
+{
+  document.querySelector('.options_lock').addEventListener ('click', function () {
+    this.classList.toggle ('docked');
+    document.querySelector('.options').classList.toggle ('docked');
+    document.querySelector('.options').classList.toggle ('undocked');
+    document.querySelector('.options_container').classList.toggle ('undocked');
+  });
+
+  document.querySelector('.options_lock').addEventListener ('mouseover', function () {
+    if (this.classList.contains('docked'))
+      this.children[0].classList.replace ('fa-cog', 'fa-arrow-right');
+    else
+      this.children[0].classList.replace ('fa-cog', 'fa-arrow-left');
+  });
+
+  document.querySelector('.options_lock').addEventListener ('mouseout', function () {
+    this.children[0].classList.replace ('fa-arrow-left', 'fa-cog');
+    this.children[0].classList.replace ('fa-arrow-right', 'fa-cog');
+  });
+}
+
+
 function options_init ()
 {
   for (let key in defaults)
@@ -217,28 +266,26 @@ function options_init ()
     custom_ui_init (key);
   }
 
-  window.onresize = reset_frame_parameters;
+  window.addEventListener ('resize', () => reset_frame_parameters());
 
-  document.querySelector('.options_lock').addEventListener ('click', function () {
-    this.classList.toggle ('options_lock_docked');
-    this.parentNode.classList.toggle ('fade_in');
-  });
+  options_lock_init ();
 
   SINK.canvas.classList.toggle('reflect_x', get_option('reflect_x'));
   bind_option ('reflect_x', function () {
     document.querySelectorAll('canvas').forEach(e => e.classList.toggle ('reflect_x', this.checked));
   });
 
-  SOURCE.classList.toggle('hide', get_option('hide_original'));
-  bind_option ('hide_original', function () {
-    SOURCE.classList.toggle ('hide', this.checked);
-    hide_original = this.checked;
+  SOURCE.classList.toggle('hide', !get_option('show_original'));
+  bind_option ('show_original', function () {
+    SOURCE.classList.toggle ('hide', !this.checked);
+    show_original = this.checked;
   });
 
-  filter_on = defaults['filter_on'];
-  bind_option ('filter_on', function () {
-    filter_on = this.checked;
-    if (!filter_on)
+  show_filtered = defaults['show_filtered'];
+  bind_option ('show_filtered', function () {
+    SINK.canvas.classList.toggle ('hide', !this.checked);
+    show_filtered = this.checked;
+    if (!show_filtered)
       remove_previous_pyramids();
     filter_toggled = true;
   });
@@ -290,9 +337,12 @@ function options_init ()
   color_space = defaults['color_space'];
   bind_option ('color_space', function () {
     color_space = this.value;
-    check_fscs ();
   });
-  check_fscs ();
+
+  time_filter = defaults['time_filter'];
+  bind_option ('time_filter', function () {
+    time_filter = this.value;
+  });
 
   source_select_init ();
 

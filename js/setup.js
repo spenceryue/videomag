@@ -142,13 +142,19 @@ function loaded ()
 
 function header_init ()
 {
-  var element = document.body.querySelector('header > span');
-  element.classList.toggle ('blur_focus');
-  element.addEventListener ('mouseover', () => {
+  var element = document.body.querySelector('.title');
+  setTimeout(() => element.classList.toggle ('blur_focus'), 330);
+  element.addEventListener ('mouseenter', () => {
     element.classList.toggle ('blur_focus');
     element.getBoundingClientRect();
     element.classList.toggle ('blur_focus');
-  })
+  }, {passive:true});
+  // window.addEventListener ('scroll', () => {
+    // document.querySelector('.bg').style.filter ='unset';
+    // element.classList.toggle ('blur_focus',false);
+    // element.style.animationFillMode = 'none';
+    // element.style.color='white';
+  // }, {passive:true});
 }
 
 
@@ -162,12 +168,32 @@ function spinner_init ()
 
 function options_pane_init ()
 {
-  if (is_mobile_or_tablet() || document.body.getBoundingClientRect().width > 825)
+  var options_lock = document.querySelector('.options_lock');
+  var options = document.querySelector('.options');
+  if (document.body.getBoundingClientRect().width >= 1000)
   {
-    let element = document.querySelector('.options_lock');
-    element.classList.toggle ('options_lock_docked');
-    element.parentNode.classList.replace ('hide','fade_in');
+    options_lock.classList.toggle ('docked', true);
+    options.classList.replace ('hide','docked');
   }
+  else
+  {
+    setTimeout(() => options.classList.replace ('hide', 'undocked'), 1000);
+  }
+
+  window.addEventListener('resize', () => {
+    if (document.body.getBoundingClientRect().width >= 1000)
+    {
+      options_lock.classList.toggle ('docked', true);
+      options.classList.toggle ('docked', true);
+      options.classList.toggle ('undocked', false);
+    }
+    else
+    {
+      options_lock.classList.toggle ('docked', false);
+      options.classList.toggle ('docked', false);
+      options.classList.toggle ('undocked', true);
+    }
+  }, {passive:true});
 }
 
 

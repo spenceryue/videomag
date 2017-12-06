@@ -1,0 +1,80 @@
+Todo List
+  ✓ fix header disappearing
+  ✓ fix loader not 'fixed' in center of screen
+  ✓ make next page indicator (line at bottom of screen blinks)
+
+  ✓ make cog a hover-activate, stationary icon. click it to lock in.
+
+  - add default options for different sources
+    - Use the following on options_lock when options are updated.
+      animation: .67s 2s ease-in infinite alternate both fade_in;
+  - implement butterworth 1st order time filter
+  ✓ add exaggeration slider option
+  ✓ add alpha and lambda input options
+  ✓ change f_low and f_high to input options
+
+  - gather other source videos for microexpressions
+  - deploy to github pages
+
+  - make next page "how it works", access by flipping page 2 with a "(i)" icon
+
+presentation topics
+  - demo baby and face results
+
+  - github languages breakdown image, comment on each
+    - python for simple web server to serve partial file content and use the correct MIME type for web assembly files
+    - html and css for front end (from scratch)
+    - javascript for ui interactivity and glue between steps in the algorithm
+    - C implementation of algorithm computation steps (from scratch)
+      - compiled to webassembly to run in browser for real time frame rates
+
+  - web assembly, how it works, how to use
+    - use javascript typed arrays to emulate memory
+    - emscripten compiler uses llvm bitcode to generate semantically equivalent webassembly code which uses this statically typed memory model
+      - anything that can be compiled with llvm can be turned into webassembly code
+        - python, SQLite, Unreal Engine 3 (has support for OpenGL 2.0)
+
+  - algorithm summary
+    - goal: increase the magnitude of translations (phase shifts) in a sine wave
+    - key: band-pass filter approximates the first derivative
+    - key: sine small angle approximation implies adding the angle is approximately equal to phase shifting by the same angle
+    - solution:
+      (1) band-pass filter the video in time for each component frequency
+      (2) multiply by amplification amount \alpha
+      (3) add to original video for each component frequency
+    - details:
+      - use laplacian pyramid to separate component frequencies in space
+      - use difference of 1st order iir filters for a simple bandpass filter
+        - can also use butterworth filters of higher order for better selectivity in time frequency
+
+  - laplacian pyramid
+    - algorithm: next pyramid level = subtract a blurred image from the original, repeat with the blurred image downsampled by 2 (in each direction)
+    - analogy: pyramid level ~ onion layer (of frequencies)
+    - name origin: difference of blurred images approximates the laplacian of gaussians (if gaussian sigmas differ by ~1.6)
+    - implementation: blur() = convolution with a kernel of normalized binomial coefficients (which approaches gaussian distribution)
+      - downsample at the same time for speed
+    - reconstruction: upsample a layer and add it to the previous layer, repeat until no more layers
+    - takes 4/3 the memory of the original image
+
+  - time filtering
+    - exponential iir filter
+      - y[n] = decay * y[n-1] + (1 - decay) * x[n]
+      - just need to store the previous sample point y[n-1]
+      - decay chosen based on desired cutoff frequency and sampling rate: decay = exp (-2pi * f_cutoff / f_sample_rate)
+        - "cutoff frequency" is where half the power is lost (the amplitude is 1/sqrt(2) = 0.707)
+    - butterworth filter
+      - skipping theory
+      - purpose: higher order filters (sharper dropoff)
+      - characteristics: maximal flatness in passband
+      - implementation: higher order butterworth => cascade of lower order butterworth filters (precision)
+    - DCT ideal filter
+      - did not implement, because not a real time technique (introduces delay, and more computationally expensive)
+        - could consider if use OpenGL (implement on GPU)
+
+  - applications
+    - baby monitor
+    - heartbeat
+    - reveal microexpressions
+
+
+

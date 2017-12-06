@@ -62,9 +62,9 @@ function range_ui_init (range_element)
 
     document.body.addEventListener('mousemove', handler);
     element.classList.toggle ('input_focus');
-  });
+  },{passive:true});
 
-  parent.addEventListener('mouseup', detach);
+  parent.addEventListener('mouseup', detach, {passive:true});
 
   element.onmousedown = event => event.preventDefault();
 }

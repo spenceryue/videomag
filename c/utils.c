@@ -136,15 +136,18 @@ void img_linear_combine (
 }
 
 
-void img_scale (
-  float* input,
-  float scale,
+void img_linear_combine_chroma_attenuate (
+  float* input_a, float* input_b,
+  float weight_a, float weight_b, float chroma_attenuation,
   float* output,
   uint16_t operate_width, uint16_t operate_height,
   uint16_t in_width, uint16_t out_width,
   uint32_t IN_LENGTH, uint32_t OUT_LENGTH
   )
 {
+  float weight_a_attenuated = weight_a * chroma_attenuation;
+  float weight_b_attenuated = weight_b * chroma_attenuation;
+
   for (int y=0; y < operate_height; y++)
   {
     int row_ofs = 4 * y * in_width;
@@ -158,18 +161,17 @@ void img_scale (
       ASSERT (input_idx + 3 < IN_LENGTH, "");
       ASSERT (output_idx + 3 < OUT_LENGTH, "");
 
-      output[output_idx + 0] = scale * input[input_idx + 0];
-      output[output_idx + 1] = scale * input[input_idx + 1];
-      output[output_idx + 2] = scale * input[input_idx + 2];
+      output[output_idx + 0] = weight_a * input_a[input_idx + 0] + weight_b * input_b[input_idx + 0];
+      output[output_idx + 1] = weight_a_attenuated * input_a[input_idx + 1] + weight_b_attenuated * input_b[input_idx + 1];
+      output[output_idx + 2] = weight_a_attenuated * input_a[input_idx + 2] + weight_b_attenuated * input_b[input_idx + 2];
       // output[output_idx + 3] = input[input_idx + 3];
     }
   }
 }
 
 
-void img_add (
+void img_subtract (
   float* input_a, float* input_b,
-  float chroma_attenuate_b,
   float* output,
   uint16_t operate_width, uint16_t operate_height,
   uint16_t in_width, uint16_t out_width,
@@ -189,9 +191,9 @@ void img_add (
       ASSERT (input_idx + 3 < IN_LENGTH, "");
       ASSERT (output_idx + 3 < OUT_LENGTH, "");
 
-      output[output_idx + 0] = input_a[input_idx + 0] + input_b[input_idx + 0];
-      output[output_idx + 1] = input_a[input_idx + 1] + chroma_attenuate_b * input_b[input_idx + 1];
-      output[output_idx + 2] = input_a[input_idx + 2] + chroma_attenuate_b * input_b[input_idx + 2];
+      output[output_idx + 0] = input_a[input_idx + 0] - input_b[input_idx + 0];
+      output[output_idx + 1] = input_a[input_idx + 1] - input_b[input_idx + 1];
+      output[output_idx + 2] = input_a[input_idx + 2] - input_b[input_idx + 2];
       // output[output_idx + 3] = input[input_idx + 3];
     }
   }
