@@ -77,7 +77,7 @@ function image_init()
 }
 
 
-function video_source_init ()
+function video_source_init (callback)
 {
   SOURCE.onloadeddata = function(e)
   {
@@ -89,6 +89,8 @@ function video_source_init ()
 
     loaded ();
     console.log('video source loaded.')
+    if (callback)
+      callback();
   };
   SOURCE.src = SOURCE.src;
 }

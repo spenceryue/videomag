@@ -180,7 +180,7 @@ function magnify_iir (time_filtered_input, width, height, depth)
     else current_alpha *= exaggeration;
 
     /* PYRAMID[i] = PYRAMID[i] * 1 + time_filtered_input[i] * current_alpha (with chrominance attenuated). */
-    img_linear_combine_chroma_attenuate (PYRAMID[i], time_filtered_input[i], 1, current_alpha, chroma_attenuation, PYRAMID[i]);
+    img_linear_combine_chroma_attenuate (PYRAMID[i], time_filtered_input[i], 1, current_alpha, chroma_attenuation/100, PYRAMID[i]);
 
     lambda /= 2;
   }

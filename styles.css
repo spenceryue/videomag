@@ -249,7 +249,6 @@ main
   font-size: 0;
   line-height: 0;
   overflow: hidden;
-  outline: 1px solid white;
 }
 
 .source_select
@@ -287,6 +286,7 @@ main
   width: 100%;
   height: 2rem;
   opacity: .382;
+  cursor: pointer;
 }
 .source_select > div:hover
 {
@@ -579,6 +579,8 @@ input:disabled
   line-height: 1.5rem;
   font-size: 1.5rem;
 
+  cursor: pointer;
+
   opacity: .382;
   transform: translateX(calc(-100% - .25rem));
   transition: all .15s ease-in;
@@ -605,6 +607,7 @@ input:disabled
 .stat
 {
   font-family: 'Varela Round';
+  user-select: unset;
 }
 
 .spinner
@@ -689,6 +692,11 @@ input:disabled
 .ease_500
 {
   transition: .5s ease all;
+}
+
+.absolute
+{
+  position: absolute !important;
 }
 
 @keyframes none

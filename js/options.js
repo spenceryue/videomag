@@ -39,8 +39,8 @@ var defaults =
   'use_pyramid_level': {min:0, max:9, step:1, value:6, print:(x => 'level ' + x)},
   'f_low': {min:0, max:15, step:.01, value:0.4},
   'f_high': {min:0, max:15, step:.01, value:3},
-  'amplification_factor': {min:0, max:150, step:.01, value:10},
-  'minimum_wavelength': {min:0, max:100, step:.01, value:16},
+  'amplification_factor': {min:1, max:151, step:1, value:10},
+  'minimum_wavelength': {min:0, max:100, step:1, value:16},
   'color_space': 'ycbcr',
   'time_filter': 'iir',
 };
@@ -53,7 +53,7 @@ var recommended = {
     'f_low': .4,
     'f_high': 3,
     'exaggeration': 2,
-    'chroma_attenuation': .1,
+    'chroma_attenuation': 10,
     'time_filter': 'iir',
   },
   'baby2.mp4': {
@@ -61,7 +61,7 @@ var recommended = {
     'use_pyramid_level': 6,
     'f_low': Math.round(140/60/.01)*.01,
     'f_high': Math.round(160/60/.01)*.01,
-    'chroma_attenuation': 1,
+    'chroma_attenuation': 100,
     'time_filter': 'ideal',
   },
 };
@@ -194,7 +194,14 @@ function source_select_init ()
 {
   let sources = document.querySelectorAll ('.source_select > div');
   let queued = [];
+  let queued_set = new Set ();
   let current = 0;
+
+  let consume_next = () => {
+    let f = queued.shift();
+    if (f)
+      f();
+  };
 
   sources.forEach ((element, i) => {
     let next = SOURCE.parentNode.children[i];
@@ -208,6 +215,15 @@ function source_select_init ()
 
       if (SOURCE == next)
         return;
+      else if (queued_set.has (next))
+      {
+        while (queued_set.has (next))
+          consume_next();
+      }
+      else{
+        console.log (queued)
+        queued_set.add (save);
+      }
 
       SOURCE = next;
       show_filtered = false;
@@ -227,7 +243,6 @@ function source_select_init ()
 
       use_recomended_settings (next.src.split ('/').slice (-1));
       queued.push (() => {
-
         if (show_original)
         {
           save.classList.toggle ('hide', true);
@@ -244,18 +259,20 @@ function source_select_init ()
         }
 
         show_filtered = save_show_filtered;
+        queued_set.delete (save);
       });
-
-      setTimeout (() => queued.shift()(), 1000);
 
       if (next.tagName == 'VIDEO' && !next.loaded)
         if (next.src === '' && next.srcObject == null)
           navigator.mediaDevices.getUserMedia(camera_constraints).
-          then(camera_init.bind (next)).catch(camera_error);
+          then(camera_init.bind (next)).catch(camera_error).then(consume_next);
         else
-          video_source_init ();
+          video_source_init (consume_next);
       else
+      {
         reset_frame_parameters (next);
+        setTimeout (consume_next, 330);
+      }
 
       remove_previous_pyramids ();
     }
@@ -382,9 +399,9 @@ function options_init ()
     exaggeration = Number(this.value);
   });
 
-  chroma_attenuation = defaults['chroma_attenuation'].value/100;
+  chroma_attenuation = defaults['chroma_attenuation'].value;
   bind_option ('chroma_attenuation', function () {
-    chroma_attenuation = Number(this.value)/100;
+    chroma_attenuation = Number(this.value);
   });
 
   use_pyramid_level = defaults['use_pyramid_level'].value;

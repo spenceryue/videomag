@@ -6,8 +6,7 @@ Todo List
   ✓ make cog a hover-activate, stationary icon. click it to lock in.
 
   ✓ add default options for different sources (first 2)
-    - Use the following on options_lock when options are updated.
-      animation: .67s 2s ease-in infinite alternate both fade_in;
+    ✓ Notify on-defaults-applied
   - implement dct
   - add default options for rest of sources
 
@@ -20,6 +19,7 @@ Todo List
   - get christian bale batman scene
   - get rogue one scene with her face
   - get doctored video of president speaking
+  - upload your own video
   - deploy to github pages
 
   - make next page "how it works", access by flipping page 2 with a "(i)" icon
