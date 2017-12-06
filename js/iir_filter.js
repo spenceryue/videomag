@@ -45,8 +45,6 @@ function iir_bandpass_filter_pyramid (output, width, height, depth)
     for (let i=1; i < depth-1; i++)
     // "ignore the highest and lowest frequency band" -- comments from original authors' MATLAB code.
     {
-      if (render.lastTime >= SOURCE.currentTime)
-        console.assert (0, 'hurrah!', render.lastTime, SOURCE.currentTime);
       img_copy (PYRAMID[i], lowerpass_pyramid[i]);
       img_copy (PYRAMID[i], higherpass_pyramid[i]);
     }

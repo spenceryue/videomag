@@ -249,6 +249,7 @@ main
   font-size: 0;
   line-height: 0;
   overflow: hidden;
+  outline: 1px solid white;
 }
 
 .source_select
@@ -309,17 +310,21 @@ main
 }
 
 .source
+,.sink
 {
   user-select: none;
-  max-width: 61.8vw;
+  max-width: 100%;
   max-height: 50vh;
+
+  transition: .33s ease all;
 }
 
-.sink
+.source.double
+,.sink.double
 {
   user-select: none;
-  max-width: 61.8vw;
-  max-height: 50vh;
+  max-width: 100%;
+  max-height: 100vh;
 }
 
 .wrapper
@@ -342,7 +347,7 @@ input[type=range] {
   -webkit-appearance: none;
   width: 100%;
   margin: 3.75px 0;
-  border-radius: 50%;
+  border-radius: 3.75px;
   background: rgba(0,0,0,.618);
 }
 input[type=range]:focus {
@@ -351,7 +356,6 @@ input[type=range]:focus {
 input[type=range]::-webkit-slider-runnable-track {
   width: 100%;
   height: 7.5px;
-  cursor: pointer;
   box-shadow: 0px 0px 5px rgba(120,120,120,.618), 0px 0px 0px rgba(133,133,133,.618);
   border-radius: 3.75px;
   border: 1px solid rgba(180,180,180,.618);
@@ -362,12 +366,13 @@ input[type=range]::-webkit-slider-thumb {
   width: 15px;
   border-radius: 7.5px;
   background: rgba(50,180,255,1);
-  cursor: pointer;
   -webkit-appearance: none;
   margin-top: -4.75px;
 }
-input[type=range]:focus::-webkit-slider-runnable-track {
-  background: rgba(180,180,180,.618);
+,input[type=range]:focus::-webkit-slider-runnable-track
+,input[type=range]:active::-webkit-slider-runnable-track
+{
+  background: rgba(60,60,60,.618);
 }
 
 input[type=radio]
@@ -390,7 +395,6 @@ input[type=radio] {
   border: 1px solid rgba(220,220,220,.618);
 
   -webkit-appearance: none;
-  cursor: pointer;
   user-select: none;
 }
 
@@ -422,7 +426,6 @@ input[type=checkbox]
   font-size: 1rem;
   line-height: 1rem;
 
-  cursor: pointer;
   filter: invert(100%);
 }
 
@@ -440,7 +443,6 @@ input[type=number]
 {
   min-height: 1.5rem;
   padding-left: .25rem;
-  /*text-align: right;*/
 
   filter: invert(100%);
   border: 1px solid rgba(120,120,120,.381);
@@ -458,10 +460,23 @@ input[type=number]:focus
   border: 1px solid rgba(120,120,120,.618);
 }
 
-input:focus, .input_focus {
+input:focus
+,.input_focus
+{
     border-color: rgb(23, 143, 229);
     outline: none;
     box-shadow: 0 0px 1px rgba(23, 143, 229, 0.075) inset, 0 0 8px rgba(23, 143, 229, 0.6);
+}
+
+input
+{
+  cursor: pointer;
+}
+
+input:disabled
+{
+  opacity: .318;
+  cursor: not-allowed;
 }
 
 .option > label
@@ -583,7 +598,7 @@ input:focus, .input_focus {
 
 .options_lock.docked:hover
 {
-  opacity: .382;
+  opacity: .909;
   transition: all .15s ease-out;
 }
 
@@ -629,6 +644,51 @@ input:focus, .input_focus {
 .visible
 {
   opacity: 1 !important;
+}
+
+.blue
+{
+  color: var(--blue);
+}
+
+.pink
+{
+  color: var(--pink);
+}
+
+.gold
+{
+  color: gold;
+}
+
+.black
+{
+  color: black;
+}
+
+.white_bg_inv_phi
+{
+  background: rgba(255,255,255,.618);
+}
+
+.ease_in_500
+{
+  transition: .5s ease-in all;
+}
+
+.linear_330
+{
+  transition: .33s linear all;
+}
+
+.ease_330
+{
+  transition: .33s ease all;
+}
+
+.ease_500
+{
+  transition: .5s ease all;
 }
 
 @keyframes none

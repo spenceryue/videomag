@@ -8,7 +8,7 @@ function checkbox_ui_init (checkbox_element)
 
   parent.onclick = function (event)
   {
-    if (event.target == element)
+    if (event.target == element || element.disabled)
       return;
 
     element.checked = !element.checked;
@@ -30,7 +30,7 @@ function range_ui_init (range_element)
   function handler (event)
   {
     var x = event.clientX + pageXOffset;
-    if (x < left || x > right)
+    if (x < left || x > right || element.disabled)
     {
       detach ();
       return;
@@ -79,7 +79,7 @@ function radio_ui_init (radio_elements)
 
   parent.onclick = function (event)
   {
-    if (event.target.type == 'radio')
+    if (event.target.type == 'radio' || elements[0].disabled)
       return;
 
     current = (elements.findIndex (e => e.checked) + 1) % length;

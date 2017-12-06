@@ -15,7 +15,7 @@ var camera_constraints =
     facingMode: "user",
     width: {max: 640},
     height: {max: 480},
-    frameRate: 30,
+    // frameRate: 30,
   }
 }
 
@@ -149,12 +149,6 @@ function header_init ()
     element.getBoundingClientRect();
     element.classList.toggle ('blur_focus');
   }, {passive:true});
-  // window.addEventListener ('scroll', () => {
-    // document.querySelector('.bg').style.filter ='unset';
-    // element.classList.toggle ('blur_focus',false);
-    // element.style.animationFillMode = 'none';
-    // element.style.color='white';
-  // }, {passive:true});
 }
 
 

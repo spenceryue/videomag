@@ -78,24 +78,28 @@
           <input type='checkbox' name='use_wasm'>
         </div>
         <div class='option'>
-          <label>blur size</label>
+          <label>blur size  <i class='light'>(px)</i></label>
           <input type='range' name='blur_size'>
         </div>
         <div class='option'>
-          <label>filter size</label>
+          <label>filter size<br><i class='light'>(percent of frame)</i></label>
           <input type='range' name='filter_size'>
         </div>
         <div class='option'>
-          <label>gamma correction</label>
+          <label>gamma correction <i class='light'>(exponent)</i></label>
           <input type='range' name='gamma_correction'>
         </div>
         <div class='option'>
-          <label>exaggeration factor</label>
+          <label>exaggeration factor <i class='light'>(for IIR filter only)</i></label>
           <input type='range' name='exaggeration'>
         </div>
         <div class='option'>
           <label>color amplification <i class='light'>(percentage)</i></label>
           <input type='range' name='chroma_attenuation'>
+        </div>
+        <div class='option'>
+          <label>use pyramid level <i class='light'>(for ideal filter only)</i></label>
+          <input type='range' name='use_pyramid_level'>
         </div>
         <div class='option'>
           <label>low frequency <i class='light'>(Hz)</i></label>
@@ -109,8 +113,8 @@
           <label>amplification factor <br><i class='light'>(a.k.a. <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="5.49ex" height="2.108ex" viewBox="0 -746.2 2363.9 907.6" style='vertical-align: -0.375ex'><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="matrix(1 0 0 -1 0 0)"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#MJMAIN-31" x="0" y="0"></use><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#MJMAIN-2B" x="722" y="0"></use><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#MJMATHI-3B1" x="1723" y="0"></use></g></svg>)</i></label>
           <input type='number' name='amplification_factor'>
         </div>
-        <div class='option'>
-          <label>minimum wavelength <i class='light'>(a.k.a. <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="2.299ex" height="2.355ex" viewBox="0 -799.3 990 1013.9" style='vertical-align: -0.498ex'><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="matrix(1 0 0 -1 0 0)"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#MJMATHI-3BB" x="0" y="0"></use><use transform="scale(0.707)" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#MJMATHI-63" x="825" y="-213"></use></g></svg>)</i></label>
+        <div class='option' style='min-height: 4.5rem'>
+          <label>minimum wavelength <i class='light'>(a.k.a. <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="2.299ex" height="2.355ex" viewBox="0 -799.3 990 1013.9" style='vertical-align: -0.498ex'><g stroke="currentColor" fill="currentColor" stroke-width="0" transform="matrix(1 0 0 -1 0 0)"><use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#MJMATHI-3BB" x="0" y="0"></use><use transform="scale(0.707)" xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="#MJMATHI-63" x="825" y="-213"></use></g></svg>)</i><br><i class='light'>(for IIR filter only)</i></label>
           <input type='number' name='minimum_wavelength'>
         </div>
         <div class='option'>
@@ -124,8 +128,8 @@
           <label>time filter</label>
           <input type='radio' name='time_filter' value='iir'>
           <label>IIR</label>
-          <input type='radio' name='time_filter' value='butterworth'>
-          <label>Butterworth</label>
+          <input type='radio' name='time_filter' value='ideal'>
+          <label>Ideal</label>
         </div>
       </div>
     </div>

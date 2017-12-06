@@ -5,15 +5,21 @@ Todo List
 
   ✓ make cog a hover-activate, stationary icon. click it to lock in.
 
-  - add default options for different sources
+  ✓ add default options for different sources (first 2)
     - Use the following on options_lock when options are updated.
       animation: .67s 2s ease-in infinite alternate both fade_in;
-  - implement butterworth 1st order time filter
+  - implement dct
+  - add default options for rest of sources
+
   ✓ add exaggeration slider option
   ✓ add alpha and lambda input options
   ✓ change f_low and f_high to input options
 
+
   - gather other source videos for microexpressions
+  - get christian bale batman scene
+  - get rogue one scene with her face
+  - get doctored video of president speaking
   - deploy to github pages
 
   - make next page "how it works", access by flipping page 2 with a "(i)" icon

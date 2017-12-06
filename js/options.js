@@ -11,8 +11,11 @@ var filter_size;
 var gamma_correction;
 var exaggeration;
 var chroma_attenuation;
+var use_pyramid_level;
 var f_low;
 var f_high;
+var amplification_factor;
+var minimum_wavelength;
 var color_space;
 var time_filter;
 var blur_size_changed;
@@ -29,10 +32,11 @@ var defaults =
   'show_pyramid': false,
   'use_wasm': true,
   'blur_size': {min:1, max:50, step:2, value:5, print:(x => x + 'px')},
-  'filter_size': {min:1, max:100, step:1, value:50, print:(x => x + '%')},
-  'gamma_correction': {min:0, max:100, step:1, value:50, print:(x => calculate_gamma(x).toFixed(2) + 'power')},
+  'filter_size': {min:1, max:100, step:1, value:50, print:(x => x + '% of frame')},
+  'gamma_correction': {min:0, max:100, step:1, value:50, print:(x => 'to the ' + calculate_gamma(x).toFixed(2) + ' power')},
   'exaggeration': {min:1, max:10, step:1, value:2, print:(x => x + 'x')},
   'chroma_attenuation': {min:0, max:100, step:1, value:10, print:(x => x + '%')},
+  'use_pyramid_level': {min:0, max:9, step:1, value:6, print:(x => 'level ' + x)},
   'f_low': {min:0, max:15, step:.01, value:0.4},
   'f_high': {min:0, max:15, step:.01, value:3},
   'amplification_factor': {min:0, max:150, step:.01, value:10},
@@ -49,7 +53,16 @@ var recommended = {
     'f_low': .4,
     'f_high': 3,
     'exaggeration': 2,
-    'chroma_attenuation': .1
+    'chroma_attenuation': .1,
+    'time_filter': 'iir',
+  },
+  'baby2.mp4': {
+    'amplification_factor': 150,
+    'use_pyramid_level': 6,
+    'f_low': Math.round(140/60/.01)*.01,
+    'f_high': Math.round(160/60/.01)*.01,
+    'chroma_attenuation': 1,
+    'time_filter': 'ideal',
   },
 };
 
@@ -128,7 +141,6 @@ function bind_option (name, updater)
       document.getElementsByName(name).forEach(element => element.onchange = updater);
       break;
     case 'number':
-    console.log('hi there')
       document.getElementsByName(name)[0].onchange = updater
       break;
   }
@@ -161,6 +173,20 @@ function update_blur_size (new_blur_size)
 {
   blur_size = new_blur_size;
   blur_size_changed = true;
+}
+
+
+function use_recomended_settings (source_selected)
+{
+  var settings = recommended[source_selected];
+  Object.assign(window, settings);
+
+  for (let each in settings)
+  {
+    set_option (each, settings[each]);
+    addClassFor (document.getElementsByName (each)[0].parentNode, ['white_bg_inv_phi', 'black'], 500);
+    addClassFor (document.getElementsByName (each)[0].parentNode, ['ease_500'], 1000);
+  }
 }
 
 
@@ -199,7 +225,9 @@ function source_select_init ()
         next.classList.toggle ('hide', false);
       }
 
+      use_recomended_settings (next.src.split ('/').slice (-1));
       queued.push (() => {
+
         if (show_original)
         {
           save.classList.toggle ('hide', true);
@@ -258,6 +286,31 @@ function options_lock_init ()
 }
 
 
+function check_time_filter (value)
+{
+  if (value == 'iir')
+  {
+    document.getElementsByName('exaggeration')[0].disabled = false;
+    document.getElementsByName('minimum_wavelength')[0].disabled = false;
+    document.getElementsByName('use_pyramid_level')[0].disabled = true;
+  }
+  else if (value == 'ideal')
+  {
+    document.getElementsByName('exaggeration')[0].disabled = true;
+    document.getElementsByName('minimum_wavelength')[0].disabled = true;
+    document.getElementsByName('use_pyramid_level')[0].disabled = false;
+  }
+}
+
+
+function check_double ()
+{
+  var double = (show_original + show_filtered == 1);
+  document.querySelectorAll ('.source').forEach ((each) => each.classList.toggle ('double', double));
+  SINK.canvas.classList.toggle ('double', double);
+}
+
+
 function options_init ()
 {
   for (let key in defaults)
@@ -275,11 +328,14 @@ function options_init ()
     document.querySelectorAll('canvas').forEach(e => e.classList.toggle ('reflect_x', this.checked));
   });
 
-  SOURCE.classList.toggle('hide', !get_option('show_original'));
+  show_original = defaults['show_original'];
   bind_option ('show_original', function () {
     SOURCE.classList.toggle ('hide', !this.checked);
     show_original = this.checked;
+
+    check_double ();
   });
+  SOURCE.classList.toggle('hide', !show_original);
 
   show_filtered = defaults['show_filtered'];
   bind_option ('show_filtered', function () {
@@ -288,6 +344,8 @@ function options_init ()
     if (!show_filtered)
       remove_previous_pyramids();
     filter_toggled = true;
+
+    check_double ();
   });
 
   use_fscs = defaults['use_fscs'];
@@ -319,6 +377,31 @@ function options_init ()
   });
   filter_size_changed = true;
 
+  exaggeration = defaults['exaggeration'].value;
+  bind_option ('exaggeration', function () {
+    exaggeration = Number(this.value);
+  });
+
+  chroma_attenuation = defaults['chroma_attenuation'].value/100;
+  bind_option ('chroma_attenuation', function () {
+    chroma_attenuation = Number(this.value)/100;
+  });
+
+  use_pyramid_level = defaults['use_pyramid_level'].value;
+  bind_option ('use_pyramid_level', function () {
+    use_pyramid_level = Number(this.value);
+  });
+
+  amplification_factor = defaults['amplification_factor'].value;
+  bind_option ('amplification_factor', function () {
+    amplification_factor = Number(this.value);
+  });
+
+  minimum_wavelength = defaults['minimum_wavelength'].value;
+  bind_option ('minimum_wavelength', function () {
+    minimum_wavelength = Number(this.value);
+  });
+
   f_low = defaults['f_low'].value;
   bind_option ('f_low', function () {
     f_low = Number(this.value);
@@ -342,7 +425,10 @@ function options_init ()
   time_filter = defaults['time_filter'];
   bind_option ('time_filter', function () {
     time_filter = this.value;
+    filter_toggled = true;
+    check_time_filter (this.value);
   });
+  check_time_filter (time_filter)
 
   source_select_init ();
 

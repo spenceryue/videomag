@@ -45,8 +45,7 @@ function play_loop_notification ()
   element.classList.toggle ('center');
   element.style.animation = '1s ease-out both fade_out';
   SINK.canvas.parentNode.appendChild (element);
-  // setTimeout (() => element.remove (), 2000);
-  throw 'up';
+  setTimeout (() => element.remove (), 2000);
 }
 
 
@@ -54,10 +53,11 @@ function render (timestamp)
 {
   SINK.drawImage (SOURCE, 0, 0);
 
-  if (SOURCE.paused || !show_filtered || SOURCE.currentTime == render.lastTime)
+  if (SOURCE.paused || !show_filtered || (SOURCE.currentTime == render.lastTime && SOURCE.src != ''))
   {
-    console.warn ('skip render')
-
+    if (!SOURCE.paused && show_filtered)
+    console.log ('skipping render')
+    render.lastTime = SOURCE.currentTime;
     update_frame_rate (timestamp - render.last);
     render.last = timestamp;
 
@@ -65,17 +65,11 @@ function render (timestamp)
     return;
   }
 
-    play_loop_notification ();
   if (SOURCE.currentTime < render.lastTime)
   {
+    play_loop_notification ();
     filter_toggled = true;
-    window.count = -1;
-    window.flag = true;
-    window.the_time = SOURCE.currentTime;
   }
-
-  if (window.flag)
-    window.count++;
 
   if (filter_size_changed)
     set_filter_dims ();
@@ -101,15 +95,13 @@ function render (timestamp)
   if (show_pyramid)
     display_pyramid();
 
-  // if (window.count == 4)
-    // throw 'up';
-
   blur_size_changed = false;
   filter_size_changed = false;
   filter_toggled = false;
 
-  // if (++counter == 1)
-    // throw 'one and done'
+  /*if (++counter == 1)
+    throw 'one and done'*/
+
   render.lastTime = SOURCE.currentTime;
   update_frame_rate (timestamp - render.last);
   render.last = timestamp;
@@ -148,8 +140,8 @@ function videomag (input, width, height)
 
   iir_bandpass_filter_pyramid (TEMP_PYRAMID, width, height, depth);
 
-  if (!blur_size_changed && !filter_size_changed && !filter_toggled && frames_filtered > frame_threshold)
-    magnify (TEMP_PYRAMID, width, height, depth, 10, 16, 1);
+  if (time_filter == 'iir' && frames_filtered > frame_threshold)
+    magnify_iir (TEMP_PYRAMID, width, height, depth, 10, 16, 1);
 
   if (!show_pyramid)
     reconstruct_pyramid (width, height, depth);
@@ -166,31 +158,28 @@ function videomag (input, width, height)
 }
 
 
-function magnify (time_filtered_input, width, height, depth)
+function magnify_iir (time_filtered_input, width, height, depth)
 {
   var alpha = amplification_factor - 1;
-  var lambda_c = minimum_wavelength; // in pixels
-  var max_delta = lambda_c / 8 / (1 + alpha);
+  var lambda_c = minimum_wavelength; /* in pixels */
+  var max_delta = lambda_c / 8 / (1 + alpha); /* max_delta is the maximum allowed phase difference in pixels */
 
   // representative wavelength of lowest level of pyramid.
-  // "3 is experimental constant" -- comments from original authors' MATLAB code.
+  // "3 is experimental constant"
+  /* -- comments from original authors' MATLAB code. */
   var lambda = (width**2 + height**2)**0.5 / 3;
+  lambda /= 2; /* adjustment for skipping first level */
 
-  lambda /= 2;
   for (let i=1; i < depth-1; i++)
   // "ignore the highest and lowest frequency band" -- comments from original authors' MATLAB code.
   {
     // "amplify each spatial frequency bands according to Figure 6 of our paper"
-    // -- comments from original authors' MATLAB code.
-    // Note: in the original code, when the ceiling alpha value is reached,
-    // the exaggeration is NOT applied. I think this is a mistake, hence I
-    // have applied exaggeration regardless (after the min() is applied).
-    // let current_alpha = Math.min (lambda / 8 / max_delta - 1, alpha) * exaggeration;
-    // let current_alpha = alpha * exaggeration;
+    /* -- comments from original authors' MATLAB code. */
     let current_alpha = lambda / 8 / max_delta - 1;
     if (current_alpha > alpha) current_alpha = alpha;
     else current_alpha *= exaggeration;
 
+    /* PYRAMID[i] = PYRAMID[i] * 1 + time_filtered_input[i] * current_alpha (with chrominance attenuated). */
     img_linear_combine_chroma_attenuate (PYRAMID[i], time_filtered_input[i], 1, current_alpha, chroma_attenuation, PYRAMID[i]);
 
     lambda /= 2;

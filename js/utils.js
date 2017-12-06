@@ -446,6 +446,7 @@ function detach (element)
   document.body.append (element);
 }
 
+
 function undo_detach (element)
 {
   element.style.position = element.save.position;
@@ -457,6 +458,18 @@ function undo_detach (element)
     element,
     element.save.next
   );
+}
+
+
+/* Copied from: https://refreshless.com/nouislider/events-callbacks/ */
+function addClassFor ( element, classes, duration ) {
+  for (let each of classes)
+  {
+    element.classList.add(each);
+    setTimeout(function(){
+      element.classList.remove(each);
+    }, duration);
+  }
 }
 
 
