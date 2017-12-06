@@ -193,8 +193,8 @@ function use_recomended_settings (source_selected)
 function source_select_init ()
 {
   let sources = document.querySelectorAll ('.source_select > div');
-  let queued = [];
-  let queued_set = new Set ();
+  window.queued = [];
+  window.queued_set = new Set ();
   let current = 0;
 
   let consume_next = () => {
@@ -211,22 +211,19 @@ function source_select_init ()
 
     element.onclick = function () {
       var save = SOURCE;
-      var save_show_filtered = show_filtered;
 
       if (SOURCE == next)
         return;
-      else if (queued_set.has (next))
+      else while (queued_set.has (next))
       {
-        while (queued_set.has (next))
-          consume_next();
-      }
-      else{
-        console.log (queued)
-        queued_set.add (save);
+        consume_next();
       }
 
+      queued_set.add (save);
+
       SOURCE = next;
-      show_filtered = false;
+      if (SOURCE.loaded)
+        SOURCE.pause();
 
       sources[current].classList.toggle ('selected');
       element.classList.toggle ('selected');
@@ -241,6 +238,11 @@ function source_select_init ()
         next.classList.toggle ('hide', false);
       }
 
+      if (show_filtered)
+      {
+        SINK.canvas.classList.toggle ('fade_in', true);
+      }
+
       use_recomended_settings (next.src.split ('/').slice (-1));
       queued.push (() => {
         if (show_original)
@@ -252,13 +254,17 @@ function source_select_init ()
           next.classList.toggle ('fade_in', false);
         }
 
+        if (show_filtered)
+        {
+          SINK.canvas.classList.toggle ('fade_in', false);
+        }
+
         if (next.loaded)
         {
           render.lastTime = next.currentTime;
           next.play ();
         }
 
-        show_filtered = save_show_filtered;
         queued_set.delete (save);
       });
 
