@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Testing getUserMedia()</title>
+	<script type="text/javascript">
+		document.onreadystatechange = function () {
+			if (document.readyState != "interactive") {
+				return;
+			}
+			if (navigator.mediaDevices) {
+				navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+				.then(function onSuccess(stream) {
+					var video = document.getElementById('webcam');
+					video.autoplay = true;
+					video.srcObject = stream;
+				})
+				.catch(function onError() {
+					alert('There has been a problem retreiving the streams - are you running on file:/// or did you disallow access?');
+				});
+			} else {
+				alert('getUserMedia is not supported in this browser.');
+			}
+		}
+	</script>
+</head>
+<body>
+	<video id="webcam" width="480" height="360"></video>
+</body>
+</html>
