@@ -1,8 +1,6 @@
 *.sublime-project
 *.sublime-workspace
 **/*.pyc
-c/*.js
-c/*.wasm
 c/*.wasm.map
 c/*.wasm.pre
 c/*.wast
