@@ -193,8 +193,8 @@ function use_recomended_settings (source_selected)
 function source_select_init ()
 {
   let sources = document.querySelectorAll ('.source_select > div');
-  window.queued = [];
-  window.queued_set = new Set ();
+  let queued = [];
+  let queued_set = new Set ();
   let current = 0;
 
   let consume_next = () => {
@@ -223,7 +223,9 @@ function source_select_init ()
 
       SOURCE = next;
       if (SOURCE.loaded)
-        SOURCE.pause();
+        SOURCE.pause ();
+      if (save.loaded)
+        save.pause ();
 
       sources[current].classList.toggle ('selected');
       element.classList.toggle ('selected');
@@ -269,11 +271,13 @@ function source_select_init ()
       });
 
       if (next.tagName == 'VIDEO' && !next.loaded)
+      {
         if (next.src === '' && next.srcObject == null)
           navigator.mediaDevices.getUserMedia(camera_constraints).
           then(camera_init.bind (next)).catch(camera_error).then(consume_next);
         else
           video_source_init (consume_next);
+      }
       else
       {
         reset_frame_parameters (next);

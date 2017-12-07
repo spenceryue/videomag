@@ -36,7 +36,7 @@ function update_iir_decays (fps_=FPS, f_low_=f_low, f_high_=f_high, use_exponent
 }
 
 
-function iir_bandpass_filter_pyramid (output, width, height, depth)
+function iir_bandpass_filter_pyramid (output, depth)
 {
   update_iir_decays ();
 
@@ -48,7 +48,7 @@ function iir_bandpass_filter_pyramid (output, width, height, depth)
       img_copy (PYRAMID[i], lowerpass_pyramid[i]);
       img_copy (PYRAMID[i], higherpass_pyramid[i]);
     }
-    frames_filtered = 0;
+    iir_ready.frames_filtered = 0;
   }
   else
   {
@@ -59,7 +59,14 @@ function iir_bandpass_filter_pyramid (output, width, height, depth)
       img_linear_combine (PYRAMID[i], higherpass_pyramid[i], 1 - iir_decay_high, iir_decay_high, higherpass_pyramid[i]);
       img_subtract (higherpass_pyramid[i], lowerpass_pyramid[i], output[i]);
     }
-    frames_filtered++;
+    iir_ready.frames_filtered++;
   }
-
 }
+
+
+function iir_ready ()
+{
+  return iir_ready.frames_filtered > iir_ready.frames_threshold;
+}
+iir_ready.frames_filtered = 0;
+iir_ready.frames_threshold = 10;

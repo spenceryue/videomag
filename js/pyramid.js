@@ -1,5 +1,6 @@
 'use strict';
 
+
 var PYRAMIDS = Array (4);
 var PyramidTypedArray = Float32Array;
 
@@ -25,15 +26,18 @@ function pyramids_init ()
 }
 
 
-function make_pyramid (width, height, depth, type=PyramidTypedArray)
+function make_pyramid (width, height, depth, type=PyramidTypedArray, skip_first=0)
 {
   var pyramid = [];
 
   for (let j=0; j < depth; j++)
   {
-    pyramid[j] = fill_alpha (malloc (type, 4 * width * height), 255);
-    pyramid[j].width = width;
-    pyramid[j].height = height;
+    if (j >= skip_first)
+    {
+      pyramid[j] = fill_alpha (malloc (type, 4 * width * height), 255);
+      pyramid[j].width = width;
+      pyramid[j].height = height;
+    }
 
     [width, height] = next_pyramid_dimensions (width, height);
 

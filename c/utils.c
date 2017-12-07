@@ -1,6 +1,5 @@
 #include "utils.h"
 
-#include <stdio.h>
 void full_scale_contrast_stretch (float* input, uint32_t length, float min, float max)
 {
   if (min < 0 || max < 0)
@@ -15,7 +14,6 @@ void full_scale_contrast_stretch (float* input, uint32_t length, float min, floa
     }
   }
 
-  // printf ("_fscs min: %.4f, max:%.4f\n", min, max);
   if (min == max)
     return;
 

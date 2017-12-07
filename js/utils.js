@@ -24,7 +24,6 @@ function full_scale_contrast_stretch (input, min, max, _use_wasm=use_wasm)
     }
   }
 
-  // console.log ('fscs min:',min,'max:',max);
   if (min == max)
     return;
 

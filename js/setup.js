@@ -13,8 +13,8 @@ var camera_constraints =
   video:
   {
     facingMode: "user",
-    width: {max: 640},
-    height: {max: 480},
+    width: {ideal: 640, max: 1024},
+    height: {ideal: 480, max: 1024},
     // frameRate: 30,
   }
 }

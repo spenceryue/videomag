@@ -56,7 +56,6 @@ function malloc (ArrayType, length)
   resultArray.ptr = ptr; // same as resultArray.byteOffset
   resultArray.heapView = heapView;
 
-
   return resultArray;
 }
 malloc.total = 0;

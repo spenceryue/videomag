@@ -6,9 +6,6 @@ var counter = 0;
 var OutputTypedArray = Uint8ClampedArray;
 var OUTPUT = Array(3);
 
-var frames_filtered = 0;
-var frame_threshold = 10;
-
 
 function videomag_init ()
 {
@@ -33,7 +30,7 @@ function update_frame_rate (delta)
 }
 
 
-function play_loop_notification ()
+function play_loop_notification (appent_to)
 {
   var element = document.createElement ('div');
   element.innerHTML = '<i class="fa fa-undo" aria-hidden="true"></i>';
@@ -44,7 +41,7 @@ function play_loop_notification ()
   element.style.opacity = 1;
   element.classList.toggle ('center');
   element.style.animation = '1s ease-out both fade_out';
-  SINK.canvas.parentNode.appendChild (element);
+  appent_to.appendChild (element);
   setTimeout (() => element.remove (), 2000);
 }
 
@@ -67,7 +64,10 @@ function render (timestamp)
 
   if (SOURCE.currentTime < render.lastTime)
   {
-    play_loop_notification ();
+    if (show_filtered)
+      play_loop_notification (SINK.canvas.parentNode);
+    if (show_original)
+      play_loop_notification (SOURCE.parentNode);
     filter_toggled = true;
   }
 
@@ -138,9 +138,9 @@ function videomag (input, width, height)
 
   build_pyramid (width, height, depth);
 
-  iir_bandpass_filter_pyramid (TEMP_PYRAMID, width, height, depth);
+  iir_bandpass_filter_pyramid (TEMP_PYRAMID, depth);
 
-  if (time_filter == 'iir' && frames_filtered > frame_threshold)
+  if (time_filter == 'iir' && iir_ready ())
     magnify_iir (TEMP_PYRAMID, width, height, depth, 10, 16, 1);
 
   if (!show_pyramid)
