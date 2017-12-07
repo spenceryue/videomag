@@ -9,10 +9,10 @@ var OUTPUT = Array(3);
 
 function videomag_init ()
 {
-  var depth = max_pyramid_depth (FRAME_WIDTH, FRAME_HEIGHT, 1);
+  var depth = max_pyramid_depth (pyramids_init.max_width, pyramids_init.max_height, 1);
 
   for (let i=0; i < PYRAMIDS.length; i++)
-    OUTPUT[i] = make_pyramid (FRAME_WIDTH, FRAME_HEIGHT, depth, OutputTypedArray);
+    OUTPUT[i] = make_pyramid (pyramids_init.max_width, pyramids_init.max_height, depth, OutputTypedArray);
 }
 
 
@@ -53,7 +53,11 @@ function render (timestamp)
   if (SOURCE.paused || !show_filtered || (SOURCE.currentTime == render.lastTime && SOURCE.src != ''))
   {
     if (!SOURCE.paused && show_filtered)
-    console.log ('skipping render')
+      console.log ('skipping render')
+
+    if (show_pyramid)
+      remove_previous_pyramids ();
+
     render.lastTime = SOURCE.currentTime;
     update_frame_rate (timestamp - render.last);
     render.last = timestamp;
@@ -72,17 +76,20 @@ function render (timestamp)
   }
 
   if (filter_size_changed)
+  {
     set_filter_dims ();
+    update_use_pyramid_level ();
+  }
 
   if (filter_size < 100)
   {
-    let width = FILTER_BOUNDS.width;
-    let height = FILTER_BOUNDS.height;
+    window.width = FILTER_BOUNDS.width;
+    window.height = FILTER_BOUNDS.height;
     let x = FILTER_BOUNDS.x;
     let y = FILTER_BOUNDS.y;
 
     let frame = SINK.getImageData (x, y, width, height);
-    let processed = videomag (frame.data, width, height);
+    window.processed = videomag (frame.data, width, height);
     SINK.putImageData (new ImageData(processed, width, height), x, y);
   }
   else
@@ -116,9 +123,13 @@ function videomag (input, width, height)
 {
   var depth = max_pyramid_depth (width, height, blur_size);
 
+  if (!depth)
+    return input;
+
   if (blur_size_changed || filter_size_changed)
   {
     resize_all (PYRAMIDS, width, height, depth);
+    ideal_resize ();
     resize_all (OUTPUT, width, height, depth);
     validate_pyramid_memory ();
 
@@ -138,13 +149,23 @@ function videomag (input, width, height)
 
   build_pyramid (width, height, depth);
 
-  iir_bandpass_filter_pyramid (TEMP_PYRAMID, depth);
+  if (time_filter == 'iir')
+  {
+    iir_bandpass_filter_pyramid (TEMP_PYRAMID, depth);
+    if (iir_ready ())
+      magnify_iir (TEMP_PYRAMID, width, height, depth);
+  }
+  else if (time_filter == 'ideal' && !ideal_ready.error)
+  {
+    ideal_filter_pyramid (TEMP_PYRAMID, depth);
+    depth = get_current_ideal_level() + 1;
 
-  if (time_filter == 'iir' && iir_ready ())
-    magnify_iir (TEMP_PYRAMID, width, height, depth, 10, 16, 1);
+    if (ideal_ready ())
+      magnify_ideal (TEMP_PYRAMID);
+  }
 
   if (!show_pyramid)
-    reconstruct_pyramid (width, height, depth);
+    reconstruct_pyramid (PYRAMID, depth);
 
   to_rgb (color_space, PYRAMID[0], width, height);
   adjust_gamma (PYRAMID[0], width, height, OUTPUT[0][0], 1 / gamma_correction);
@@ -184,4 +205,18 @@ function magnify_iir (time_filtered_input, width, height, depth)
 
     lambda /= 2;
   }
+}
+
+
+function magnify_ideal (time_filtered_input)
+{
+  var alpha = amplification_factor - 1;
+  var level = get_current_ideal_level ();
+
+  console.assert (ideal_ready ());
+
+  /*
+    PYRAMID[level] = PYRAMID[level] * 1 + time_filtered_input[level] * alpha (with chrominance attenuated).
+  */
+  img_linear_combine_chroma_attenuate (PYRAMID[level], time_filtered_input[level], 1, alpha, chroma_attenuation/100, PYRAMID[level]);
 }

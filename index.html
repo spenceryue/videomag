@@ -26,7 +26,7 @@
   <main>
     <div class='source_select loading'>
       <div><span>Lie to Me.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
-      <div><span>liar.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
+      <div><span>microexpression.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
       <div><span>baby.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
       <div><span>baby2.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
       <div><span>face.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
@@ -37,14 +37,14 @@
 
     <div class='content loading'>
       <div class='wrapper'>
-        <video class='source hide' src='data/Lie to Me.mp4' controls loop playsinline></video>
-        <video class='source hide' src='data/liar.mp4' controls loop playsinline></video>
+        <video class='source hide' src='data/Lie to Me.mp4' controls playsinline></video>
+        <video class='source hide' src='data/microexpression.mp4' controls playsinline></video>
         <video class='source hide' src='data/original paper/baby.mp4' muted loop autoplay playsinline></video>
         <video class='source hide' src='data/original paper/baby2.mp4' muted loop autoplay playsinline></video>
         <video class='source hide' src='data/original paper/face.mp4' muted loop autoplay playsinline></video>
         <video class='source hide' src='data/original paper/face2.mp4' muted loop autoplay playsinline></video>
         <video class='source hide' src='data/original paper/wrist.mp4' muted loop autoplay playsinline></video>
-        <video class='source hide' muted loop autoplay playsinline></video>
+        <video class='source hide' muted loop autoplay playsinline use_settings='webcam'></video>
       </div>
 
       <div class='wrapper'>
@@ -148,6 +148,7 @@
   <script src='js/pyramid.js'></script>
   <script src='js/blur_filter.js'></script>
   <script src='js/iir_filter.js'></script>
+  <script src='js/ideal_filter.js'></script>
   <script src='js/color_space.js'></script>
   <script src='js/options.js'></script>
   <script src='js/controls.js'></script>

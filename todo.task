@@ -7,7 +7,7 @@ Todo List
 
   ✓ add default options for different sources (first 2)
     ✓ Notify on-defaults-applied
-  - implement dct
+  ✓ implement dct
   - add default options for rest of sources
 
   ✓ add exaggeration slider option
@@ -20,7 +20,7 @@ Todo List
   - get rogue one scene with her face
   - get doctored video of president speaking
   - upload your own video
-  - deploy to github pages
+  ✓ deploy to github pages
 
   - make next page "how it works", access by flipping page 2 with a "(i)" icon
 
@@ -39,6 +39,17 @@ presentation topics
     - emscripten compiler uses llvm bitcode to generate semantically equivalent webassembly code which uses this statically typed memory model
       - anything that can be compiled with llvm can be turned into webassembly code
         - python, SQLite, Unreal Engine 3 (has support for OpenGL 2.0)
+
+  - miscellaneous lessons
+    - Javascript TypedArrays are fast to read/modify but allocation is slow
+      - went from 10 fps on webcam to 30-40 fps after switching to reusing existing typed arrays
+    - Assertions (console.assert()) found numerous bugs for me
+      - unlike logging can leave them in the source code and they will catch new bugs introduced
+    - Placing "MAGIC" values after allocated memory segments helps detect invalid array accesses (which Javascript doesn't warn about)
+      - e.g. After malloc(1000) call malloc(4) and set the next 4 "MAGIC" bytes to 0xdeadbeef, then assert MAGIC == 0xdeadbeef after a computation finishes
+    - Chrome DevTools can reveal memory leaks and performance bottleneck functions
+      - (helped identify TypedArray allocation problem)
+    - More fun to write own code than use a library
 
   - algorithm summary
     - goal: increase the magnitude of translations (phase shifts) in a sine wave

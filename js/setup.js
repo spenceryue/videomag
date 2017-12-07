@@ -138,6 +138,7 @@ function loaded ()
   header_init ();
   setTimeout (() => loading.forEach (e => e.classList.toggle ('fade_in')), 1000);
 
+  document.querySelectorAll ('.source_select > div')[7].onclick(); // TODO: remove
   render.id = requestAnimationFrame (render);
 }
 
@@ -182,12 +183,7 @@ function options_pane_init ()
       options_lock.classList.toggle ('docked', true);
       options.classList.toggle ('docked', true);
       options.classList.toggle ('undocked', false);
-    }
-    else
-    {
-      options_lock.classList.toggle ('docked', false);
-      options.classList.toggle ('docked', false);
-      options.classList.toggle ('undocked', true);
+      document.querySelector('.options_container').classList.toggle ('undocked', false);
     }
   }, {passive:true});
 }

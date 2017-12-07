@@ -23,6 +23,8 @@ function blur_init ()
 
     binomial_kernels[i] = tmp;
   }
+
+  kernel = get_blur_kernel (blur_size);
 }
 
 

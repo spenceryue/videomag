@@ -19,6 +19,7 @@
 
 
 #include <stdint.h>
+#include "float.h"
 
 
 #define STRIDE 2
@@ -27,64 +28,65 @@
 DEMANGLE
 EXPORT
 void row_corr_down (
-  float* input, int in_width,
-  float* output, int out_width,
-  uint16_t operate_width, uint16_t operate_height,
-  // uint8_t stride,
-  float* kernel, uint8_t window,
-  uint32_t IN_LENGTH,
-  uint32_t OUT_LENGTH
+  const FLOAT* input, const int in_width,
+  FLOAT* output, const int out_width,
+  const uint16_t operate_width, const uint16_t operate_height,
+  // const uint8_t stride,
+  const FLOAT* kernel, const uint8_t window,
+  const uint32_t IN_LENGTH,
+  const uint32_t OUT_LENGTH
 );
 
 
 EXPORT
 void col_corr_down (
-  float* input, int in_width,
-  float* output, int out_width,
-  uint16_t operate_width, uint16_t operate_height,
-  // uint8_t stride,
-  float* kernel, uint8_t window,
-  uint32_t IN_LENGTH,
-  uint32_t OUT_LENGTH
+  const FLOAT* input, const int in_width,
+  FLOAT* output, const int out_width,
+  const uint16_t operate_width, const uint16_t operate_height,
+  // const uint8_t stride,
+  const FLOAT* kernel, const uint8_t window,
+  const uint32_t IN_LENGTH,
+  const uint32_t OUT_LENGTH
 );
 
 
 EXPORT
 void row_corr_up (
-  float* input, int in_width,
-  float* output, int out_width,
-  uint16_t operate_width, uint16_t operate_height,
+  const FLOAT* input, const int in_width,
+  FLOAT* output, const int out_width,
+  const uint16_t operate_width, const uint16_t operate_height,
   uint16_t clip_width,
-  // uint8_t stride,
-  float* kernel, uint8_t window,
-  uint32_t IN_LENGTH,
-  uint32_t OUT_LENGTH
+  // const uint8_t stride,
+  const FLOAT* kernel, const uint8_t window,
+  const uint32_t IN_LENGTH,
+  const uint32_t OUT_LENGTH
 );
 
 
 EXPORT
 void col_corr_up_mult_add (
-  float* input, int in_width,
-  float* output, int out_width,
-  uint16_t operate_width, uint16_t operate_height,
-  uint16_t clip_height,
-  float scale,
-  // uint8_t stride,
-  float* kernel, uint8_t window,
-  uint32_t IN_LENGTH,
-  uint32_t OUT_LENGTH
+  const FLOAT* input, const int in_width,
+  FLOAT* output, const int out_width,
+  const uint16_t operate_width, const uint16_t operate_height,
+  const uint16_t clip_height,
+  const FLOAT scale,
+  // const uint8_t stride,
+  const FLOAT* kernel, const uint8_t window,
+  const uint32_t IN_LENGTH,
+  const uint32_t OUT_LENGTH
 );
 
 
 EXPORT
 void blur5_corr_up_mult_add (
-  float* input, int in_width,
-  float* output, int out_width,
-  uint16_t operate_width, uint16_t operate_height,
-  uint16_t clip_height,
-  float scale,
-  // uint8_t stride,
-  uint32_t IN_LENGTH, uint32_t OUT_LENGTH
+  const FLOAT* input, const int in_width,
+  FLOAT* output, const int out_width,
+  const uint16_t operate_width, const uint16_t operate_height,
+  const uint16_t clip_height,
+  const FLOAT scale,
+  // const uint8_t stride,
+  const uint32_t IN_LENGTH,
+  const uint32_t OUT_LENGTH
 );
 END_DEMANGLE
 

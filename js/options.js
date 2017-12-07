@@ -36,10 +36,10 @@ var defaults =
   'gamma_correction': {min:0, max:100, step:1, value:50, print:(x => 'to the ' + calculate_gamma(x).toFixed(2) + ' power')},
   'exaggeration': {min:1, max:10, step:1, value:2, print:(x => x + 'x')},
   'chroma_attenuation': {min:0, max:100, step:1, value:10, print:(x => x + '%')},
-  'use_pyramid_level': {min:0, max:9, step:1, value:6, print:(x => 'level ' + x)},
+  'use_pyramid_level': {min:0, max:9, step:1, value:6-1, print:(x => 'level ' + x)},
   'f_low': {min:0, max:15, step:.01, value:0.4},
   'f_high': {min:0, max:15, step:.01, value:3},
-  'amplification_factor': {min:1, max:151, step:1, value:10},
+  'amplification_factor': {min:1, max:151, step:1, value:10+1},
   'minimum_wavelength': {min:0, max:100, step:1, value:16},
   'color_space': 'ycbcr',
   'time_filter': 'iir',
@@ -47,8 +47,35 @@ var defaults =
 
 
 var recommended = {
+  'Lie to Me.mp4': {
+    'reflect_x': false,
+    'show_original': true,
+    'filter_size': 50,
+    'amplification_factor': 10+1,
+    'minimum_wavelength': 16,
+    'f_low': .4,
+    'f_high': 3,
+    'exaggeration': 2,
+    'chroma_attenuation': 10,
+    'time_filter': 'iir',
+  },
+  'microexpression.mp4': {
+    'reflect_x': false,
+    'show_original': true,
+    'filter_size': 50,
+    'amplification_factor': 10+1,
+    'minimum_wavelength': 16,
+    'f_low': .4,
+    'f_high': 3,
+    'exaggeration': 2,
+    'chroma_attenuation': 10,
+    'time_filter': 'iir',
+  },
   'baby.mp4': {
-    'amplification_factor': 10,
+    'reflect_x': false,
+    'show_original': true,
+    'filter_size': 50,
+    'amplification_factor': 10+1,
     'minimum_wavelength': 16,
     'f_low': .4,
     'f_high': 3,
@@ -57,10 +84,58 @@ var recommended = {
     'time_filter': 'iir',
   },
   'baby2.mp4': {
-    'amplification_factor': 150,
-    'use_pyramid_level': 6,
+    'reflect_x': false,
+    'show_original': true,
+    'filter_size': 50,
+    'amplification_factor': 150+1,
+    'use_pyramid_level': 6-1,
     'f_low': Math.round(140/60/.01)*.01,
     'f_high': Math.round(160/60/.01)*.01,
+    'chroma_attenuation': 100,
+    'time_filter': 'ideal',
+  },
+  'face.mp4': {
+    'reflect_x': false,
+    'show_original': true,
+    'filter_size': 75,
+    'amplification_factor': 50+1,
+    'use_pyramid_level': 4-1,
+    'f_low': Math.round(50/60/.01)*.01,
+    'f_high': Math.round(60/60/.01)*.01,
+    'chroma_attenuation': 100,
+    'time_filter': 'ideal',
+  },
+  'face2.mp4': {
+    'reflect_x': false,
+    'show_original': true,
+    'filter_size': 75,
+    'amplification_factor': 50+1,
+    'use_pyramid_level': 6-1,
+    'f_low': Math.round(50/60/.01)*.01,
+    'f_high': Math.round(60/60/.01)*.01,
+    'chroma_attenuation': 100,
+    'time_filter': 'ideal',
+  },
+  'wrist.mp4': {
+    'reflect_x': false,
+    'show_original': true,
+    'filter_size': 50,
+    'amplification_factor': 10+1,
+    'minimum_wavelength': 16,
+    'f_low': .4,
+    'f_high': 3,
+    'exaggeration': 2,
+    'chroma_attenuation': 10,
+    'time_filter': 'iir',
+  },
+  'webcam': {
+    'reflect_x': true,
+    'show_original': false,
+    'filter_size': 50,
+    'amplification_factor': 50+1,
+    'use_pyramid_level': 4-1,
+    'f_low': Math.round(50/60/.01)*.01,
+    'f_high': Math.round(60/60/.01)*.01,
     'chroma_attenuation': 100,
     'time_filter': 'ideal',
   },
@@ -176,10 +251,20 @@ function update_blur_size (new_blur_size)
 }
 
 
+function check_source_sink_show_settings ()
+{
+  document.querySelectorAll('canvas').forEach(e => e.classList.toggle ('reflect_x', get_option('reflect_x')));
+  SOURCE.classList.toggle('hide', !show_original);
+  SINK.canvas.classList.toggle('hide', !show_filtered);
+  check_double ();
+}
+
+
 function use_recomended_settings (source_selected)
 {
   var settings = recommended[source_selected];
   Object.assign(window, settings);
+  check_time_filter ();
 
   for (let each in settings)
   {
@@ -187,6 +272,7 @@ function use_recomended_settings (source_selected)
     addClassFor (document.getElementsByName (each)[0].parentNode, ['white_bg_inv_phi', 'black'], 500);
     addClassFor (document.getElementsByName (each)[0].parentNode, ['ease_500'], 1000);
   }
+  check_source_sink_show_settings ();
 }
 
 
@@ -245,7 +331,11 @@ function source_select_init ()
         SINK.canvas.classList.toggle ('fade_in', true);
       }
 
-      use_recomended_settings (next.src.split ('/').slice (-1));
+      if (next.attributes.use_settings)
+        use_recomended_settings (next.attributes.use_settings.value);
+      else
+        use_recomended_settings (next.src.split ('/').slice (-1));
+
       queued.push (() => {
         if (show_original)
         {
@@ -264,7 +354,8 @@ function source_select_init ()
         if (next.loaded)
         {
           render.lastTime = next.currentTime;
-          next.play ();
+          if (next.autoplay)
+            next.play ();
         }
 
         queued_set.delete (save);
@@ -285,19 +376,46 @@ function source_select_init ()
       }
 
       remove_previous_pyramids ();
+      stop_wait_a_bit ();
+      filter_toggled = true;
     }
   });
 }
 
 
+function update_use_pyramid_level ()
+{
+  var max_level = Math.max (max_pyramid_depth () - 1, 0);
+  var element = document.getElementsByName('use_pyramid_level')[0];
+
+  if (element.max != max_level)
+  {
+    element.max = max_level;
+    element.value = clamp (element.value, element.min, element.max);
+    use_pyramid_level = clamp (use_pyramid_level, DCT_minimum_pyramid_level, max_level);
+
+    addClassFor (element.parentNode, ['white_bg_inv_phi', 'black'], 500);
+    addClassFor (element.parentNode, ['ease_500'], 1000);
+  }
+}
+
+
+function constrain_use_pyramid_level () {
+  var element = document.getElementsByName('use_pyramid_level')[0];
+  element.min = DCT_minimum_pyramid_level;
+}
+
+
 function options_lock_init ()
 {
-  document.querySelector('.options_lock').addEventListener ('click', function () {
+  document.querySelector('.options_lock').onclick = function () {
     this.classList.toggle ('docked');
     document.querySelector('.options').classList.toggle ('docked');
     document.querySelector('.options').classList.toggle ('undocked');
+
+    // Only relevant when window width is >= 1000
     document.querySelector('.options_container').classList.toggle ('undocked');
-  });
+  };
 
   document.querySelector('.options_lock').addEventListener ('mouseover', function () {
     if (this.classList.contains('docked'))
@@ -313,7 +431,7 @@ function options_lock_init ()
 }
 
 
-function check_time_filter (value)
+function check_time_filter (value=time_filter)
 {
   if (value == 'iir')
   {
@@ -338,6 +456,16 @@ function check_double ()
 }
 
 
+function shortcut_to_options_init ()
+{
+  document.body.addEventListener('keyup', (event) => {
+    const keyName = event.key;
+
+    if (event.key == 'Escape')
+      document.querySelector('.options_lock').onclick();
+  });
+}
+
 function options_init ()
 {
   for (let key in defaults)
@@ -349,6 +477,7 @@ function options_init ()
   window.addEventListener ('resize', () => reset_frame_parameters());
 
   options_lock_init ();
+  shortcut_to_options_init ();
 
   SINK.canvas.classList.toggle('reflect_x', get_option('reflect_x'));
   bind_option ('reflect_x', function () {
@@ -374,6 +503,8 @@ function options_init ()
 
     check_double ();
   });
+  SINK.canvas.classList.toggle('hide', !show_filtered);
+  check_double ();
 
   use_fscs = defaults['use_fscs'];
   bind_option ('use_fscs', function () {
@@ -417,7 +548,10 @@ function options_init ()
   use_pyramid_level = defaults['use_pyramid_level'].value;
   bind_option ('use_pyramid_level', function () {
     use_pyramid_level = Number(this.value);
+    // TODO: do fft on pyramid so can change this option live, then remove filter_toggled
+    filter_toggled = true;
   });
+  constrain_use_pyramid_level ();
 
   amplification_factor = defaults['amplification_factor'].value;
   bind_option ('amplification_factor', function () {
@@ -455,7 +589,7 @@ function options_init ()
     filter_toggled = true;
     check_time_filter (this.value);
   });
-  check_time_filter (time_filter)
+  check_time_filter ()
 
   source_select_init ();
 

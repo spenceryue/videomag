@@ -38,14 +38,14 @@ function full_scale_contrast_stretch (input, min, max, _use_wasm=use_wasm)
 
 
 /* Candidate for js->C->WebAssembly conversion. */
-function fill_alpha (input, value, _use_wasm=use_wasm)
+function img_fill_alpha (input, value, _use_wasm=use_wasm)
 {
   if (_use_wasm)
   {
     if (input instanceof Uint8ClampedArray || input instanceof Uint8Array)
-      _fill_alpha_Uint8 (input.ptr, input.length, value);
+      _img_fill_alpha_Uint8 (input.ptr, input.length, value);
     else if (input instanceof Float32Array || input instanceof Float64Array)
-      _fill_alpha (input.ptr, input.length, value);
+      _img_fill_alpha (input.ptr, input.length, value);
     return input;
   }
 
@@ -53,6 +53,28 @@ function fill_alpha (input, value, _use_wasm=use_wasm)
   {
     console.assert (i + 3 < input.length, "i: %d, input.length: %d", i, input.length);
     input[i + 3] = value;
+  }
+
+  return input;
+}
+
+
+/* Candidate for js->C->WebAssembly conversion. */
+function img_fill (input, value, _use_wasm=use_wasm)
+{
+  if (_use_wasm)
+  {
+    _img_fill (input.ptr, input.length, value);
+
+    return input;
+  }
+
+  for (let i=0; i < input.length; i+=4)
+  {
+    console.assert (i + 3 < input.length, "i: %d, input.length: %d", i, input.length);
+    input[i + 0] = value;
+    input[i + 1] = value;
+    input[i + 2] = value;
   }
 
   return input;
@@ -448,6 +470,9 @@ function detach (element)
 
 function undo_detach (element)
 {
+  if (!element.save)
+    return;
+
   element.style.position = element.save.position;
   element.style.left = element.save.left;
   element.style.top = element.save.top;

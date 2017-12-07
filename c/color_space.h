@@ -17,22 +17,24 @@
 #define END_DEMANGLE
 #endif
 
+#include "float.h"
+
 
 DEMANGLE
 EXPORT
-void rgb2ntsc (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
+void rgb2ntsc (FLOAT* input, int width, int height, FLOAT* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void rgb2ntsc_fscs (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
+void rgb2ntsc_fscs (FLOAT* input, int width, int height, FLOAT* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void ntsc2rgb (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
+void ntsc2rgb (FLOAT* input, int width, int height, FLOAT* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void ntsc2rgb_fscs (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
+void ntsc2rgb_fscs (FLOAT* input, int width, int height, FLOAT* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 /*
@@ -42,23 +44,23 @@ void ntsc2rgb_fscs (float* input, int width, int height, float* output, int IN_L
   FSCS packed in as well (not much effect).
 */
 EXPORT
-void rgb2ycbcr (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
+void rgb2ycbcr (FLOAT* input, int width, int height, FLOAT* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void ycbcr2rgb (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
+void ycbcr2rgb (FLOAT* input, int width, int height, FLOAT* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void rgb2ycbcr_fscs (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
+void rgb2ycbcr_fscs (FLOAT* input, int width, int height, FLOAT* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void ycbcr2rgb_fscs (float* input, int width, int height, float* output, int IN_LENGTH, int OUT_LENGTH);
+void ycbcr2rgb_fscs (FLOAT* input, int width, int height, FLOAT* output, int IN_LENGTH, int OUT_LENGTH);
 
 
 EXPORT
-void adjust_gamma (float* input, int width, int height, float* output, float gamma, int IN_LENGTH, int OUT_LENGTH);
+void adjust_gamma (FLOAT* input, int width, int height, FLOAT* output, FLOAT gamma, int IN_LENGTH, int OUT_LENGTH);
 END_DEMANGLE
 
 

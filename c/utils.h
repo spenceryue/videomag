@@ -18,32 +18,37 @@
 #endif
 
 #include <stdint.h>
+#include "float.h"
 
 
 DEMANGLE
 EXPORT
-void full_scale_contrast_stretch (float* input, uint32_t length, float min, float max);
+void full_scale_contrast_stretch (FLOAT* input, uint32_t length, FLOAT min, FLOAT max);
 
 
 EXPORT
-void fill_alpha (float* input, uint32_t length, float value);
+void img_fill_alpha (FLOAT* input, uint32_t length, FLOAT value);
 
 
 EXPORT
-void fill_alpha_Uint8 (uint8_t* input, uint32_t length, uint8_t value);
+void img_fill_alpha_Uint8 (uint8_t* input, uint32_t length, uint8_t value);
+
+
+EXPORT
+void img_fill (FLOAT* input, uint32_t length, FLOAT value);
 
 
 EXPORT
 void img_copy (
-  float* input, uint16_t in_width,
-  float* output, uint16_t out_width,
+  FLOAT* input, uint16_t in_width,
+  FLOAT* output, uint16_t out_width,
   uint16_t rows, uint16_t cols,
   uint32_t IN_LENGTH, uint32_t OUT_LENGTH
 );
 
 EXPORT
 void img_copy_to_Uint8 (
-  float* input, uint16_t in_width,
+  FLOAT* input, uint16_t in_width,
   uint8_t* output, uint16_t out_width,
   uint16_t rows, uint16_t cols,
   uint32_t IN_LENGTH, uint32_t OUT_LENGTH
@@ -51,9 +56,9 @@ void img_copy_to_Uint8 (
 
 EXPORT
 void img_linear_combine (
-  float* input_a, float* input_b,
-  float weight_a, float weight_b,
-  float* output,
+  FLOAT* input_a, FLOAT* input_b,
+  FLOAT weight_a, FLOAT weight_b,
+  FLOAT* output,
   uint16_t operate_width, uint16_t operate_height,
   uint16_t in_width, uint16_t out_width,
   uint32_t IN_LENGTH, uint32_t OUT_LENGTH
@@ -61,9 +66,9 @@ void img_linear_combine (
 
 EXPORT
 void img_linear_combine_chroma_attenuate (
-  float* input_a, float* input_b,
-  float weight_a, float weight_b, float chroma_attenuation,
-  float* output,
+  FLOAT* input_a, FLOAT* input_b,
+  FLOAT weight_a, FLOAT weight_b, FLOAT chroma_attenuation,
+  FLOAT* output,
   uint16_t operate_width, uint16_t operate_height,
   uint16_t in_width, uint16_t out_width,
   uint32_t IN_LENGTH, uint32_t OUT_LENGTH
@@ -71,8 +76,8 @@ void img_linear_combine_chroma_attenuate (
 
 EXPORT
 void img_subtract (
-  float* input_a, float* input_b,
-  float* output,
+  FLOAT* input_a, FLOAT* input_b,
+  FLOAT* output,
   uint16_t operate_width, uint16_t operate_height,
   uint16_t in_width, uint16_t out_width,
   uint32_t IN_LENGTH, uint32_t OUT_LENGTH

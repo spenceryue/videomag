@@ -3,6 +3,7 @@
 
 var PYRAMIDS = Array (4);
 var PyramidTypedArray = Float32Array;
+// var PyramidTypedArray = Float64Array;
 
 var pyramid_depths_map = new Map ();
 var pyramid_prev_dimension_map = new Map ();
@@ -14,16 +15,19 @@ var TEMP_PYRAMID;
 
 function pyramids_init ()
 {
-  var depth = max_pyramid_depth(FRAME_WIDTH, FRAME_HEIGHT, 1);
+  var depth = max_pyramid_depth(pyramids_init.max_width, pyramids_init.max_height, 1);
 
   for (let i=0; i < PYRAMIDS.length; i++)
-    PYRAMIDS[i] = make_pyramid (FRAME_WIDTH, FRAME_HEIGHT, depth);
+    PYRAMIDS[i] = make_pyramid (pyramids_init.max_width, pyramids_init.max_width, depth);
 
   PYRAMID = PYRAMIDS[0];
   TEMP_PYRAMID = PYRAMIDS[1];
 
-  iir_init(); // uses PYRAMIDS[2], PYRAMIDS[3];
+  iir_init (); // uses PYRAMIDS[2], PYRAMIDS[3];
+  ideal_init ();
 }
+pyramids_init.max_width = 1280;
+pyramids_init.max_height = 960;
 
 
 function make_pyramid (width, height, depth, type=PyramidTypedArray, skip_first=0)
@@ -34,17 +38,17 @@ function make_pyramid (width, height, depth, type=PyramidTypedArray, skip_first=
   {
     if (j >= skip_first)
     {
-      pyramid[j] = fill_alpha (malloc (type, 4 * width * height), 255);
+      pyramid[j] = img_fill_alpha (malloc (type, 4 * width * height), 255);
       pyramid[j].width = width;
       pyramid[j].height = height;
+
+      /* To check for memory corruption.
+      (Assumes malloc() will hand out next piece of memory close to pyramid[j].) */
+      make_pyramid.MAGIC.push (malloc (Uint32Array, 1));
+      make_pyramid.MAGIC[make_pyramid.MAGIC.length-1][0] = 0xdeadbeef;
     }
 
     [width, height] = next_pyramid_dimensions (width, height);
-
-    /* To check for memory corruption.
-    (Assumes malloc() will hand out next piece of memory close to pyramid[j].) */
-    make_pyramid.MAGIC.push (malloc (Uint32Array, 1));
-    make_pyramid.MAGIC[make_pyramid.MAGIC.length-1][0] = 0xdeadbeef;
   }
 
   return pyramid;
@@ -76,13 +80,13 @@ function build_pyramid (width, height, depth)
 }
 
 
-function reconstruct_pyramid (width, height, depth)
+function reconstruct_pyramid (pyramid, depth, up_to_level=0, output=pyramid)
 {
-  for (let i=depth-1; i >= 1; i--)
+  for (let i=depth-1; i > up_to_level; i--)
   {
-    corr2_up (PYRAMID[i], TEMP_PYRAMID[i-1], PYRAMID[i-1], +(PYRAMID_STRIDE**2));
+    corr2_up (pyramid[i], TEMP_PYRAMID[i-1], output[i-1], +(PYRAMID_STRIDE**2));
     // last argument is to normalize kernel weights after upsampling.
-    // positive sign is to add the result to PYRAMID[i-1]
+    // positive sign is to add the result to pyramid[i-1]
   }
 }
 
@@ -90,7 +94,8 @@ function reconstruct_pyramid (width, height, depth)
 function resize_all (pyramids, width, height, depth)
 {
   for (let i=0; i < pyramids.length; i++)
-    resize_pyramid (pyramids[i], width, height, depth);
+    if (pyramids[i])
+      resize_pyramid (pyramids[i], width, height, depth);
 
   validate_pyramid_memory ();
 }
@@ -248,10 +253,6 @@ function display_old_pyramid (c, INPUT=PYRAMID, OUTPUT_=OUTPUT[0], skip_first=tr
 function display_new_pyramid (base=SINK.canvas.parentNode, skip_first=true)
 {
   var style_scale = SINK.canvas.getBoundingClientRect().width / FRAME_WIDTH;
-  /*var [prev_width, prev_height] = [FILTER_BOUNDS.width, FILTER_BOUNDS.height];
-  var [prev_x, prev_y] = [FILTER_BOUNDS.x, FILTER_BOUNDS.y];
-  var x, y;
-  var depth = max_pyramid_depth (prev_width, prev_height, blur_size);*/
   var [width, height] = [FILTER_BOUNDS.width, FILTER_BOUNDS.height];
   var [x, y] = [FILTER_BOUNDS.x, FILTER_BOUNDS.y];
   var depth = max_pyramid_depth (width, height, blur_size);
@@ -269,14 +270,5 @@ function display_new_pyramid (base=SINK.canvas.parentNode, skip_first=true)
     let [prev_x, prev_y] = [x, y];
     [width, height] = next_pyramid_dimensions (width, height);
     [x, y] = next_pyramid_position (prev_width, prev_height, prev_x, prev_y, level+1, width, height);
-
-    /*let [width, height] = next_pyramid_dimensions (prev_width, prev_height);
-    [x, y] = next_pyramid_position (prev_width, prev_height, prev_x, prev_y, level, width, height);
-    let c = get_canvas (width, height, x, y, style_scale);
-    c.getContext ('2d').fillStyle = 'hsla(' + (Math.random() * 360) + ', 100%, 90%, .5)';
-    c.getContext ('2d').fillRect(0,0, width, height);
-    base.append (c);
-    [prev_width, prev_height] = [width, height];
-    [prev_x, prev_y] = [x, y];*/
   }
 }
