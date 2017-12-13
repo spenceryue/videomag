@@ -25,9 +25,9 @@ Todo List
   - make next page "how it works", access by flipping page 2 with a "(i)" icon
 
 presentation topics
-  - demo baby and face results
+  ✓ demo baby and face results
 
-  - github languages breakdown image, comment on each
+  ✓ github languages breakdown image, comment on each
     - python for simple web server to serve partial file content and use the correct MIME type for web assembly files
     - html and css for front end (from scratch)
     - javascript for ui interactivity and glue between steps in the algorithm
@@ -92,6 +92,8 @@ presentation topics
     - baby monitor
     - heartbeat
     - reveal microexpressions
+
+  - need better parameter tuning / exploration
 
 
 
