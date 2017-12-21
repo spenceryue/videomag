@@ -1,6 +1,7 @@
 'use strict';
 
 
+var reflect_x;
 var show_original;
 var show_filtered;
 var use_fscs;
@@ -21,6 +22,7 @@ var time_filter;
 var blur_size_changed;
 var filter_size_changed;
 var filter_toggled;
+const INITIAL_SOURCE_INDEX = 7;
 
 
 var defaults =
@@ -50,6 +52,7 @@ var recommended = {
   'Lie to Me.mp4': {
     'reflect_x': false,
     'show_original': true,
+    'show_filtered': true,
     'filter_size': 50,
     'amplification_factor': 10+1,
     'minimum_wavelength': 16,
@@ -62,6 +65,7 @@ var recommended = {
   'microexpression.mp4': {
     'reflect_x': false,
     'show_original': true,
+    'show_filtered': true,
     'filter_size': 50,
     'amplification_factor': 10+1,
     'minimum_wavelength': 16,
@@ -74,6 +78,7 @@ var recommended = {
   'baby.mp4': {
     'reflect_x': false,
     'show_original': true,
+    'show_filtered': true,
     'filter_size': 50,
     'amplification_factor': 10+1,
     'minimum_wavelength': 16,
@@ -86,6 +91,7 @@ var recommended = {
   'baby2.mp4': {
     'reflect_x': false,
     'show_original': true,
+    'show_filtered': true,
     'filter_size': 50,
     'amplification_factor': 150+1,
     'use_pyramid_level': 6-1,
@@ -97,6 +103,7 @@ var recommended = {
   'face.mp4': {
     'reflect_x': false,
     'show_original': true,
+    'show_filtered': true,
     'filter_size': 75,
     'amplification_factor': 50+1,
     'use_pyramid_level': 4-1,
@@ -108,6 +115,7 @@ var recommended = {
   'face2.mp4': {
     'reflect_x': false,
     'show_original': true,
+    'show_filtered': true,
     'filter_size': 75,
     'amplification_factor': 50+1,
     'use_pyramid_level': 6-1,
@@ -119,6 +127,7 @@ var recommended = {
   'wrist.mp4': {
     'reflect_x': false,
     'show_original': true,
+    'show_filtered': true,
     'filter_size': 50,
     'amplification_factor': 10+1,
     'minimum_wavelength': 16,
@@ -131,6 +140,7 @@ var recommended = {
   'webcam': {
     'reflect_x': true,
     'show_original': false,
+    'show_filtered': true,
     'filter_size': 50,
     'amplification_factor': 50+1,
     'use_pyramid_level': 4-1,
@@ -263,122 +273,224 @@ function check_source_sink_show_settings ()
 function use_recomended_settings (source_selected)
 {
   var settings = recommended[source_selected];
+
+  var save = {};
+  for (let each in settings)
+  {
+    save[each] = eval (each);
+  }
+
   Object.assign(window, settings);
   check_time_filter ();
 
   for (let each in settings)
   {
+    // console.log (each, save[each], settings[each])
     set_option (each, settings[each]);
-    addClassFor (document.getElementsByName (each)[0].parentNode, ['white_bg_inv_phi', 'black'], 500);
-    addClassFor (document.getElementsByName (each)[0].parentNode, ['ease_500'], 1000);
+
+    if (settings[each] != save[each])
+    {
+      addClassFor (document.getElementsByName (each)[0].parentNode, ['white_bg_inv_phi', 'black'], 500);
+      addClassFor (document.getElementsByName (each)[0].parentNode, ['ease_500'], 1000);
+    }
   }
   check_source_sink_show_settings ();
 }
 
 
+function open_file_init ()
+{
+  VIEW_STATE['open_file'] = false;
+
+  var element = document.querySelector ('.open_file_container > input[type=file]');
+  element.title = ' ';
+
+  element.addEventListener ('click', function () {
+    VIEW_STATE['open_file'] = true;
+  });
+
+  element.addEventListener ('change', function () {
+    var first = true;
+    for (let file of Array.from (element.files))
+    {
+      if (first)
+      {
+        add_new_source (file).click ();
+        first = false;
+      }
+      else
+      {
+        add_new_source (file)
+      }
+    }
+    element.title = ' ';
+    VIEW_STATE['open_file'] = false;
+  });
+}
+
+
+function add_new_source (src_file)
+{
+  var basename = src_file.name.split ('/').slice (-1);
+  var objectURL = URL.createObjectURL (src_file);
+  var parent = document.querySelector ('.source_select');
+  var before_me = document.querySelector ('.open_file_container');
+  var element = document.createElement ('div');
+  var source_container = document.createElement ('template');
+
+  element.innerHTML = `<span>${basename}</span><span>&#x1F39E;&#xFE0F;</span>`;
+  source_container.innerHTML = `<video class='source hide' data_src='${objectURL}' muted loop autoplay playsinline></video>`;
+  attach_source_init_handler (element, source_container.content.firstChild);
+
+  parent.insertBefore (element, before_me);
+  SOURCE.parentNode.append (source_container.content.firstChild);
+
+  return element;
+}
+
+
 function source_select_init ()
 {
-  let sources = document.querySelectorAll ('.source_select > div');
-  let queued = [];
-  let queued_set = new Set ();
-  let current = 0;
+  var sources = document.querySelectorAll ('.source_select > div');
+  source_select_init.queued = [];
+  source_select_init.selected = sources[INITIAL_SOURCE_INDEX];
 
-  let consume_next = () => {
-    let f = queued.shift();
+  source_select_init.selected.classList.toggle ('selected', true);
+
+  sources.forEach ((element, i) => {
+    if (element.source_select_initialized)
+      return;
+
+    if (element.classList.contains ('open_file_container'))
+    {
+      open_file_init ();
+      return;
+    }
+
+    var source_to_activate = SOURCE.parentNode.children[i];
+    attach_source_init_handler (element, source_to_activate);
+
+    element.source_select_initialized = true;
+  });
+}
+
+
+function attach_source_init_handler (element, source_to_activate)
+{
+  const consume_next = () => {
+    var f = source_select_init.queued.shift();
     if (f)
       f();
   };
 
-  sources.forEach ((element, i) => {
-    let next = SOURCE.parentNode.children[i];
+  var next = source_to_activate;
 
-    if (i == current)
-      element.classList.toggle ('selected');
+  element.addEventListener ('click', function () {
+    var save = SOURCE;
 
-    element.onclick = function () {
-      var save = SOURCE;
+    if (SOURCE == next)
+    {
+      return;
+    }
 
-      if (SOURCE == next)
-        return;
-      else while (queued_set.has (next))
+    if (save.loaded)
+    {
+      save.pause ();
+    }
+
+    while (source_select_init.queued.length)
+    {
+      consume_next();
+    }
+
+    SOURCE = next;
+    let spinner;
+    if (next.loaded)
+    {
+      next.pause ();
+    }
+    else
+    {
+      spinner = add_wait_spinner (next.parentNode, 'Loading...', .618, {minWidth: '120px', minHeight: '120px'});
+      reset_frame_parameters ();
+    }
+
+    source_select_init.selected.classList.toggle ('selected', false);
+    element.classList.toggle ('selected', true);
+    source_select_init.selected = element;
+
+    let do_detach = show_original;
+    if (do_detach)
+    {
+      detach (save);
+      save.classList.toggle ('fade_out', true);
+
+      next.classList.toggle ('fade_in', true);
+      next.classList.toggle ('hide', false);
+    }
+
+    if (show_filtered)
+    {
+      SINK.canvas.classList.toggle ('fade_in', true);
+    }
+
+    source_select_init.queued.push (() => {
+      remove_wait_spinner (spinner);
+
+      if (next.getAttribute('use_settings'))
       {
-        consume_next();
+        use_recomended_settings (SOURCE.getAttribute('use_settings'));
+      }
+      else
+      {
+        use_recomended_settings (next.src.split ('/').slice (-1));
       }
 
-      queued_set.add (save);
-
-      SOURCE = next;
-      if (SOURCE.loaded)
-        SOURCE.pause ();
-      if (save.loaded)
-        save.pause ();
-
-      sources[current].classList.toggle ('selected');
-      element.classList.toggle ('selected');
-      current = i;
-
-      if (show_original)
+      if (do_detach)
       {
-        detach (save);
-        save.classList.toggle ('fade_out', true);
+        save.classList.toggle ('hide', true);
+        undo_detach (save);
+        save.classList.toggle ('fade_out', false);
 
-        next.classList.toggle ('fade_in', true);
-        next.classList.toggle ('hide', false);
+        next.classList.toggle ('fade_in', false);
       }
 
       if (show_filtered)
       {
-        SINK.canvas.classList.toggle ('fade_in', true);
+        SINK.canvas.classList.toggle ('fade_in', false);
       }
 
-      if (next.attributes.use_settings)
-        use_recomended_settings (next.attributes.use_settings.value);
-      else
-        use_recomended_settings (next.src.split ('/').slice (-1));
-
-      queued.push (() => {
-        if (show_original)
-        {
-          save.classList.toggle ('hide', true);
-          undo_detach (save);
-          save.classList.toggle ('fade_out', false);
-
-          next.classList.toggle ('fade_in', false);
-        }
-
-        if (show_filtered)
-        {
-          SINK.canvas.classList.toggle ('fade_in', false);
-        }
-
-        if (next.loaded)
-        {
-          render.lastTime = next.currentTime;
-          if (next.autoplay)
-            next.play ();
-        }
-
-        queued_set.delete (save);
-      });
-
-      if (next.tagName == 'VIDEO' && !next.loaded)
+      if (next.loaded)
       {
-        if (next.src === '' && next.srcObject == null)
-          navigator.mediaDevices.getUserMedia(camera_constraints).
-          then(camera_init.bind (next)).catch(camera_error).then(consume_next);
-        else
-          video_source_init (consume_next);
+        render.lastTime = next.currentTime;
+        if (next.autoplay)
+        {
+          next.play ();
+        }
+      }
+    });
+
+    if (next.tagName == 'VIDEO' && !next.loaded)
+    {
+      if (next.srcObject == null && next.getAttribute('data_src') == null)
+      {
+        navigator.mediaDevices.getUserMedia (camera_constraints).
+        then (camera_init.bind (next)).catch (camera_error).then (consume_next);
       }
       else
       {
-        reset_frame_parameters (next);
-        setTimeout (consume_next, 330);
+        video_source_init (consume_next);
       }
-
-      remove_previous_pyramids ();
-      stop_wait_a_bit ();
-      filter_toggled = true;
     }
+    else
+    {
+      reset_frame_parameters (next);
+      setTimeout (consume_next, 330);
+    }
+
+    remove_previous_pyramids ();
+    stop_wait_a_bit ();
+    filter_toggled = true;
   });
 }
 
@@ -400,7 +512,8 @@ function update_use_pyramid_level ()
 }
 
 
-function constrain_use_pyramid_level () {
+function constrain_use_pyramid_level ()
+{
   var element = document.getElementsByName('use_pyramid_level')[0];
   element.min = DCT_minimum_pyramid_level;
 }
@@ -408,14 +521,14 @@ function constrain_use_pyramid_level () {
 
 function options_lock_init ()
 {
-  document.querySelector('.options_lock').onclick = function () {
+  document.querySelector('.options_lock').addEventListener ('click', function () {
     this.classList.toggle ('docked');
     document.querySelector('.options').classList.toggle ('docked');
     document.querySelector('.options').classList.toggle ('undocked');
 
     // Only relevant when window width is >= 1000
     document.querySelector('.options_container').classList.toggle ('undocked');
-  };
+  });
 
   document.querySelector('.options_lock').addEventListener ('mouseover', function () {
     if (this.classList.contains('docked'))
@@ -456,13 +569,52 @@ function check_double ()
 }
 
 
-function shortcut_to_options_init ()
+function check_wait_a_bit ()
+{
+  if (!show_filtered)
+    stop_wait_a_bit ();
+}
+
+function shortcuts_init ()
 {
   document.body.addEventListener('keyup', (event) => {
-    const keyName = event.key;
+    var keyName = event.key;
 
-    if (event.key == 'Escape')
-      document.querySelector('.options_lock').onclick();
+    switch (event.key)
+    {
+      case 'Escape':
+      {
+        if (VIEW_STATE['open_file'])
+        {
+          VIEW_STATE['open_file'] = false;
+        }
+        else
+        {
+          document.querySelector('.options_lock').click ();
+        }
+        break;
+      }
+      case 'o':
+      {
+        if (VIEW_STATE['open_file'])
+        {
+        }
+        else
+        {
+          VIEW_STATE['open_file'] = true;
+          document.querySelector ('.open_file_container > input[type=file]').click ();
+        }
+        break;
+      }
+      case ' ':
+      {
+        if (SOURCE.paused)
+          SOURCE.play ();
+        else
+          SOURCE.pause ();
+        break;
+      }
+    }
   });
 }
 
@@ -477,7 +629,7 @@ function options_init ()
   window.addEventListener ('resize', () => reset_frame_parameters());
 
   options_lock_init ();
-  shortcut_to_options_init ();
+  shortcuts_init ();
 
   SINK.canvas.classList.toggle('reflect_x', get_option('reflect_x'));
   bind_option ('reflect_x', function () {
@@ -502,6 +654,7 @@ function options_init ()
     filter_toggled = true;
 
     check_double ();
+    check_wait_a_bit ();
   });
   SINK.canvas.classList.toggle('hide', !show_filtered);
   check_double ();

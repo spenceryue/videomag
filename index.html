@@ -5,6 +5,14 @@
   <link rel='stylesheet' href='styles.css'></link>
   <link href='https://fonts.googleapis.com/css?family=Ubuntu|Varela+Round|Oxygen' rel='stylesheet'>
   <script src='https://use.fontawesome.com/e50f58653f.js'></script>
+  <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon/favicon-16x16.png">
+  <link rel="manifest" href="/favicon/manifest.json">
+  <link rel="mask-icon" href="/favicon/safari-pinned-tab.svg" color="#00b4ed">
+  <link rel="shortcut icon" href="/favicon/favicon.ico">
+  <meta name="msapplication-config" content="/favicon/browserconfig.xml">
+  <meta name="theme-color" content="#ffffff">
 </head>
 <body>
   <div class='spinner'></div>
@@ -25,7 +33,6 @@
 
   <main>
     <div class='source_select loading'>
-      <div><span>Fake Obama.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
       <div><span>Lie to Me.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
       <div><span>microexpression.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
       <div><span>baby.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
@@ -34,18 +41,18 @@
       <div><span>face2.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
       <div><span>wrist.mp4</span><span>&#x1F39E;&#xFE0F;</span></div>
       <div><span>webcam</span><span>&#x1F4F7;</span></div>
+      <div class='open_file_container'><span>open file</span><span>&#128194;</span><input type='file' name='open_file' accept='video/*' multiple></div>
     </div>
 
     <div class='content loading'>
       <div class='wrapper'>
-        <video class='source hide' src='data/Fake Obama.mp4' controls playsinline></video>
-        <video class='source hide' src='data/Lie to Me.mp4' controls playsinline></video>
-        <video class='source hide' src='data/microexpression.mp4' controls playsinline></video>
-        <video class='source hide' src='data/original paper/baby.mp4' muted loop autoplay playsinline></video>
-        <video class='source hide' src='data/original paper/baby2.mp4' muted loop autoplay playsinline></video>
-        <video class='source hide' src='data/original paper/face.mp4' muted loop autoplay playsinline></video>
-        <video class='source hide' src='data/original paper/face2.mp4' muted loop autoplay playsinline></video>
-        <video class='source hide' src='data/original paper/wrist.mp4' muted loop autoplay playsinline></video>
+        <video class='source hide' data_src='data/Lie to Me.mp4' controls playsinline></video>
+        <video class='source hide' data_src='data/microexpression.mp4' controls playsinline></video>
+        <video class='source hide' data_src='data/original paper/baby.mp4' muted loop autoplay playsinline></video>
+        <video class='source hide' data_src='data/original paper/baby2.mp4' muted loop autoplay playsinline></video>
+        <video class='source hide' data_src='data/original paper/face.mp4' muted loop autoplay playsinline></video>
+        <video class='source hide' data_src='data/original paper/face2.mp4' muted loop autoplay playsinline></video>
+        <video class='source hide' data_src='data/original paper/wrist.mp4' muted loop autoplay playsinline></video>
         <video class='source hide' muted loop autoplay playsinline use_settings='webcam'></video>
       </div>
 

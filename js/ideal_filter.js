@@ -114,25 +114,14 @@ function ideal_filter_pyramid (output, depth)
 }
 
 
-function play_wait_a_bit (appent_to=SINK.canvas.parentNode)
+function play_wait_a_bit (append_to=SINK.canvas.parentNode)
 {
-  var element = document.createElement ('div');
   var dim = Math.min (FILTER_BOUNDS.width, FILTER_BOUNDS.height);
-  element.style.width = 0.618 * dim + 'px';
-  element.style.height = 0.618 * dim + 'px';
-  element.style.color = 'rgba(255,255,255,.382)';
-  element.style.fontFamily = 'Varela Round';
-  element.style.display = 'flex';
-  element.style.flexDirection = 'column';
-  element.style.justifyContent = 'center';
-  element.style.fontSize = '1rem';
-  element.style.lineHeight = '1.5rem';
-  element.style.filter = 'grayscale(100%) brightness(200%)';
-  element.style.textAlign = 'center';
+  var width = 0.618 * dim + 'px';
+  var height = 0.618 * dim + 'px';
+
+  var element = add_wait_spinner (SINK.canvas.parentNode, null, 0, {'width': width, 'height': height});
   update_wait_a_bit (element, 1);
-  element.classList.toggle ('generic_spinner');
-  element.classList.toggle ('center');
-  appent_to.appendChild (element);
 
   return element;
 }
@@ -140,17 +129,14 @@ function play_wait_a_bit (appent_to=SINK.canvas.parentNode)
 
 function update_wait_a_bit (element=ideal_filter_pyramid.waiter, value=ideal_ready.frames_buffered)
 {
-  element.innerHTML = 'DCT buffering...<br>' + parseFloat(value/DCT_BUFFER.length * 100).toFixed(1) + '%';
+  value = 'DCT buffering...<br>' + parseFloat(value/DCT_BUFFER.length * 100).toFixed(1) + '%';
+  update_wait_spinner (element, value);
 }
 
 
 function stop_wait_a_bit (element=ideal_filter_pyramid.waiter)
 {
-  if (!element)
-    return;
-
-  addClassFor (element, ['fade_out', 'duration_150'], 300);
-  setTimeout (() => element.remove (), 300);
+  remove_wait_spinner (element)
 
   if (element == ideal_filter_pyramid.waiter)
     ideal_filter_pyramid.waiter = null;

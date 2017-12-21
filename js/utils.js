@@ -395,22 +395,21 @@ function $args(func) {
 }
 
 
-function add_div (width, height, parent, left=0, top=0)
+function add_div (parent, style)
 {
-  var a = document.createElement('div');
-  a.style.width = width + 'px';
-  a.style.height = height + 'px';
-  a.style.position = 'absolute';
-  a.classList.toggle('debug_border');
+  var element = document.createElement('div');
+
+  if (style)
+  {
+    Object.assign (element.style, style);
+  }
 
   if (parent)
   {
-    parent.appendChild (a);
-    a.style.left = left + 'px';
-    a.style.top = top + 'px';
+    parent.appendChild (element);
   }
 
-  return a;
+  return element;
 }
 
 
@@ -422,6 +421,17 @@ function getCoords (elem)
   return {
     top: box.top + pageYOffset,
     left: box.left + pageXOffset
+  };
+}
+
+
+function getBounds (elem)
+{
+  let box = elem.getBoundingClientRect();
+
+  return {
+    width: box.width,
+    height: box.height
   };
 }
 
@@ -456,7 +466,7 @@ function detach (element)
     width: element.style.width ? element.style.width : 'unset',
     height: element.style.height ? element.style.height : 'unset',
     parentNode: element.parentNode,
-    next: element.nextSibling
+    next: element.nextElementSibling
   };
 
   element.style.position = 'fixed';
@@ -496,6 +506,63 @@ function addClassFor ( element, classes, duration ) {
   }
 }
 
+function add_wait_spinner (append_to, text, fraction_size=0.618, style, gray_bright=true)
+{
+  var element = document.createElement ('div');
+
+  if (append_to && fraction_size)
+  {
+    var bounds = getBounds(append_to);
+    var dim = Math.min (bounds.width, bounds.height);
+    element.style.width = fraction_size * dim + 'px';
+    element.style.height = fraction_size * dim + 'px';
+  }
+
+  if (style)
+  {
+    Object.assign (element.style, style);
+  }
+
+  element.classList.toggle ('wait_spinner');
+  element.classList.toggle ('center');
+
+  if (gray_bright)
+  {
+    element.classList.toggle ('gray_bright');
+  }
+
+  if (text)
+  {
+    update_wait_spinner (element, text);
+  }
+
+  if (append_to)
+  {
+    append_to.appendChild (element);
+  }
+
+  return element;
+}
+
+
+function update_wait_spinner (element, text)
+{
+  element.innerHTML = text;
+
+  return element;
+}
+
+
+function remove_wait_spinner (element)
+{
+  if (!element)
+    return;
+
+  addClassFor (element, ['fade_out', 'duration_150'], 300);
+  setTimeout (() => element.remove (), 300);
+
+  return element;
+}
 
 /*
 Loop inspector

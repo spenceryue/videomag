@@ -5,6 +5,7 @@ var SOURCE, SINK;
 var FRAME_WIDTH, FRAME_HEIGHT;
 var FPS, FPS_LABEL, DECAY, FPS_DECAY_THRESHOLD;
 var FILTER_BOUNDS = {};
+var VIEW_STATE = {};
 
 
 var camera_constraints =
@@ -21,15 +22,15 @@ var camera_constraints =
 
 function reset_frame_parameters (source=SOURCE)
 {
-  if (SOURCE.tagName == 'VIDEO')
+  if (source.tagName == 'VIDEO')
   {
-    FRAME_WIDTH = SOURCE.videoWidth;
-    FRAME_HEIGHT = SOURCE.videoHeight;
+    FRAME_WIDTH = source.videoWidth;
+    FRAME_HEIGHT = source.videoHeight;
   }
   else
   {
-    FRAME_WIDTH = SOURCE.width;
-    FRAME_HEIGHT = SOURCE.height;
+    FRAME_WIDTH = source.width;
+    FRAME_HEIGHT = source.height;
   }
 
   document.querySelectorAll ('.sink').forEach (canvas => {
@@ -53,6 +54,9 @@ function camera_init (mediaStream)
 
   this.onloadedmetadata = function(e)
   {
+    if (this.loaded)
+      return;
+
     this.loaded = true;
     reset_frame_parameters (this);
 
@@ -67,6 +71,9 @@ function image_init()
 {
   SOURCE.onload = function ()
   {
+    if (this.loaded)
+      return;
+
     this.loaded = true;
     reset_frame_parameters (this);
 
@@ -81,7 +88,7 @@ function video_source_init (callback)
 {
   SOURCE.onloadeddata = function(e)
   {
-    if (this.readyState < 2)
+    if (this.readyState < 2 || this.loaded)
       return;
 
     this.loaded = true;
@@ -92,7 +99,7 @@ function video_source_init (callback)
     if (callback)
       callback();
   };
-  SOURCE.src = SOURCE.src;
+  SOURCE.src = SOURCE.getAttribute('data_src');
 }
 
 
@@ -108,11 +115,15 @@ function init ()
   switch (SOURCE.tagName)
   {
     case 'VIDEO':
-      if (SOURCE.src === '')
+      if (SOURCE.srcObject == null && SOURCE.getAttribute('data_src') == null)
+      {
         navigator.mediaDevices.getUserMedia(camera_constraints).
         then(camera_init.bind (SOURCE)).catch(camera_error);
+      }
       else
+      {
         video_source_init ();
+      }
       break;
     case 'IMG':
       image_init ();
@@ -138,7 +149,7 @@ function loaded ()
   header_init ();
   setTimeout (() => loading.forEach (e => e.classList.toggle ('fade_in')), 1000);
 
-  document.querySelectorAll ('.source_select > div')[7].onclick(); // TODO: remove
+  document.querySelectorAll ('.source_select > div')[INITIAL_SOURCE_INDEX].click ();
   render.id = requestAnimationFrame (render);
 }
 

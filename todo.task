@@ -8,7 +8,7 @@ Todo List
   ✓ add default options for different sources (first 2)
     ✓ Notify on-defaults-applied
   ✓ implement dct
-  - add default options for rest of sources
+  ✓ add default options for rest of sources
 
   ✓ add exaggeration slider option
   ✓ add alpha and lambda input options
@@ -19,10 +19,20 @@ Todo List
   - get christian bale batman scene
   - get rogue one scene with her face
   - get doctored video of president speaking
-  - upload your own video
+  ✓ upload your own video
+    ✓ add new videos to source list and content area
+    ✓ extract source_select handler init so can apply to these new elements
+    ✓ switch to first file chosen
   ✓ deploy to github pages
 
+  ✓ play load spinner for videos while loading
+
+  ✓ make DCT buffering turn off when "show filter" is false
+  ✓ figure out why options toggle when clicking "open file" in source select
+  ✓ make options flash animation only if value of option changes
+
   - make next page "how it works", access by flipping page 2 with a "(i)" icon
+  - make simple switch (default motion filter, default color filter)
 
 presentation topics
   ✓ demo baby and face results

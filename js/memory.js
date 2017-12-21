@@ -44,8 +44,8 @@ function malloc (ArrayType, length)
 {
   var bytes_needed = bytesPerElement_map.get(ArrayType) * length;
   malloc.total += bytes_needed;
-  console.log ('malloc:\t%s bytes', bytes_needed.toLocaleString())
-  console.log ('\t   [%s total]', malloc.total.toLocaleString());
+  // console.log ('malloc:\t%s bytes', bytes_needed.toLocaleString())
+  // console.log ('\t   [%s total]', malloc.total.toLocaleString());
 
   var ptr = Module._malloc (bytes_needed);
   console.assert (!heap_map.has (ptr));

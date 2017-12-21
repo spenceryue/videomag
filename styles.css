@@ -281,6 +281,7 @@ main
   justify-content: flex-start;
   align-items: center;
   width: 100%;
+  max-width: 100%;
   height: 2rem;
   opacity: .382;
   cursor: pointer;
@@ -476,6 +477,27 @@ input:disabled
   cursor: not-allowed;
 }
 
+input[type='file']
+{
+  position: absolute;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  font-size: 0;
+  color: transparent;
+
+  opacity: 0.5;
+  padding-left: 100%;
+}
+
+.open_file_container
+{
+  position: relative;
+  overflow-x: hidden;
+}
+
 .option > label
 {
   flex-grow: 1;
@@ -623,6 +645,36 @@ input:disabled
   animation: .67s linear infinite spin;
 }
 
+.wait_spinner
+{
+  color: rgba(255,255,255,.382);
+  font-family: 'Varela Round';
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  text-align: center;
+  z-index: 10;
+}
+
+.wait_spinner:after
+{
+  content: '';
+
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+
+  border: 3px solid var(--blue);
+  border-top: 3px solid var(--pink);
+  border-radius: 50%;
+
+  animation: .67s linear infinite spin_centered;
+}
+
 .fade_in
 {
   animation-name: fade_in !important;
@@ -639,6 +691,11 @@ input:disabled
   animation-timing-function: ease-out;
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
+}
+
+.gray_bright
+{
+  filter: grayscale(100%) brightness(200%) !important;
 }
 
 .visible
@@ -664,6 +721,13 @@ input:disabled
 .black
 {
   color: black;
+}
+
+i.fa
+{
+  display: inline-block;
+  width: 100%;
+  text-align: center;
 }
 
 .white_bg_inv_phi
@@ -702,30 +766,19 @@ input:disabled
   border: 1px solid white;
 }
 
-.generic_spinner
-{
-}
-
-.generic_spinner:after
-{
-  content: '';
-
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 100%;
-  height: 100%;
-
-  border: 3px solid var(--blue);
-  border-top: 3px solid var(--pink);
-  border-radius: 50%;
-
-  animation: .67s linear infinite spin_centered;
-}
-
 .duration_150
 {
   animation-duration: .15s;
+}
+
+.no_mouse
+{
+  pointer-events: none !important;
+}
+
+.no_overflow_x
+{
+  overflow: hidden !important;
 }
 
 @keyframes none
