@@ -9,4 +9,4 @@ Completed as final project for EE 371R (Digital Image/Video Processing).
 See the [project proposal](docs/spenceryue_371R_Proposal.pdf) and [final report](docs/spencer_yue_videomag.pdf).
 Implementation details are also described in the final report.
 
-Visit the application website at https://spenceryue.github.io/videomag/
+Visit the application website at https://spenceryue.me/videomag/
