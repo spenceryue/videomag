@@ -285,7 +285,6 @@ function use_recomended_settings (source_selected)
 
   for (let each in settings)
   {
-    // console.log (each, save[each], settings[each])
     set_option (each, settings[each]);
 
     if (settings[each] != save[each])
@@ -325,6 +324,7 @@ function open_file_init ()
     }
     element.title = ' ';
     VIEW_STATE['open_file'] = false;
+    element.blur ();
   });
 }
 
@@ -393,6 +393,18 @@ function attach_source_init_handler (element, source_to_activate)
       return;
     }
 
+    if (!save.loaded && is_camera_source (save))
+    {
+      if (!save.failed)
+      {
+        return;
+      }
+      else
+      {
+        camera_error.element.classList.toggle ('hide', true);
+      }
+    }
+
     if (save.loaded)
     {
       save.pause ();
@@ -404,8 +416,12 @@ function attach_source_init_handler (element, source_to_activate)
     }
 
     SOURCE = next;
+    var next_is_failed = next.failed && is_camera_source (next);
+
+    stop_wait_a_bit (null, true);
+
     let spinner;
-    if (next.loaded)
+    if (next.loaded || next_is_failed)
     {
       next.pause ();
     }
@@ -425,8 +441,11 @@ function attach_source_init_handler (element, source_to_activate)
       detach (save);
       save.classList.toggle ('fade_out', true);
 
-      next.classList.toggle ('fade_in', true);
-      next.classList.toggle ('hide', false);
+      if (!next_is_failed)
+      {
+        next.classList.toggle ('fade_in', true);
+        next.classList.toggle ('hide', false);
+      }
     }
 
     if (show_filtered)
@@ -435,7 +454,7 @@ function attach_source_init_handler (element, source_to_activate)
     }
 
     source_select_init.queued.push (() => {
-      remove_wait_spinner (spinner);
+      remove_wait_spinner (spinner, true);
 
       if (next.getAttribute('use_settings'))
       {
@@ -460,6 +479,12 @@ function attach_source_init_handler (element, source_to_activate)
         SINK.canvas.classList.toggle ('fade_in', false);
       }
 
+      if (next_is_failed)
+      {
+        addClassFor (camera_error.element, ['fade_in'], 330);
+        camera_error.element.classList.toggle ('hide', false);
+      }
+
       if (next.loaded)
       {
         render.lastTime = next.currentTime;
@@ -470,26 +495,24 @@ function attach_source_init_handler (element, source_to_activate)
       }
     });
 
-    if (next.tagName == 'VIDEO' && !next.loaded)
+    if (!next.loaded && !next_is_failed)
     {
-      if (next.srcObject == null && next.getAttribute('data_src') == null)
-      {
-        navigator.mediaDevices.getUserMedia (camera_constraints).
-        then (camera_init.bind (next)).catch (camera_error).then (consume_next);
-      }
-      else
-      {
-        video_source_init (consume_next);
-      }
+      source_init (next, consume_next);
     }
     else
     {
       reset_frame_parameters (next);
-      setTimeout (consume_next, 330);
+      if (next_is_failed)
+      {
+        consume_next ();
+      }
+      else
+      {
+        setTimeout (consume_next, 330);
+      }
     }
 
     remove_previous_pyramids ();
-    stop_wait_a_bit ();
     filter_toggled = true;
   });
 }

@@ -66,9 +66,9 @@ header:after
   border-radius: 50%;
   transform: translateY(50%);
   background: white;
-  box-shadow: 0 0 3px 3px white;
-  opacity: 0;
-  animation: .67s 2s ease-in infinite alternate both fade_in;
+  box-shadow: 0 0 160px 80px white;
+  opacity: .33;
+  animation: 1s 3s ease-in infinite alternate none fade_in_from;
 }
 
 .bg
@@ -112,7 +112,7 @@ header:after
 
 .blur_focus
 {
-  animation: .5s ease-in-out both blur_focus;
+  animation: .5s ease-in forwards blur_focus;
 }
 
 @keyframes blur_focus
@@ -693,6 +693,26 @@ input[type='file']
   animation-fill-mode: forwards;
 }
 
+.fade_in_out
+{
+  animation-name: fade_in !important;
+  animation-duration: .33s;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  animation-fill-mode: forwards;
+}
+
+.fade_in_out_from
+{
+  animation-name: fade_in_from !important;
+  animation-duration: .33s;
+  animation-timing-function: ease-in;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  animation-fill-mode: forwards;
+}
+
 .gray_bright
 {
   filter: grayscale(100%) brightness(200%) !important;
@@ -755,6 +775,21 @@ i.fa
   transition: .5s ease all;
 }
 
+.duration_750
+{
+  animation-duration: 0.75s;
+}
+
+.timing_ease_out
+{
+  animation-timing-function: ease-out;
+}
+
+.timing_linear
+{
+  animation-timing-function: linear;
+}
+
 .absolute
 {
   position: absolute !important;
@@ -797,6 +832,12 @@ i.fa
 {
   from {opacity: 0}
   to {opacity: 1}
+}
+
+@keyframes fade_in_from
+{
+  from {opacity: initial}
+  to {opacity: 1 !important}
 }
 
 @keyframes spin

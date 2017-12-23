@@ -506,14 +506,21 @@ function addClassFor ( element, classes, duration ) {
   }
 }
 
+
+function get_min_dim (element)
+{
+  var bounds = getBounds (element);
+  return Math.min (bounds.width, bounds.height);
+}
+
+
 function add_wait_spinner (append_to, text, fraction_size=0.618, style, gray_bright=true)
 {
   var element = document.createElement ('div');
 
   if (append_to && fraction_size)
   {
-    var bounds = getBounds(append_to);
-    var dim = Math.min (bounds.width, bounds.height);
+    var dim = get_min_dim (append_to);
     element.style.width = fraction_size * dim + 'px';
     element.style.height = fraction_size * dim + 'px';
   }
@@ -553,13 +560,17 @@ function update_wait_spinner (element, text)
 }
 
 
-function remove_wait_spinner (element)
+function remove_wait_spinner (element, immediate=false)
 {
-  if (!element)
+  if (!element || !element.parentNode)
     return;
 
-  addClassFor (element, ['fade_out', 'duration_150'], 300);
-  setTimeout (() => element.remove (), 300);
+  if (immediate)
+    element.classList.toggle ('hide', true);
+  else
+    addClassFor (element, ['fade_out', 'duration_150'], 150);
+
+  setTimeout (() => element.remove (), 150);
 
   return element;
 }

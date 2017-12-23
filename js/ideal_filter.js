@@ -134,9 +134,12 @@ function update_wait_a_bit (element=ideal_filter_pyramid.waiter, value=ideal_rea
 }
 
 
-function stop_wait_a_bit (element=ideal_filter_pyramid.waiter)
+function stop_wait_a_bit (element=ideal_filter_pyramid.waiter, immediate=false)
 {
-  remove_wait_spinner (element)
+  if (!element && ideal_filter_pyramid.waiter)
+    element = ideal_filter_pyramid.waiter;
+
+  remove_wait_spinner (element, immediate)
 
   if (element == ideal_filter_pyramid.waiter)
     ideal_filter_pyramid.waiter = null;

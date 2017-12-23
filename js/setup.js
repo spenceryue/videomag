@@ -44,7 +44,37 @@ function reset_frame_parameters (source=SOURCE)
 
 function camera_error (error)
 {
-  console.error('Couldn\'t get access to webcam.', error);
+  console.error(`Couldn't access webcam.`, error);
+
+  SOURCE.failed = true;
+  SOURCE.classList.toggle ('hide', true);
+  document.querySelector ('.wait_spinner').classList.toggle ('hide', true);
+
+  var parent = document.querySelector('.content');
+  var dim = get_min_dim (parent);
+  var fraction = 0.618;
+
+  camera_error.element = parent = add_div (parent);
+  var style = {
+    color: 'var(--pink)',
+    width: fraction * dim + 'px',
+    height: fraction * dim + 'px',
+    fontSize: fraction * dim + 'px',
+    lineHeight: fraction * dim + 'px',
+    opacity: .33,
+  };
+  var element = add_div (parent, style);
+
+  element.innerHTML = '&#9785;';
+  element.classList.toggle ('fade_in_out_from', true);
+  element.classList.toggle ('timing_linear', true);
+  element.classList.toggle ('duration_750', true);
+
+  var message = add_div (parent, {color: 'var(--pink)', fontSize: '1.5rem', lineHeight: '1.5rem', textAlign: 'center', opacity: .33});
+  message.innerHTML = `<br>Couldn't access webcam.`;
+  message.classList.toggle ('fade_in_out_from', true);
+  message.classList.toggle ('timing_linear', true);
+  message.classList.toggle ('duration_750', true);
 }
 
 
@@ -111,18 +141,57 @@ function init ()
   heap_init ();
   options_init ();
   fps_init ();
+  pyramids_init ();
+  videomag_init ();
+  blur_init ();
 
-  switch (SOURCE.tagName)
+  var loading = document.querySelectorAll ('.loading');
+  loading.forEach (e => e.classList.replace ('loading', 'fade_in'));
+  spinner_init ();
+  options_pane_init ();
+  header_init ();
+  setTimeout (() => loading.forEach (e => e.classList.toggle ('fade_in')), 1000);
+
+  var delay_source_init = function ()
+  {
+    document.querySelectorAll ('.source_select > div')[INITIAL_SOURCE_INDEX].click ();
+    window.removeEventListener ('scroll', delay_source_init, {passive: true});
+  }
+
+  window.addEventListener ('scroll', delay_source_init, {passive: true});
+
+  if (!SOURCE.loaded && pageYOffset > 0)
+  {
+    delay_source_init ();
+  }
+}
+
+
+function is_camera_source (source)
+{
+  if (source)
+    return source.srcObject == null && source.getAttribute('data_src') == null;
+}
+
+
+function source_init (source=SOURCE, callback)
+{
+  if (source.loaded)
+  {
+    return;
+  }
+
+  switch (source.tagName)
   {
     case 'VIDEO':
-      if (SOURCE.srcObject == null && SOURCE.getAttribute('data_src') == null)
+      if (is_camera_source (source))
       {
-        navigator.mediaDevices.getUserMedia(camera_constraints).
-        then(camera_init.bind (SOURCE)).catch(camera_error);
+        navigator.mediaDevices.getUserMedia (camera_constraints).
+        then (camera_init.bind (source)).catch (camera_error).then (callback);
       }
       else
       {
-        video_source_init ();
+        video_source_init (callback);
       }
       break;
     case 'IMG':
@@ -138,18 +207,6 @@ function loaded ()
   else
     return;
 
-  pyramids_init ();
-  videomag_init ();
-  blur_init ();
-
-  var loading = document.querySelectorAll ('.loading');
-  loading.forEach (e => e.classList.replace ('loading', 'fade_in'));
-  spinner_init ();
-  options_pane_init ();
-  header_init ();
-  setTimeout (() => loading.forEach (e => e.classList.toggle ('fade_in')), 1000);
-
-  document.querySelectorAll ('.source_select > div')[INITIAL_SOURCE_INDEX].click ();
   render.id = requestAnimationFrame (render);
 }
 
