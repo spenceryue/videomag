@@ -37,6 +37,12 @@ Todo List
   ✓ sort out license
   ✓ hook up github page domain name to spenceryue.me
 
+Stretch
+  - make spectrum plot to validate DCT
+    - adjust buffer to be rel. real time not # frames (e.g. 2 seconds instead of 61 frames)
+  - try using built in canvas blur
+  - try using webgl
+
 presentation topics
   ✓ demo baby and face results
 
