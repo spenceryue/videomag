@@ -24,7 +24,7 @@ Implementation details are also described in the final report.
 
 #### See for yourself
 
-Try the application at https://spenceryue.me/videomag/.
+Try the application at [spenceryue.me/videomag](https://spenceryue.me/videomag).
 
 ![Preview Recording](data/preview.gif)
 
