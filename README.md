@@ -3,7 +3,7 @@ videomag
 
 Reveal subtle changes in motion and color from your webcam.
 
-Implements the [Eulerian Video Magnification algorithm](http://people.csail.mit.edu/mrub/evm/) in real-time within your browser.
+Implements the [Eulerian Video Magnification algorithm](http://people.csail.mit.edu/mrub/evm/) in real-time within the browser.
 
 ---
 
