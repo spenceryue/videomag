@@ -363,7 +363,7 @@ function source_select_init() {
       return;
     }
 
-    var source_to_activate = SOURCE.parentNode.children[i];
+    var source_to_activate = SOURCE.parentNode.querySelectorAll('video')[i];
     attach_source_init_handler(element, source_to_activate);
 
     element.source_select_initialized = true;
