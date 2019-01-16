@@ -8,22 +8,23 @@
   --blue: rgba(0, 180, 237, 1);
   overflow-x: hidden;
   overflow-y: scroll;
+  --scrollbarWidth: 0.5vw;
 }
 
 ::-webkit-scrollbar {
-  width: 0.25rem;
-  height: 0.25rem;
+  width: var(--scrollbarWidth, 1vw);
+  height: var(--scrollbarWidth, 1vw);
   background: black;
 }
 
 ::-webkit-scrollbar-thumb {
   background: gold;
-  border-radius: 5px;
+  border-radius: calc(var(--scrollbarWidth, 0.5vw) / 2);
 }
 
 body {
   position: relative;
-  width: 100vw;
+  width: calc(100vw - var(--scrollbarWidth, 0px));
   height: 100vh;
   margin: 0;
   background: black;
@@ -116,7 +117,6 @@ header {
 
   text-align: center;
   font-size: 5.5vh;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.618);
 }
 
 header:after {
@@ -250,21 +250,48 @@ main {
   background: inherit;
 }
 
-.github {
+/* https://github.com/tholman/github-corners */
+.github-corner {
+  pointer-events: auto;
+  opacity: 0.682;
+  transition: opacity 0.15s;
+}
+.github-corner:hover {
+  opacity: 1;
+}
+.github-corner > svg {
+  width: 8vw;
+  height: 8vw;
+  clip-path: polygon(0 0, 100% 100%, 100% 0);
+  --fill: rgb(0, 0, 0);
+  --color: rgb(255, 255, 255);
+  fill: var(--fill);
+  color: var(--color);
   position: absolute;
   top: 0;
+  border: 0;
   right: 0;
-  color: black;
-  fill: white;
-  opacity: 0.382;
 }
-
-.github:hover {
-  opacity: 0.618;
+.github-corner:hover {
+  fill: var(--color);
+  color: var(--fill);
 }
-
-.github_bg {
-  fill: currentColor;
+.github-corner:hover .octo-arm {
+  animation: 560ms octocat-wave ease-in-out;
+}
+@keyframes octocat-wave {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20%,
+  60% {
+    transform: rotate(-25deg);
+  }
+  40%,
+  80% {
+    transform: rotate(10deg);
+  }
 }
 
 .layer {
@@ -656,7 +683,7 @@ input[type='file'] {
 }
 
 .options::-webkit-scrollbar {
-  width: 0.125rem;
+  width: calc(var(--scrollbarWidth) * 0.75);
   border-radius: 0;
 }
 
@@ -697,14 +724,15 @@ input[type='file'] {
 
 .spinner {
   position: fixed;
-  left: calc(50vw - 60px);
-  top: calc(50vh - 60px);
-  height: 120px;
-  width: 120px;
+  --spinnerWidth: 10vw;
+  left: calc(50vw - calc(var(--spinnerWidth) / 2));
+  top: calc(50vh - calc(var(--spinnerWidth) / 2));
+  height: var(--spinnerWidth);
+  width: var(--spinnerWidth);
   z-index: 10;
 
-  border: 3px solid var(--blue);
-  border-top: 3px solid var(--pink);
+  border: 0.3vw solid var(--blue);
+  border-top: 0.3vw solid var(--pink);
   border-radius: 50%;
 
   animation: 0.67s linear infinite spin;
